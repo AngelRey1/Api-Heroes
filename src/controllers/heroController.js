@@ -10,6 +10,8 @@ const router = express.Router();
  * @swagger
  * /api/heroes:
  *   get:
+ *     tags:
+ *       - Superhéroes
  *     summary: Obtiene todos los héroes
  *     responses:
  *       200:
@@ -43,6 +45,8 @@ router.get("/heroes", async (req, res) => {
  * @swagger
  * /api/heroes:
  *   post:
+ *     tags:
+ *       - Superhéroes
  *     summary: Agrega un nuevo héroe
  *     requestBody:
  *       required: true
@@ -82,6 +86,8 @@ router.post("/heroes",
  * @swagger
  * /api/heroes/city/{city}:
  *   get:
+ *     tags:
+ *       - Superhéroes
  *     summary: Busca héroes por ciudad
  *     parameters:
  *       - in: path
@@ -107,6 +113,8 @@ router.get('/heroes/city/:city', async (req, res) => {
  * @swagger
  * /api/heroes/{id}/enfrentar:
  *   post:
+ *     tags:
+ *       - Superhéroes
  *     summary: Enfrenta a un héroe con un villano
  *     parameters:
  *       - in: path
@@ -144,6 +152,8 @@ router.post('/heroes/:id/enfrentar', async (req, res) => {
  * @swagger
  * /api/heroes/{id}/pets:
  *   get:
+ *     tags:
+ *       - Superhéroes
  *     summary: Lista las mascotas adoptadas por un héroe
  *     parameters:
  *       - in: path
@@ -171,6 +181,8 @@ router.get('/heroes/:id/pets', async (req, res) => {
  * @swagger
  * /api/heroes/{id}:
  *   put:
+ *     tags:
+ *       - Superhéroes
  *     summary: Actualiza un héroe por ID
  *     parameters:
  *       - in: path

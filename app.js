@@ -3,6 +3,7 @@ import heroController from './src/controllers/heroController.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerJSDoc from 'swagger-jsdoc';
 import petController from './src/controllers/petController.js';
+import petCareController from './src/controllers/petCareController.js';
 
 const app = express();
 
@@ -24,7 +25,7 @@ const swaggerDefinition = {
 
 const options = {
   swaggerDefinition,
-  apis: ['./src/controllers/*.js'], // Ruta corregida para los controladores
+  apis: ['./src/controllers/*.js'], // Incluye todos los controladores
 };
 
 const swaggerSpec = swaggerJSDoc(options);
@@ -33,6 +34,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.json());
 app.use('/api', heroController);
 app.use('/api/pets', petController);
+app.use('/api/pet-care', petCareController);
 
 const PORT = 3001;
 app.listen(PORT, () => {

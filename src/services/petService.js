@@ -20,7 +20,23 @@ async function addPet(pet) {
     } else {
         newId = pets.length > 0 ? Math.max(...pets.map(p => p.id)) + 1 : 1;
     }
-    const newPet = new Pet(newId, pet.name, pet.type, pet.superPower, null, [], 'available');
+    // Nuevos atributos por defecto
+    const newPet = new Pet(
+        newId,
+        pet.name,
+        pet.type,
+        pet.superPower,
+        null,
+        [],
+        'available',
+        100, // health
+        100, // happiness
+        pet.personality || 'neutral',
+        [], // activityHistory
+        { free: [], paid: [] }, // customization
+        [], // diseases
+        null // lastCare
+    );
     pets.push(newPet);
     await petRepository.savePets(pets);
     return newPet;

@@ -7,6 +7,8 @@ const router = express.Router();
  * @swagger
  * /api/pets:
  *   get:
+ *     tags:
+ *       - Mascotas
  *     summary: Lista todas las mascotas
  *     responses:
  *       200:
@@ -25,6 +27,8 @@ router.get("/", async (req, res) => {
  * @swagger
  * /api/pets:
  *   post:
+ *     tags:
+ *       - Mascotas
  *     summary: Agrega una mascota (puedes especificar el id)
  *     requestBody:
  *       required: true
@@ -63,6 +67,8 @@ router.post("/", async (req, res) => {
  * @swagger
  * /api/pets/{id}:
  *   delete:
+ *     tags:
+ *       - Mascotas
  *     summary: Elimina una mascota por ID
  *     parameters:
  *       - in: path
@@ -90,6 +96,8 @@ router.delete('/:id', async (req, res) => {
  * @swagger
  * /api/pets/{id}/adoptedBy:
  *   get:
+ *     tags:
+ *       - Mascotas
  *     summary: Ver quién adoptó la mascota
  *     parameters:
  *       - in: path
@@ -127,6 +135,8 @@ router.get('/:id/adoptedBy', async (req, res) => {
  * @swagger
  * /api/pets/{id}/adopt:
  *   post:
+ *     tags:
+ *       - Mascotas
  *     summary: Un héroe adopta una mascota (registro realista)
  *     parameters:
  *       - in: path
@@ -170,6 +180,8 @@ router.post('/:id/adopt', async (req, res) => {
  * @swagger
  * /api/pets/{id}/return:
  *   post:
+ *     tags:
+ *       - Mascotas
  *     summary: Devolver una mascota adoptada
  *     parameters:
  *       - in: path

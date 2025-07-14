@@ -1,0 +1,279 @@
+// src/services/petCareService.js
+import petRepository from '../repositories/petRepository.js';
+import Pet from '../models/petModel.js';
+
+function clamp(val, min, max) {
+    return Math.max(min, Math.min(max, val));
+}
+
+function randomChance(prob) {
+    return Math.random() < prob;
+}
+
+function countRecentActions(pet, action, minutes = 60) {
+    const now = Date.now();
+    return (pet.activityHistory || []).filter(a => a.action === action && (now - new Date(a.date).getTime()) < minutes * 60 * 1000).length;
+}
+
+async function feedPet(petId, food = 'default') {
+    const pets = await petRepository.getPets();
+    const pet = pets.find(p => p.id === parseInt(petId));
+    if (!pet) throw new Error('Mascota no encontrada');
+    if (pet.health === 0 || pet.status === 'dead') {
+        throw new Error('La mascota ha muerto y no puede recibir más cuidados.');
+    }
+    let healthBoost = 10;
+    let happinessBoost = 5;
+    if (food === 'premium') { healthBoost = 20; happinessBoost = 15; }
+    // Penalización por sobrealimentación
+    if ((pet.health ?? 100) >= 100) {
+        if (randomChance(0.5)) {
+            pet.diseases = pet.diseases || [];
+            pet.diseases.push('indigestión');
+            pet.activityHistory.push({ action: 'sick', disease: 'indigestión', date: new Date().toISOString() });
+            await petRepository.savePets(pets);
+            return { message: '¡Sobrealimentación! La mascota se enfermó de indigestión.', health: pet.health, diseases: pet.diseases };
+        }
+    }
+    // Penalización por alimentar muchas veces seguidas
+    if (countRecentActions(pet, 'feed', 10) >= 3) {
+        pet.diseases = pet.diseases || [];
+        pet.diseases.push('empacho');
+        pet.activityHistory.push({ action: 'sick', disease: 'empacho', date: new Date().toISOString() });
+        await petRepository.savePets(pets);
+        return { message: '¡Demasiada comida en poco tiempo! La mascota se enfermó de empacho.', health: pet.health, diseases: pet.diseases };
+    }
+    // Penalización por falta de variedad
+    const lastFoods = (pet.activityHistory || []).filter(a => a.action === 'feed').slice(-3).map(a => a.food);
+    if (lastFoods.length === 3 && lastFoods.every(f => f === food)) {
+        pet.happiness = clamp((pet.happiness ?? 100) - 10, 0, 100);
+    }
+    pet.health = clamp((pet.health ?? 100) + healthBoost, 0, 100);
+    pet.happiness = clamp((pet.happiness ?? 100) + happinessBoost, 0, 100);
+    if (pet.health === 0) {
+        if (pet.status !== 'dead') {
+            pet.status = 'dead';
+            pet.deathDate = new Date().toISOString();
+        }
+    }
+    pet.activityHistory = pet.activityHistory || [];
+    pet.activityHistory.push({ action: 'feed', food, date: new Date().toISOString() });
+    pet.lastCare = new Date().toISOString();
+    await petRepository.savePets(pets);
+    return { message: `Mascota alimentada con ${food}`, health: pet.health, happiness: pet.happiness };
+}
+
+async function walkPet(petId) {
+    const pets = await petRepository.getPets();
+    const pet = pets.find(p => p.id === parseInt(petId));
+    if (!pet) throw new Error('Mascota no encontrada');
+    if (pet.health === 0 || pet.status === 'dead') {
+        throw new Error('La mascota ha muerto y no puede recibir más cuidados.');
+    }
+    // Personalidad: perezoso pierde felicidad si pasea mucho
+    if (pet.personality === 'perezoso' && countRecentActions(pet, 'walk', 60) >= 2) {
+        pet.happiness = clamp((pet.happiness ?? 100) - 10, 0, 100);
+    } else {
+        pet.happiness = clamp((pet.happiness ?? 100) + 10, 0, 100);
+    }
+    pet.health = clamp((pet.health ?? 100) + 5, 0, 100);
+    if (pet.health === 0) {
+        if (pet.status !== 'dead') {
+            pet.status = 'dead';
+            pet.deathDate = new Date().toISOString();
+        }
+    }
+    pet.activityHistory = pet.activityHistory || [];
+    pet.activityHistory.push({ action: 'walk', date: new Date().toISOString() });
+    pet.lastCare = new Date().toISOString();
+    await petRepository.savePets(pets);
+    return { message: 'Mascota paseada', health: pet.health, happiness: pet.happiness };
+}
+
+async function playWithPet(petId) {
+    const pets = await petRepository.getPets();
+    const pet = pets.find(p => p.id === parseInt(petId));
+    if (!pet) throw new Error('Mascota no encontrada');
+    if (pet.health === 0 || pet.status === 'dead') {
+        throw new Error('La mascota ha muerto y no puede recibir más cuidados.');
+    }
+    // Penalización por jugar demasiado
+    if (countRecentActions(pet, 'play', 10) >= 3) {
+        pet.diseases = pet.diseases || [];
+        pet.diseases.push('agotamiento');
+        pet.activityHistory.push({ action: 'sick', disease: 'agotamiento', date: new Date().toISOString() });
+        await petRepository.savePets(pets);
+        return { message: '¡Demasiado juego! La mascota se enfermó de agotamiento.', health: pet.health, diseases: pet.diseases };
+    }
+    // Personalidad: juguetón pierde felicidad si no juega seguido
+    if (pet.personality === 'juguetón') {
+        const lastPlay = (pet.activityHistory || []).reverse().find(a => a.action === 'play');
+        if (!lastPlay || (Date.now() - new Date(lastPlay.date).getTime()) > 6 * 60 * 60 * 1000) {
+            pet.happiness = clamp((pet.happiness ?? 100) - 10, 0, 100);
+        }
+    }
+    pet.happiness = clamp((pet.happiness ?? 100) + 15, 0, 100);
+    pet.health = clamp((pet.health ?? 100) - 2, 0, 100); // jugar cansa
+    if (pet.health === 0) {
+        if (pet.status !== 'dead') {
+            pet.status = 'dead';
+            pet.deathDate = new Date().toISOString();
+        }
+    }
+    pet.activityHistory = pet.activityHistory || [];
+    pet.activityHistory.push({ action: 'play', date: new Date().toISOString() });
+    pet.lastCare = new Date().toISOString();
+    await petRepository.savePets(pets);
+    return { message: 'Mascota jugó', health: pet.health, happiness: pet.happiness };
+}
+
+async function bathPet(petId) {
+    const pets = await petRepository.getPets();
+    const pet = pets.find(p => p.id === parseInt(petId));
+    if (!pet) throw new Error('Mascota no encontrada');
+    if (pet.health === 0 || pet.status === 'dead') {
+        throw new Error('La mascota ha muerto y no puede recibir más cuidados.');
+    }
+    // Penalización por bañar muchas veces seguidas
+    if (countRecentActions(pet, 'bath', 30) >= 2) {
+        pet.diseases = pet.diseases || [];
+        pet.diseases.push('resfriado');
+        pet.activityHistory.push({ action: 'sick', disease: 'resfriado', date: new Date().toISOString() });
+        await petRepository.savePets(pets);
+        return { message: '¡Demasiados baños! La mascota se resfrió.', happiness: pet.happiness, diseases: pet.diseases };
+    }
+    pet.happiness = clamp((pet.happiness ?? 100) + 5, 0, 100);
+    pet.activityHistory = pet.activityHistory || [];
+    pet.activityHistory.push({ action: 'bath', date: new Date().toISOString() });
+    pet.lastCare = new Date().toISOString();
+    if (pet.health === 0) {
+        if (pet.status !== 'dead') {
+            pet.status = 'dead';
+            pet.deathDate = new Date().toISOString();
+        }
+    }
+    await petRepository.savePets(pets);
+    return { message: 'Mascota bañada', happiness: pet.happiness };
+}
+
+async function customizePet(petId, item, type = 'free', balance = 0) {
+    const pets = await petRepository.getPets();
+    const pet = pets.find(p => p.id === parseInt(petId));
+    if (!pet) throw new Error('Mascota no encontrada');
+    if (pet.health === 0 || pet.status === 'dead') {
+        throw new Error('La mascota ha muerto y no puede recibir más cuidados.');
+    }
+    if (type === 'paid' && (!balance || balance < 1)) {
+        return { message: 'No tienes saldo suficiente para customización paga.' };
+    }
+    pet.customization = pet.customization || { free: [], paid: [] };
+    pet.customization[type] = pet.customization[type] || [];
+    pet.customization[type].push(item);
+    pet.activityHistory = pet.activityHistory || [];
+    pet.activityHistory.push({ action: 'customize', item, type, date: new Date().toISOString() });
+    await petRepository.savePets(pets);
+    return { message: `Mascota customizada con ${item} (${type})`, customization: pet.customization };
+}
+
+async function healPet(petId, disease) {
+    const pets = await petRepository.getPets();
+    const pet = pets.find(p => p.id === parseInt(petId));
+    if (!pet) throw new Error('Mascota no encontrada');
+    if (pet.health === 0 || pet.status === 'dead') {
+        throw new Error('La mascota ha muerto y no puede recibir más cuidados.');
+    }
+    pet.diseases = (pet.diseases || []).filter(d => d !== disease);
+    pet.health = clamp((pet.health ?? 100) + 15, 0, 100);
+    pet.activityHistory = pet.activityHistory || [];
+    pet.activityHistory.push({ action: 'heal', disease, date: new Date().toISOString() });
+    await petRepository.savePets(pets);
+    return { message: `Mascota curada de ${disease}`, health: pet.health, diseases: pet.diseases };
+}
+
+async function getPetStatus(petId) {
+    const pets = await petRepository.getPets();
+    const pet = pets.find(p => p.id === parseInt(petId));
+    if (!pet) throw new Error('Mascota no encontrada');
+    // Retornar toda la información relevante de la mascota
+    return {
+        id: pet.id,
+        name: pet.name,
+        type: pet.type,
+        superPower: pet.superPower,
+        adoptedBy: pet.adoptedBy,
+        adoptionHistory: pet.adoptionHistory,
+        status: pet.status,
+        health: pet.health,
+        happiness: pet.happiness,
+        personality: pet.personality,
+        activityHistory: pet.activityHistory,
+        customization: pet.customization,
+        diseases: pet.diseases,
+        lastCare: pet.lastCare
+    };
+}
+
+async function makePetSick(petId, disease) {
+    const pets = await petRepository.getPets();
+    const pet = pets.find(p => p.id === parseInt(petId));
+    if (!pet) throw new Error('Mascota no encontrada');
+    if (pet.health === 0 || pet.status === 'dead') {
+        throw new Error('La mascota ha muerto y no puede recibir más cuidados.');
+    }
+    pet.diseases = pet.diseases || [];
+    if (!pet.diseases.includes(disease)) pet.diseases.push(disease);
+    pet.health = clamp((pet.health ?? 100) - 20, 0, 100);
+    if (pet.health === 0) {
+        if (pet.status !== 'dead') {
+            pet.status = 'dead';
+            pet.deathDate = new Date().toISOString();
+        }
+    }
+    pet.activityHistory = pet.activityHistory || [];
+    pet.activityHistory.push({ action: 'sick', disease, date: new Date().toISOString() });
+    await petRepository.savePets(pets);
+    return { message: `Mascota enfermó de ${disease}`, health: pet.health, happiness: pet.happiness, diseases: pet.diseases };
+}
+
+async function decayPetStats(petId, hours = 1) {
+    const pets = await petRepository.getPets();
+    const pet = pets.find(p => p.id === parseInt(petId));
+    if (!pet) throw new Error('Mascota no encontrada');
+    if (pet.health === 0 || pet.status === 'dead') {
+        throw new Error('La mascota ha muerto y no puede recibir más cuidados.');
+    }
+    // Si está enferma y no se cura, decae más rápido
+    let healthDecay = 2 * hours;
+    let happinessDecay = 3 * hours;
+    if (pet.diseases && pet.diseases.length > 0) {
+        healthDecay *= 2;
+        happinessDecay *= 2;
+    }
+    pet.health = clamp((pet.health ?? 100) - healthDecay, 0, 100);
+    if (pet.health === 0) {
+        if (pet.status !== 'dead') {
+            pet.status = 'dead';
+            pet.deathDate = new Date().toISOString();
+        }
+    }
+    // Si abandono es muy largo, probabilidad de enfermedad
+    if (hours >= 24 && randomChance(0.3)) {
+        pet.diseases = pet.diseases || [];
+        pet.diseases.push('tristeza');
+        pet.activityHistory.push({ action: 'sick', disease: 'tristeza', date: new Date().toISOString() });
+    }
+    await petRepository.savePets(pets);
+    return { message: `Stats decay for ${hours}h`, health: pet.health, happiness: pet.happiness, diseases: pet.diseases };
+}
+
+export default {
+    feedPet,
+    walkPet,
+    playWithPet,
+    bathPet,
+    customizePet,
+    healPet,
+    getPetStatus,
+    makePetSick,
+    decayPetStats
+}; 
