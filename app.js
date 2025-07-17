@@ -7,10 +7,14 @@ import petCareController from './src/controllers/petCareController.js';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import authController from './src/controllers/authController.js';
+import cors from 'cors';
 
 dotenv.config();
 
 const app = express();
+
+// Habilitar CORS para todos los orígenes
+app.use(cors());
 
 // Configuración Swagger
 const swaggerDefinition = {
