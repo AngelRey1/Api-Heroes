@@ -26,8 +26,8 @@ const swaggerDefinition = {
   },
   servers: [
     {
-      url: 'http://localhost:3001',
-      description: 'Servidor local',
+      url: process.env.RENDER_EXTERNAL_URL || 'http://localhost:3001',
+      description: 'Servidor de Producción o Desarrollo',
     },
   ],
   tags: [
