@@ -37,6 +37,10 @@ class PetService {
 
     async getAllPets(userId) {
         try {
+            // Si no se pasa userId, devuelve todas las mascotas
+            if (!userId) {
+                return await this.petRepository.getPets();
+            }
             validateObjectId(userId, 'ID de usuario');
             return await this.petRepository.getPets({ owner: userId });
         } catch (error) {

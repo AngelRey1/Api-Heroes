@@ -339,6 +339,7 @@ router.get('/:petId/adoptedBy', authMiddleware, async (req, res) => {
  */
 router.get('/adopted', authMiddleware, async (req, res) => {
     try {
+        // Solo mascotas adoptadas por el usuario autenticado
         const pets = await petService.getAllPets(req.user._id);
         const adopted = pets.filter(pet => pet.adoptedBy);
         res.json(adopted);

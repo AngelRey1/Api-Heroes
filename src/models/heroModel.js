@@ -10,9 +10,10 @@ const heroSchema = new mongoose.Schema({
 });
 
 heroSchema.method('toJSON', function() {
-    const { _id, __v, ...object } = this.toObject();
+    const { _id, __v, pets, ...object } = this.toObject();
     object._id = _id;
     object.id_corto = _id.toString().substring(0, 8);
+    object.pets = pets; // Asegura que pets siempre esté presente
     return object;
 });
 
