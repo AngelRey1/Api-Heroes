@@ -1,10 +1,12 @@
 import express from "express";
 import { check, validationResult } from 'express-validator';
-import heroService from "../services/heroService.js";
+import HeroService from "../services/heroService.js";
 import Hero from "../models/heroModel.js";
 import petRepository from "../repositories/petRepository.js";
+import authMiddleware from '../middleware/authMiddleware.js';
 
 const router = express.Router();
+const heroService = new HeroService();
 
 /**
  * @swagger
@@ -13,6 +15,8 @@ const router = express.Router();
  *     tags:
  *       - Superhéroes
  *     summary: Obtiene todos los héroes
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Lista de héroes
@@ -23,20 +27,12 @@ const router = express.Router();
  *               items:
  *                 $ref: '#/components/schemas/Hero'
  */
-router.get("/heroes", async (req, res) => {
+router.get("/heroes", authMiddleware, async (req, res) => {
     try {
-        const heroes = await heroService.getAllHeroes();
-        const pets = await petRepository.getPets();
-        // Mapear los ids de mascotas a objetos {id, name}
-        const heroesWithPetNames = heroes.map(hero => ({
-            ...hero,
-            pets: (hero.pets || []).map(pid => {
-                const pet = pets.find(p => p.id === (typeof pid === 'object' ? pid.id : pid));
-                return pet ? { id: pet.id, name: pet.name } : { id: pid };
-            })
-        }));
-        res.json(heroesWithPetNames);
+        const heroes = await heroService.getAllHeroes(req.user._id);
+        res.json(heroes);
     } catch (error) {
+        if (error.status === 403) return res.status(403).json({ error: error.message });
         res.status(500).json({ error: error.message });
     }
 });
@@ -48,20 +44,45 @@ router.get("/heroes", async (req, res) => {
  *     tags:
  *       - Superhéroes
  *     summary: Agrega un nuevo héroe
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Hero'
+ *             type: object
+ *             required:
+ *               - name
+ *               - alias
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Nombre real del superhéroe
+ *                 example: "Roberto Gómez Bolaños"
+ *               alias:
+ *                 type: string
+ *                 description: Nombre de superhéroe o alias
+ *                 example: "Chapulín Colorado"
+ *               city:
+ *                 type: string
+ *                 description: Ciudad donde opera el héroe
+ *                 example: "CDMX"
+ *               team:
+ *                 type: string
+ *                 description: Equipo o grupo al que pertenece
+ *                 example: "Independiente"
  *     responses:
  *       201:
  *         description: Héroe creado
  *       400:
  *         description: Error de validación
+ *       401:
+ *         description: No autorizado
  */
 router.post("/heroes",
     [
+        authMiddleware,
         check('name').not().isEmpty().withMessage('El nombre es requerido'),
         check('alias').not().isEmpty().withMessage('El alias es requerido')
     ], 
@@ -70,12 +91,9 @@ router.post("/heroes",
         if(!errors.isEmpty()){
             return res.status(400).json({ error : errors.array() });
         }
-
         try {
             const { name, alias, city, team } = req.body;
-            const newHero = new Hero(null, name, alias, city, team);
-            const addedHero = await heroService.addHero(newHero);
-
+            const addedHero = await heroService.addHero({ name, alias, city, team, owner: req.user._id });
             res.status(201).json(addedHero);
         } catch (error) {
             res.status(500).json({ error: error.message });
@@ -89,6 +107,8 @@ router.post("/heroes",
  *     tags:
  *       - Superhéroes
  *     summary: Busca héroes por ciudad
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: city
@@ -99,10 +119,12 @@ router.post("/heroes",
  *     responses:
  *       200:
  *         description: Lista de héroes de la ciudad
+ *       401:
+ *         description: No autorizado
  */
-router.get('/heroes/city/:city', async (req, res) => {
+router.get('/heroes/city/:city', authMiddleware, async (req, res) => {
     try {
-        const heroes = await heroService.findHeroesByCity(req.params.city);
+        const heroes = await heroService.findHeroesByCity(req.params.city, req.user._id);
         res.json(heroes);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -111,37 +133,45 @@ router.get('/heroes/city/:city', async (req, res) => {
 
 /**
  * @swagger
- * /api/heroes/{id}/enfrentar:
+ * /api/heroes/{heroId}/enfrentar:
  *   post:
  *     tags:
  *       - Superhéroes
- *     summary: Enfrenta a un héroe con un villano
+ *     summary: Enfrenta a un héroe específico con un villano
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: heroId
  *         schema:
- *           type: integer
+ *           type: string
  *         required: true
- *         description: ID del héroe
+ *         description: ID único del héroe que enfrentará al villano
+ *         example: 68785027
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
+ *             required:
+ *               - villain
  *             properties:
  *               villain:
  *                 type: string
- *                 example: Joker
+ *                 description: Nombre del villano a enfrentar
+ *                 example: "Joker"
  *     responses:
  *       200:
  *         description: Mensaje de enfrentamiento
+ *       401:
+ *         description: No autorizado
  *       404:
  *         description: Héroe no encontrado
  */
-router.post('/heroes/:id/enfrentar', async (req, res) => {
+router.post('/heroes/:heroId/enfrentar', authMiddleware, async (req, res) => {
     try {
-        const result = await heroService.faceVillain(req.params.id, req.body.villain);
+        const result = await heroService.faceVillain(req.params.heroId, req.body.villain, req.user._id);
         res.json({ message: result });
     } catch (err) {
         res.status(404).json({ error: err.message });
@@ -150,27 +180,32 @@ router.post('/heroes/:id/enfrentar', async (req, res) => {
 
 /**
  * @swagger
- * /api/heroes/{id}/pets:
+ * /api/heroes/{heroId}/pets:
  *   get:
  *     tags:
  *       - Superhéroes
- *     summary: Lista las mascotas adoptadas por un héroe
+ *     summary: Lista las mascotas adoptadas por un héroe específico
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: heroId
  *         schema:
- *           type: integer
+ *           type: string
  *         required: true
- *         description: ID del héroe
+ *         description: ID único del héroe del cual ver las mascotas
+ *         example: 68785027
  *     responses:
  *       200:
- *         description: Lista de mascotas
+ *         description: Lista de mascotas adoptadas por el héroe
+ *       401:
+ *         description: No autorizado
  *       404:
  *         description: Héroe no encontrado
  */
-router.get('/heroes/:id/pets', async (req, res) => {
+router.get('/heroes/:heroId/pets', authMiddleware, async (req, res) => {
     try {
-        const pets = await heroService.getHeroPets(req.params.id);
+        const pets = await heroService.getHeroPets(req.params.heroId, req.user._id);
         res.json(pets);
     } catch (error) {
         res.status(404).json({ error: error.message });
@@ -179,33 +214,55 @@ router.get('/heroes/:id/pets', async (req, res) => {
 
 /**
  * @swagger
- * /api/heroes/{id}:
+ * /api/heroes/{heroId}:
  *   put:
  *     tags:
  *       - Superhéroes
- *     summary: Actualiza un héroe por ID
+ *     summary: Actualiza los datos de un héroe específico
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: heroId
  *         schema:
- *           type: integer
+ *           type: string
  *         required: true
- *         description: ID del héroe
+ *         description: ID único del héroe a actualizar
+ *         example: 68785027
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
- *             $ref: '#/components/schemas/Hero'
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Nombre real del superhéroe
+ *                 example: "Roberto Gómez Bolaños"
+ *               alias:
+ *                 type: string
+ *                 description: Nombre de superhéroe o alias
+ *                 example: "Chapulín Colorado"
+ *               city:
+ *                 type: string
+ *                 description: Ciudad donde opera el héroe
+ *                 example: "CDMX"
+ *               team:
+ *                 type: string
+ *                 description: Equipo o grupo al que pertenece
+ *                 example: "Independiente"
  *     responses:
  *       200:
- *         description: Héroe actualizado
+ *         description: Héroe actualizado exitosamente
+ *       401:
+ *         description: No autorizado
  *       404:
  *         description: Héroe no encontrado
  */
-router.put("/heroes/:id", async (req, res) => {
+router.put("/heroes/:heroId", authMiddleware, async (req, res) => {
     try {
-        const updatedHero = await heroService.updateHero(req.params.id, req.body);
+        const updatedHero = await heroService.updateHero(req.params.heroId, req.body, req.user._id);
         res.json(updatedHero);
     } catch (error) {
         res.status(404).json({ error: error.message });
@@ -214,25 +271,32 @@ router.put("/heroes/:id", async (req, res) => {
 
 /**
  * @swagger
- * /api/heroes/{id}:
+ * /api/heroes/{heroId}:
  *   delete:
- *     summary: Elimina un héroe por ID
+ *     tags:
+ *       - Superhéroes
+ *     summary: Elimina un héroe específico y todas sus relaciones
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: id
+ *         name: heroId
  *         schema:
- *           type: integer
+ *           type: string
  *         required: true
- *         description: ID del héroe
+ *         description: ID único del héroe a eliminar
+ *         example: 68785027
  *     responses:
  *       200:
- *         description: Héroe eliminado
+ *         description: Héroe eliminado exitosamente
+ *       401:
+ *         description: No autorizado
  *       404:
  *         description: Héroe no encontrado
  */
-router.delete('/heroes/:id', async (req, res) => {
+router.delete('/heroes/:heroId', authMiddleware, async (req, res) => {
     try {
-        const result = await heroService.deleteHero(req.params.id);
+        const result = await heroService.deleteHero(req.params.heroId, req.user._id);
         res.json(result);
     } catch (error) {
         res.status(404).json({ error: error.message });
@@ -246,21 +310,43 @@ router.delete('/heroes/:id', async (req, res) => {
  *     Hero:
  *       type: object
  *       properties:
- *         id:
- *           type: integer
- *           example: 1
+ *         _id:
+ *           type: string
+ *           example: "64a1b2c3d4e5f6a7b8c9d0e1"
+ *           description: ID único de MongoDB
+ *         id_corto:
+ *           type: string
+ *           example: "64a1b2c3"
+ *           description: ID corto para mostrar o copiar fácilmente
  *         name:
  *           type: string
- *           example: Roberto Gómez Bolaños
+ *           example: "Roberto Gómez Bolaños"
+ *           description: Nombre real del superhéroe
  *         alias:
  *           type: string
- *           example: Chapulin Colorado
+ *           example: "Chapulín Colorado"
+ *           description: Nombre de superhéroe o alias
  *         city:
  *           type: string
- *           example: CDMX
+ *           example: "CDMX"
+ *           description: Ciudad donde opera el héroe
  *         team:
  *           type: string
- *           example: Independient
+ *           example: "Independiente"
+ *           description: Equipo o grupo al que pertenece
+ *         pets:
+ *           type: array
+ *           description: Mascotas adoptadas por el héroe
+ *           items:
+ *             type: string
+ *       example:
+ *         _id: "64a1b2c3d4e5f6a7b8c9d0e1"
+ *         id_corto: "64a1b2c3"
+ *         name: "Roberto Gómez Bolaños"
+ *         alias: "Chapulín Colorado"
+ *         city: "CDMX"
+ *         team: "Independiente"
+ *         pets: ["64a1b2c3d4e5f6a7b8c9d0e2", "64a1b2c3d4e5f6a7b8c9d0e3"]
  */
 
 export default router;

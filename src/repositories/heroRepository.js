@@ -1,44 +1,45 @@
-import fs from 'fs-extra';
 import Hero from '../models/heroModel.js';
-import petRepository from '../repositories/petRepository.js';
 
-const filePath = './superheroes.json';
+class HeroRepository {
+    async getHeroes(filter = {}) {
+        try {
+            // Trae héroes filtrados y sus mascotas (populate pets)
+            return await Hero.find(filter).populate('pets');
+        } catch (error) {
+            console.error(error);
+            return [];
+        }
+    }
 
-async function getHeroes() {
-    try {
-        const data = await fs.readJson(filePath);
-        // Si pets es un array de objetos {id, name}, solo pasar el id al modelo
-        return data.map(hero => new Hero(
-            hero.id, hero.name, hero.alias, hero.city, hero.team,
-            (hero.pets || []).map(p => typeof p === 'object' ? p.id : p)
-        ));
-    } catch (error) {
-        console.error(error);
-        return [];
+    async getHeroById(id) {
+        try {
+            if (id.length === 8) {
+                // Buscar por id_corto
+                const all = await Hero.find().populate('pets');
+                return all.find(h => h._id.toString().substring(0,8) === id);
+            } else {
+                return await Hero.findById(id).populate('pets');
+            }
+        } catch (error) {
+            console.error(error);
+            return null;
+        }
+    }
+
+    async saveHero(heroData) {
+        try {
+            // Si heroData tiene _id, actualiza; si no, crea nuevo
+            if (heroData._id) {
+                return await Hero.findByIdAndUpdate(heroData._id, heroData, { new: true });
+            } else {
+                const hero = new Hero(heroData);
+                return await hero.save();
+            }
+        } catch (error) {
+            console.error(error);
+            throw error;
+        }
     }
 }
 
-async function saveHeroes(heroes) {
-    try {
-        // Obtener todas las mascotas para mapear id a nombre
-        const pets = await petRepository.getPets();
-        await fs.writeJson(filePath, heroes.map(h => ({
-            id: h.id,
-            name: h.name,
-            alias: h.alias,
-            city: h.city,
-            team: h.team,
-            pets: (h.pets || []).map(pid => {
-                const pet = pets.find(p => p.id === pid);
-                return pet ? { id: pet.id, name: pet.name } : { id: pid };
-            })
-        })));
-    } catch (error) {
-        console.error(error);
-    }
-}
-
-export default {
-    getHeroes,
-    saveHeroes
-};
+export default HeroRepository;

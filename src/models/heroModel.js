@@ -1,12 +1,19 @@
-class Hero {
-    constructor(id, name, alias, city, team, pets = []) {
-        this.id = id;
-        this.name = name;
-        this.alias = alias;
-        this.city = city;
-        this.team = team;
-        this.pets = pets; // IDs de mascotas adoptadas
-    }
-}
+import mongoose from 'mongoose';
 
-export default Hero;
+const heroSchema = new mongoose.Schema({
+    name: { type: String, required: true, description: 'Nombre real del superhéroe' },
+    alias: { type: String, required: true, description: 'Nombre de superhéroe o alias' },
+    city: { type: String, description: 'Ciudad donde opera el héroe' },
+    team: { type: String, description: 'Equipo o grupo al que pertenece' },
+    owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, description: 'Propietario del héroe (jugador)' },
+    pets: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Pet', description: 'Mascotas adoptadas por el héroe' }]
+});
+
+heroSchema.method('toJSON', function() {
+    const { _id, __v, ...object } = this.toObject();
+    object._id = _id;
+    object.id_corto = _id.toString().substring(0, 8);
+    return object;
+});
+
+export default mongoose.model('Hero', heroSchema);

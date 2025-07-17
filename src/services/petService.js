@@ -1,151 +1,201 @@
-import petRepository from '../repositories/petRepository.js';
-import heroRepository from '../repositories/heroRepository.js';
-import Pet from '../models/petModel.js';
+import PetRepository from '../repositories/petRepository.js';
+import HeroRepository from '../repositories/heroRepository.js';
+import { ValidationError, NotFoundError, AuthorizationError } from '../utils/errors.js';
+import { validateObjectId, validateRequiredFields, validateStringLength } from '../utils/validations.js';
 
-async function getAllPets() {
-    return await petRepository.getPets();
-}
-
-async function addPet(pet) {
-    if (!pet.name || !pet.type) {
-        throw new Error('La mascota debe tener nombre y tipo.');
+class PetService {
+    constructor() {
+        this.petRepository = new PetRepository();
+        this.heroRepository = new HeroRepository();
     }
-    const pets = await petRepository.getPets();
-    let newId;
-    if (pet.id !== undefined && pet.id !== null) {
-        if (pets.some(p => p.id === parseInt(pet.id))) {
-            throw new Error('El id de la mascota ya existe.');
-        }
-        newId = parseInt(pet.id);
-    } else {
-        newId = pets.length > 0 ? Math.max(...pets.map(p => p.id)) + 1 : 1;
-    }
-    // Nuevos atributos por defecto
-    const newPet = new Pet(
-        newId,
-        pet.name,
-        pet.type,
-        pet.superPower,
-        null,
-        [],
-        'available',
-        100, // health
-        100, // happiness
-        pet.personality || 'neutral',
-        [], // activityHistory
-        { free: [], paid: [] }, // customization
-        [], // diseases
-        null // lastCare
-    );
-    pets.push(newPet);
-    await petRepository.savePets(pets);
-    return newPet;
-}
 
-async function adoptPet(petId, heroId, reason = '', notes = '') {
-    const pets = await petRepository.getPets();
-    const pet = pets.find(p => p.id === parseInt(petId));
-    if (!pet) throw new Error('Mascota no encontrada');
-    if (pet.adoptedBy) throw new Error('La mascota ya fue adoptada');
-    const heroes = await heroRepository.getHeroes();
-    const hero = heroes.find(h => h.id === parseInt(heroId));
-    if (!hero) throw new Error('Héroe no encontrado');
-    // Registrar adopción
-    const adoptionDate = new Date().toISOString();
-    const adoptionRecord = {
-        heroId: hero.id,
-        heroName: hero.name,
-        adoptionDate,
-        reason,
-        notes,
-        status: 'adopted'
-    };
-    pet.adoptedBy = hero.id;
-    pet.status = 'adopted';
-    pet.adoptionHistory = pet.adoptionHistory || [];
-    pet.adoptionHistory.push(adoptionRecord);
-    hero.pets = hero.pets || [];
-    hero.pets.push(pet.id);
-    await petRepository.savePets(pets);
-    await heroRepository.saveHeroes(heroes);
-    return { message: `La mascota ${pet.name} fue adoptada por ${hero.name}`, adoption: adoptionRecord };
-}
+    async createPet(petData, userId) {
+        try {
+            // Validar campos requeridos
+            validateRequiredFields(petData, ['name', 'type', 'superPower']);
+            // Validar longitudes de strings
+            validateStringLength(petData.name, 1, 50, 'Nombre');
+            validateStringLength(petData.type, 1, 30, 'Tipo');
+            validateStringLength(petData.superPower, 1, 100, 'Superpoder');
 
-async function returnPet(petId, notes = '') {
-    const pets = await petRepository.getPets();
-    const pet = pets.find(p => p.id === parseInt(petId));
-    if (!pet) throw new Error('Mascota no encontrada');
-    if (!pet.adoptedBy) throw new Error('La mascota no está adoptada');
-    const heroes = await heroRepository.getHeroes();
-    const hero = heroes.find(h => h.id === parseInt(pet.adoptedBy));
-    // Actualizar historial
-    if (pet.adoptionHistory && pet.adoptionHistory.length > 0) {
-        const lastAdoption = pet.adoptionHistory[pet.adoptionHistory.length - 1];
-        if (lastAdoption.status === 'adopted') {
-            lastAdoption.status = 'returned';
-            lastAdoption.returnDate = new Date().toISOString();
-            lastAdoption.returnNotes = notes;
+            // Validar que el usuario existe
+            validateObjectId(userId, 'ID de usuario');
+
+            const pet = await this.petRepository.createPet({
+                ...petData,
+                owner: userId
+            });
+
+            return pet;
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                throw error;
+            }
+            throw new Error(`Error al crear mascota: ${error.message}`);
         }
     }
-    // Quitar la mascota del héroe
-    if (hero && hero.pets) {
-        hero.pets = hero.pets.filter(pid => pid !== pet.id);
-        await heroRepository.saveHeroes(heroes);
-    }
-    pet.adoptedBy = null;
-    pet.status = 'returned';
-    await petRepository.savePets(pets);
-    return { message: `La mascota ${pet.name} fue devuelta`, pet };
-}
 
-async function deletePet(id) {
-    const pets = await petRepository.getPets();
-    const pet = pets.find(p => p.id === parseInt(id));
-    if (!pet) {
-        throw new Error('Mascota no encontrada');
-    }
-    if (pet.adoptedBy) {
-        const heroes = await heroRepository.getHeroes();
-        const hero = heroes.find(h => h.id === parseInt(pet.adoptedBy));
-        if (hero && hero.pets) {
-            hero.pets = hero.pets.filter(pid => pid !== pet.id);
-            await heroRepository.saveHeroes(heroes);
+    async getAllPets(userId) {
+        try {
+            validateObjectId(userId, 'ID de usuario');
+            return await this.petRepository.getPets({ owner: userId });
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                throw error;
+            }
+            throw new Error(`Error al obtener mascotas: ${error.message}`);
         }
     }
-    const filteredPets = pets.filter(pet => pet.id !== parseInt(id));
-    await petRepository.savePets(filteredPets);
-    return { message: 'Mascota eliminada' };
-}
 
-async function getPetById(id) {
-    return await petRepository.getPetById(id);
-}
+    async getPetById(petId, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
 
-async function updatePet(id, data) {
-    const pets = await petRepository.getPets();
-    const index = pets.findIndex(pet => pet.id === parseInt(id));
-    if (index === -1) {
-        throw new Error('Mascota no encontrada');
-    }
-    if (data.id !== undefined && data.id !== null && data.id !== pets[index].id) {
-        if (pets.some(p => p.id === parseInt(data.id))) {
-            throw new Error('El nuevo id de la mascota ya existe.');
+            const pet = await this.petRepository.getPetById(petId);
+
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para ver esta mascota');
+            }
+
+            return pet;
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al obtener mascota: ${error.message}`);
         }
-        pets[index].id = parseInt(data.id);
     }
-    if (data.name !== undefined) pets[index].name = data.name;
-    if (data.type !== undefined) pets[index].type = data.type;
-    if (data.superPower !== undefined) pets[index].superPower = data.superPower;
-    await petRepository.savePets(pets);
-    return pets[index];
+
+    async updatePet(petId, updateData, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
+
+            // Validar campos si se proporcionan
+            if (updateData.name) {
+                validateStringLength(updateData.name, 1, 50, 'Nombre');
+            }
+            if (updateData.type) {
+                validateStringLength(updateData.type, 1, 30, 'Tipo');
+            }
+            if (updateData.superPower) {
+                validateStringLength(updateData.superPower, 1, 100, 'Superpoder');
+            }
+
+            const pet = await this.petRepository.getPetById(petId);
+
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para modificar esta mascota');
+            }
+
+            return await this.petRepository.updatePet(petId, updateData);
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al actualizar mascota: ${error.message}`);
+        }
+    }
+
+    async deletePet(petId, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
+
+            const pet = await this.petRepository.getPetById(petId);
+
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para eliminar esta mascota');
+            }
+
+            return await this.petRepository.deletePet(petId);
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al eliminar mascota: ${error.message}`);
+        }
+    }
+
+    async adoptPet(petId, heroId, reason, notes, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(heroId, 'ID de héroe');
+            validateObjectId(userId, 'ID de usuario');
+
+            if (reason) {
+                validateStringLength(reason, 10, 'Motivo de adopción');
+            }
+            if (notes) {
+                validateStringLength(notes, 1, 'Notas');
+            }
+
+            const pet = await this.petRepository.getPetById(petId);
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para adoptar esta mascota');
+            }
+
+            const hero = await this.heroRepository.getHeroById(heroId);
+            if (!hero) {
+                throw new NotFoundError('Héroe no encontrado');
+            }
+
+            if (hero.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para usar este héroe');
+            }
+
+            return await this.petRepository.adoptPet(petId, heroId, reason, notes);
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al adoptar mascota: ${error.message}`);
+        }
+    }
+
+    async returnPet(petId, notes, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
+
+            if (notes) {
+                validateStringLength(notes, 1, 'Notas');
+            }
+
+            const pet = await this.petRepository.getPetById(petId);
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para devolver esta mascota');
+            }
+
+            return await this.petRepository.returnPet(petId, notes);
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al devolver mascota: ${error.message}`);
+        }
+    }
 }
 
-export default {
-    getAllPets,
-    addPet,
-    adoptPet,
-    returnPet,
-    deletePet,
-    getPetById,
-    updatePet
-};
+export default PetService;
