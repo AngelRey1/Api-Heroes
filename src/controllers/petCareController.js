@@ -83,60 +83,6 @@ router.post('/:petId/walk', authMiddleware, async (req, res) => {
 
 /**
  * @swagger
- * /api/pet-care/{petId}/play:
- *   post:
- *     tags:
- *       - Cuidado de Mascota
- *     summary: Jugar con una mascota
- *     parameters:
- *       - in: path
- *         name: petId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Mascota jugó
- */
-router.post('/:petId/play', authMiddleware, async (req, res) => {
-    try {
-        const result = await petCareService.playWithPet(req.params.petId, req.user._id);
-        res.json(result);
-    } catch (error) {
-        if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(400).json({ error: error.message });
-    }
-});
-
-/**
- * @swagger
- * /api/pet-care/{petId}/bath:
- *   post:
- *     tags:
- *       - Cuidado de Mascota
- *     summary: Bañar a una mascota
- *     parameters:
- *       - in: path
- *         name: petId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Mascota bañada
- */
-router.post('/:petId/bath', authMiddleware, async (req, res) => {
-    try {
-        const result = await petCareService.bathPet(req.params.petId, req.user._id);
-        res.json(result);
-    } catch (error) {
-        if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(400).json({ error: error.message });
-    }
-});
-
-/**
- * @swagger
  * /api/pet-care/{petId}/customize:
  *   post:
  *     tags:
@@ -271,33 +217,6 @@ router.post('/:petId/sick', authMiddleware, async (req, res) => {
 
 /**
  * @swagger
- * /api/pet-care/{petId}/status:
- *   get:
- *     tags:
- *       - Cuidado de Mascota
- *     summary: Obtener el estado de una mascota
- *     parameters:
- *       - in: path
- *         name: petId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Estado de la mascota
- */
-router.get('/:petId/status', authMiddleware, async (req, res) => {
-    try {
-        const result = await petCareService.getPetStatus(req.params.petId, req.user._id);
-        res.json(result);
-    } catch (error) {
-        if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(404).json({ error: error.message });
-    }
-});
-
-/**
- * @swagger
  * /api/pet-care/{petId}/decay:
  *   post:
  *     tags:
@@ -334,6 +253,93 @@ router.post('/:petId/decay', authMiddleware, async (req, res) => {
     } catch (error) {
         if (error.status === 403) return res.status(403).json({ error: error.message });
         res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pet-care/{petId}/play:
+ *   post:
+ *     tags:
+ *       - Cuidado de Mascota
+ *     summary: Jugar con una mascota
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: petId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Mascota jugó
+ */
+router.post('/:petId/play', authMiddleware, async (req, res) => {
+    try {
+        const result = await petCareService.playWithPet(req.params.petId, req.user._id);
+        res.json(result);
+    } catch (error) {
+        if (error.status === 403) return res.status(403).json({ error: error.message });
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pet-care/{petId}/bath:
+ *   post:
+ *     tags:
+ *       - Cuidado de Mascota
+ *     summary: Bañar a una mascota
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: petId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Mascota bañada
+ */
+router.post('/:petId/bath', authMiddleware, async (req, res) => {
+    try {
+        const result = await petCareService.bathPet(req.params.petId, req.user._id);
+        res.json(result);
+    } catch (error) {
+        if (error.status === 403) return res.status(403).json({ error: error.message });
+        res.status(400).json({ error: error.message });
+    }
+});
+
+/**
+ * @swagger
+ * /api/pet-care/{petId}/status:
+ *   get:
+ *     tags:
+ *       - Cuidado de Mascota
+ *     summary: Obtener el estado de una mascota
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: petId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Estado de la mascota
+ */
+router.get('/:petId/status', authMiddleware, async (req, res) => {
+    try {
+        const result = await petCareService.getPetStatus(req.params.petId, req.user._id);
+        res.json(result);
+    } catch (error) {
+        if (error.status === 403) return res.status(403).json({ error: error.message });
+        res.status(404).json({ error: error.message });
     }
 });
 

@@ -3,6 +3,25 @@ import HeroRepository from '../repositories/heroRepository.js';
 import { ValidationError, NotFoundError, AuthorizationError } from '../utils/errors.js';
 import { validateObjectId, validateRequiredFields, validateStringLength } from '../utils/validations.js';
 
+// Función auxiliar para simplificar la mascota (solo datos básicos y customización)
+function toBasicPet(pet) {
+    if (!pet) return null;
+    return {
+        _id: pet._id,
+        id_corto: pet._id ? pet._id.toString().substring(0, 8) : undefined,
+        name: pet.name,
+        type: pet.type,
+        superPower: pet.superPower,
+        status: pet.status,
+        adoptedBy: pet.adoptedBy && typeof pet.adoptedBy === 'object' ? {
+            _id: pet.adoptedBy._id || pet.adoptedBy,
+            name: pet.adoptedBy.name,
+            alias: pet.adoptedBy.alias
+        } : pet.adoptedBy,
+        customization: pet.customization || { free: [], paid: [] }
+    };
+}
+
 class PetService {
     constructor() {
         this.petRepository = new PetRepository();
@@ -38,11 +57,15 @@ class PetService {
     async getAllPets(userId) {
         try {
             // Si no se pasa userId, devuelve todas las mascotas
+            let pets;
             if (!userId) {
-                return await this.petRepository.getPets();
+                pets = await this.petRepository.getPets();
+            } else {
+                validateObjectId(userId, 'ID de usuario');
+                pets = await this.petRepository.getPets({ owner: userId });
             }
-            validateObjectId(userId, 'ID de usuario');
-            return await this.petRepository.getPets({ owner: userId });
+            // Solo datos básicos y customización
+            return pets.map(toBasicPet);
         } catch (error) {
             if (error instanceof ValidationError) {
                 throw error;
@@ -200,6 +223,26 @@ class PetService {
             throw new Error(`Error al devolver mascota: ${error.message}`);
         }
     }
+
+    // Mascotas adoptadas por héroes del usuario autenticado
+    async getAdoptedPetsByUser(userId) {
+        try {
+            validateObjectId(userId, 'ID de usuario');
+            // Buscar héroes del usuario
+            const heroes = await this.heroRepository.getHeroes({ owner: userId });
+            const heroIds = heroes.map(h => h._id.toString());
+            if (heroIds.length === 0) return [];
+            // Buscar mascotas adoptadas por esos héroes
+            const pets = await this.petRepository.getPets({ adoptedBy: { $in: heroIds } });
+            return pets.map(toBasicPet);
+        } catch (error) {
+            if (error instanceof ValidationError) {
+                throw error;
+            }
+            throw new Error(`Error al obtener mascotas adoptadas: ${error.message}`);
+        }
+    }
 }
 
+export { toBasicPet };
 export default PetService;

@@ -26,8 +26,11 @@ const petSchema = new mongoose.Schema({
         type: { type: String, description: 'Tipo de customización (solo para customize)' }
     }],
     customization: {
-        free: [{ type: String, description: 'Objetos de customización gratuitos' }],
-        paid: [{ type: String, description: 'Objetos de customización de pago' }]
+        type: {
+            free: [{ type: String, description: 'Objetos de customización gratuitos' }],
+            paid: [{ type: String, description: 'Objetos de customización de pago' }]
+        },
+        default: { free: [], paid: [] }
     },
     diseases: [{ type: String, description: 'Enfermedades activas' }],
     lastCare: { type: Date, default: null, description: 'Fecha del último cuidado' },

@@ -1,5 +1,6 @@
 import HeroRepository from '../repositories/heroRepository.js';
 import PetRepository from '../repositories/petRepository.js';
+import { toBasicPet } from './petService.js';
 
 class HeroService {
     constructor() {
@@ -8,7 +9,12 @@ class HeroService {
     }
 
     async getAllHeroes(userId) {
-        return await this.heroRepository.getHeroes({ owner: userId });
+        const heroes = await this.heroRepository.getHeroes({ owner: userId });
+        // Transformar el array pets de cada héroe para que solo incluya los datos básicos
+        return heroes.map(hero => ({
+            ...hero.toObject(),
+            pets: (hero.pets || []).map(pet => toBasicPet(pet))
+        }));
     }
 
     async addHero(hero) {
@@ -52,12 +58,7 @@ class HeroService {
     async getHeroPets(id, userId) {
         const hero = await this.heroRepository.getHeroById(id);
         if (!hero || hero.owner.toString() !== userId.toString()) throw { status: 403, message: 'No tienes permiso para ver las mascotas de este héroe.' };
-        return (hero.pets || []).map(pet => ({
-            id: pet._id,
-            name: pet.name,
-            type: pet.type,
-            superPower: pet.superPower
-        }));
+        return (hero.pets || []).map(pet => toBasicPet(pet));
     }
 }
 

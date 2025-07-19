@@ -3,6 +3,7 @@ import { check, validationResult } from "express-validator";
 import authMiddleware from '../middleware/authMiddleware.js';
 import PetService from '../services/petService.js';
 import { ValidationError, AuthorizationError, NotFoundError } from '../utils/errors.js';
+import { toBasicPet } from '../services/petService.js';
 
 const router = express.Router();
 const petService = new PetService();
@@ -322,46 +323,6 @@ router.get('/:petId/adoptedBy', authMiddleware, async (req, res) => {
         const status = mapErrorToStatus(error);
         res.status(status).json({ error: error.message });
     }
-});
-
-/**
- * @swagger
- * /api/pets/adopted:
- *   get:
- *     tags:
- *       - Mascotas
- *     summary: Lista todas las mascotas adoptadas
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Lista de mascotas adoptadas
- */
-router.get('/adopted', authMiddleware, async (req, res) => {
-    try {
-        // Solo mascotas adoptadas por el usuario autenticado
-        const pets = await petService.getAllPets(req.user._id);
-        const adopted = pets.filter(pet => pet.adoptedBy);
-        res.json(adopted);
-    } catch (error) {
-        const status = mapErrorToStatus(error);
-        res.status(status).json({ error: error.message });
-    }
-});
-
-/**
- * @swagger
- * /api/pets/test:
- *   get:
- *     tags:
- *       - Mascotas
- *     summary: Endpoint de prueba para Swagger
- *     responses:
- *       200:
- *         description: Funciona
- */
-router.get('/test', (req, res) => {
-  res.json({ ok: true });
 });
 
 /**

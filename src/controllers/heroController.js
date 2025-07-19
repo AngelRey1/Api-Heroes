@@ -4,6 +4,7 @@ import HeroService from "../services/heroService.js";
 import Hero from "../models/heroModel.js";
 import petRepository from "../repositories/petRepository.js";
 import authMiddleware from '../middleware/authMiddleware.js';
+import { toBasicPet } from '../services/petService.js';
 
 const router = express.Router();
 const heroService = new HeroService();
