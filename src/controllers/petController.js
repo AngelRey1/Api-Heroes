@@ -288,42 +288,6 @@ router.post('/:petId/return', authMiddleware, async (req, res) => {
         res.status(status).json({ error: error.message });
     }
 });
-/**
- * @swagger
- * /api/pets/{petId}/adoptedBy:
- *   get:
- *     tags:
- *       - Mascotas
- *     summary: Ver quién adoptó una mascota
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: petId
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Información del héroe adoptante
- */
-router.get('/:petId/adoptedBy', authMiddleware, async (req, res) => {
-    try {
-        const pet = await petService.getPetById(req.params.petId, req.user._id);
-        if (!pet.adoptedBy) {
-            return res.status(404).json({ error: 'La mascota no ha sido adoptada' });
-        }
-        // El campo adoptedBy ya viene populado desde getPetById
-        const hero = pet.adoptedBy;
-        if (!hero) {
-            return res.status(404).json({ error: 'Héroe adoptante no encontrado' });
-        }
-        res.json({ id: hero._id, name: hero.name, alias: hero.alias });
-    } catch (error) {
-        const status = mapErrorToStatus(error);
-        res.status(status).json({ error: error.message });
-    }
-});
 
 /**
  * @swagger
