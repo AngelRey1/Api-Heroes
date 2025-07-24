@@ -1,10 +1,10 @@
-import express from "express";
-import { check, validationResult } from 'express-validator';
-import HeroService from "../services/heroService.js";
-import Hero from "../models/heroModel.js";
-import petRepository from "../repositories/petRepository.js";
-import authMiddleware from '../middleware/authMiddleware.js';
-import { toBasicPet } from '../services/petService.js';
+const express = require('express');
+const { check, validationResult } = require('express-validator');
+const HeroService = require('../services/heroService.js');
+const Hero = require('../models/heroModel.js');
+const petRepository = require('../repositories/petRepository.js');
+const authMiddleware = require('../middleware/authMiddleware.js');
+const { toBasicPet } = require('../services/petService.js');
 
 const router = express.Router();
 const heroService = new HeroService();
@@ -350,4 +350,4 @@ router.delete('/heroes/:heroId', authMiddleware, async (req, res) => {
  *         pets: ["64a1b2c3d4e5f6a7b8c9d0e2", "64a1b2c3d4e5f6a7b8c9d0e3"]
  */
 
-export default router;
+module.exports = router;
