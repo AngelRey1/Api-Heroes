@@ -8,6 +8,16 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import authController from './src/controllers/authController.js';
 import cors from 'cors';
+// Nuevas rutas
+import itemRoutes from './src/routes/itemRoutes.js';
+import achievementRoutes from './src/routes/achievementRoutes.js';
+import minigameRoutes from './src/routes/minigameRoutes.js';
+import shopRoutes from './src/routes/shopRoutes.js';
+import inventoryRoutes from './src/routes/inventoryRoutes.js';
+import userRoutes from './src/routes/userRoutes.js';
+import notificationRoutes from './src/routes/notificationRoutes.js';
+import eventRoutes from './src/routes/eventRoutes.js';
+import missionRoutes from './src/routes/missionRoutes.js';
 
 dotenv.config();
 
@@ -34,7 +44,10 @@ const swaggerDefinition = {
     { name: 'Autenticación', description: 'Registro e inicio de sesión de jugadores' },
     { name: 'Superhéroes', description: 'Operaciones sobre superhéroes' },
     { name: 'Mascotas', description: 'Operaciones sobre mascotas' },
-    { name: 'Cuidado de Mascota', description: 'Operaciones de cuidado tipo Pou' }
+    { name: 'Cuidado de Mascota', description: 'Operaciones de cuidado tipo Pou' },
+    { name: 'Items', description: 'Objetos, accesorios, comida, etc.' },
+    { name: 'Logros', description: 'Logros y recompensas' },
+    { name: 'Minijuegos', description: 'Minijuegos y records' }
   ],
   components: {
     securitySchemes: {
@@ -72,6 +85,16 @@ app.use('/api', heroController);
 app.use('/api/pets', petController);
 app.use('/api/pet-care', petCareController);
 app.use('/api/auth', authController);
+// Nuevas rutas
+app.use('/api/items', itemRoutes);
+app.use('/api/achievements', achievementRoutes);
+app.use('/api/minigames', minigameRoutes);
+app.use('/api/shop', shopRoutes);
+app.use('/api/inventory', inventoryRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/missions', missionRoutes);
 
 const PORT = 3001;
 app.listen(PORT, () => {

@@ -4,6 +4,8 @@ import authMiddleware from '../middleware/authMiddleware.js';
 import PetService from '../services/petService.js';
 import { ValidationError, AuthorizationError, NotFoundError } from '../utils/errors.js';
 import { toBasicPet } from '../services/petService.js';
+import Pet from '../models/petModel.js';
+import User from '../models/userModel.js';
 
 const router = express.Router();
 const petService = new PetService();
