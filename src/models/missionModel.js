@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const missionSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -15,4 +15,4 @@ const missionSchema = new mongoose.Schema({
   secret: { type: Boolean, default: false }
 });
 
-module.exports = mongoose.model('Mission', missionSchema); 
+export default mongoose.model('Mission', missionSchema); 

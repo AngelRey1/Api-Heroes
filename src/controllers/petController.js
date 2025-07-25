@@ -1,11 +1,10 @@
-const express = require("express");
-const { check, validationResult } = require("express-validator");
-const authMiddleware = require('../middleware/authMiddleware.js');
-const PetService = require('../services/petService.js');
-const { ValidationError, AuthorizationError, NotFoundError } = require('../utils/errors.js');
-const { toBasicPet } from '../services/petService.js';
-const Pet = require('../models/petModel.js');
-const User = require('../models/userModel.js');
+import express from "express";
+import { check, validationResult } from "express-validator";
+import authMiddleware from '../middleware/authMiddleware.js';
+import PetService from '../services/petService.js';
+import { ValidationError, AuthorizationError, NotFoundError } from '../utils/errors.js';
+import Pet from '../models/petModel.js';
+import User from '../models/userModel.js';
 
 const router = express.Router();
 const petService = new PetService();
@@ -371,4 +370,4 @@ function mapErrorToStatus(error) {
     return 500;
 }
 
-module.exports = router; 
+export default router; 

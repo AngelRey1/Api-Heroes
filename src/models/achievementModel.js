@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const achievementSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -7,4 +7,4 @@ const achievementSchema = new mongoose.Schema({
   reward: { type: Object, default: {} },
 });
 
-module.exports = mongoose.model('Achievement', achievementSchema); 
+export default mongoose.model('Achievement', achievementSchema); 

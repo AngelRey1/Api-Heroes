@@ -1,6 +1,6 @@
-const Notification = require('../models/notificationModel');
+import Notification from '../models/notificationModel.js';
 
-exports.getNotifications = async (req, res) => {
+export const getNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find({ $or: [ { userId: req.user._id }, { userId: null } ] }).sort({ createdAt: -1 });
     res.json(notifications);
@@ -9,7 +9,7 @@ exports.getNotifications = async (req, res) => {
   }
 };
 
-exports.createNotification = async (req, res) => {
+export const createNotification = async (req, res) => {
   try {
     const notif = new Notification(req.body);
     await notif.save();
@@ -19,7 +19,7 @@ exports.createNotification = async (req, res) => {
   }
 };
 
-exports.markAsRead = async (req, res) => {
+export const markAsRead = async (req, res) => {
   try {
     const notif = await Notification.findById(req.params.id);
     if (!notif) return res.status(404).json({ error: 'Notification not found' });
@@ -31,7 +31,7 @@ exports.markAsRead = async (req, res) => {
   }
 };
 
-exports.deleteNotification = async (req, res) => {
+export const deleteNotification = async (req, res) => {
   try {
     await Notification.findByIdAndDelete(req.params.id);
     res.json({ message: 'Notification deleted' });

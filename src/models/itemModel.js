@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const itemSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -9,4 +9,4 @@ const itemSchema = new mongoose.Schema({
   target: { type: String, enum: ['pet', 'hero', 'both'], default: 'pet' },
 });
 
-module.exports = mongoose.model('Item', itemSchema); 
+export default mongoose.model('Item', itemSchema); 

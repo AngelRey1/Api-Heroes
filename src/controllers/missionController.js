@@ -1,8 +1,8 @@
-const Mission = require('../models/missionModel');
-const User = require('../models/userModel');
-const Notification = require('../models/notificationModel');
+import Mission from '../models/missionModel.js';
+import User from '../models/userModel.js';
+import Notification from '../models/notificationModel.js';
 
-exports.getMissions = async (req, res) => {
+export const getMissions = async (req, res) => {
   try {
     const missions = await Mission.find({ userId: req.user._id });
     res.json(missions);
@@ -11,7 +11,7 @@ exports.getMissions = async (req, res) => {
   }
 };
 
-exports.updateMissionProgress = async (req, res) => {
+export const updateMissionProgress = async (req, res) => {
   try {
     const mission = await Mission.findById(req.params.id);
     if (!mission || mission.userId.toString() !== req.user._id.toString()) return res.status(404).json({ error: 'Mission not found' });
@@ -25,7 +25,7 @@ exports.updateMissionProgress = async (req, res) => {
   }
 };
 
-exports.claimMission = async (req, res) => {
+export const claimMission = async (req, res) => {
   try {
     const mission = await Mission.findById(req.params.id);
     if (!mission || mission.userId.toString() !== req.user._id.toString()) return res.status(404).json({ error: 'Mission not found' });
@@ -50,7 +50,7 @@ exports.claimMission = async (req, res) => {
   }
 };
 
-exports.resetMissions = async (req, res) => {
+export const resetMissions = async (req, res) => {
   try {
     // Resetear misiones diarias/semanales (puedes mejorar la lógica según el tipo)
     await Mission.updateMany({ userId: req.user._id, type: 'daily' }, { progress: 0, completed: false, claimed: false });

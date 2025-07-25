@@ -1,6 +1,6 @@
-const Achievement = require('../models/achievementModel.js');
-const User = require('../models/userModel.js');
-const Item = require('../models/itemModel.js');
+import Achievement from '../models/achievementModel.js';
+import User from '../models/userModel.js';
+import Item from '../models/itemModel.js';
 
 export const getAllAchievements = async (req, res) => {
   try {

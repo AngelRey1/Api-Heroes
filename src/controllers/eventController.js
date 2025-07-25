@@ -1,7 +1,7 @@
-const Notification = require('../models/notificationModel');
-const User = require('../models/userModel');
+import Notification from '../models/notificationModel.js';
+import User from '../models/userModel.js';
 
-exports.getActiveEvents = async (req, res) => {
+export const getActiveEvents = async (req, res) => {
   try {
     const now = new Date();
     const events = await Notification.find({ type: 'event', $or: [ { eventEnd: null }, { eventEnd: { $gt: now } } ] }).sort({ eventStart: 1 });
@@ -11,7 +11,7 @@ exports.getActiveEvents = async (req, res) => {
   }
 };
 
-exports.claimDailyReward = async (req, res) => {
+export const claimDailyReward = async (req, res) => {
   try {
     const user = await User.findById(req.user._id);
     const today = new Date();

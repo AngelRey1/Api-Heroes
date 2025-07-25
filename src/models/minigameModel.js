@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const minigameSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -11,4 +11,4 @@ const minigameSchema = new mongoose.Schema({
   ]
 });
 
-module.exports = mongoose.model('Minigame', minigameSchema); 
+export default mongoose.model('Minigame', minigameSchema); 

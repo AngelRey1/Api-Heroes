@@ -1,4 +1,4 @@
-const Minigame = require('../models/minigameModel.js');
+import Minigame from '../models/minigameModel.js';
 
 export const getAllMinigames = async (req, res) => {
   try {
