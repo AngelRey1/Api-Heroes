@@ -441,6 +441,13 @@ function App() {
     // O actualizar el estado de la mascota principal
   };
 
+  const handleUserUpdate = (updatedUser) => {
+    setUser(updatedUser);
+    if (updatedUser.background) {
+      setUserBackground(updatedUser.background);
+    }
+  };
+
   if (!token) {
     return (
       <div className="App">
