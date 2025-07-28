@@ -1,170 +1,138 @@
-import React, { useState, useEffect } from 'react';
-import { getAllMinigames, getMinigameHighScores, getUserMinigameStats } from '../api';
-import MemoryGame from '../components/games/MemoryGame';
-import SpeedGame from '../components/games/SpeedGame';
-import PuzzleGame from '../components/games/PuzzleGame';
-import ReactionGame from '../components/games/ReactionGame';
+import React, { useState } from 'react';
 import MathGame from '../components/games/MathGame';
 import './Minigames.css';
 
-export default function Minigames({ token }) {
-  const [minigames, setMinigames] = useState([]);
-  const [userStats, setUserStats] = useState({});
-  const [selectedGame, setSelectedGame] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+const Minigames = ({ token, onCoinsUpdate }) => {
+  const [showMathGame, setShowMathGame] = useState(false);
+  const [showMemoryGame, setShowMemoryGame] = useState(false);
+  const [showSpeedGame, setShowSpeedGame] = useState(false);
+  const [showReactionGame, setShowReactionGame] = useState(false);
+  const [showPuzzleGame, setShowPuzzleGame] = useState(false);
 
-  useEffect(() => {
-    fetchMinigames();
-    fetchUserStats();
-  }, [token]);
-
-  const fetchMinigames = async () => {
-    try {
-      const data = await getAllMinigames();
-      setMinigames(data);
-    } catch (err) {
-      setError('Error al cargar minijuegos');
-    } finally {
-      setLoading(false);
+  const handleGameEnd = (coinsEarned) => {
+    if (onCoinsUpdate) {
+      onCoinsUpdate(coinsEarned);
     }
+    setShowMathGame(false);
   };
 
-  const fetchUserStats = async () => {
-    if (!token) return;
-    try {
-      const stats = await getUserMinigameStats(token);
-      setUserStats(stats);
-    } catch (err) {
-      console.error('Error al cargar estadísticas:', err);
+  const games = [
+    {
+      id: 'math',
+      name: 'Matemáticas',
+      description: 'Resuelve problemas matemáticos para ganar monedas',
+      icon: '🧮',
+      color: '#667eea',
+      onClick: () => setShowMathGame(true)
+    },
+    {
+      id: 'memory',
+      name: 'Memoria',
+      description: 'Encuentra las parejas de cartas',
+      icon: '🧠',
+      color: '#4ecdc4',
+      onClick: () => setShowMemoryGame(true)
+    },
+    {
+      id: 'speed',
+      name: 'Velocidad',
+      description: 'Responde lo más rápido posible',
+      icon: '⚡',
+      color: '#ff6b6b',
+      onClick: () => setShowSpeedGame(true)
+    },
+    {
+      id: 'reaction',
+      name: 'Reacción',
+      description: 'Mide tus reflejos',
+      icon: '🎯',
+      color: '#f9ca24',
+      onClick: () => setShowReactionGame(true)
+    },
+    {
+      id: 'puzzle',
+      name: 'Puzzle',
+      description: 'Ordena las piezas correctamente',
+      icon: '🧩',
+      color: '#a55eea',
+      onClick: () => setShowPuzzleGame(true)
     }
-  };
-
-  const handleGameSelect = (game) => {
-    setSelectedGame(game);
-  };
-
-  const handleGameClose = () => {
-    setSelectedGame(null);
-    fetchUserStats(); // Actualizar estadísticas después del juego
-  };
-
-  const renderGameComponent = () => {
-    if (!selectedGame) return null;
-
-    const gameProps = {
-      game: selectedGame,
-      token,
-      onClose: handleGameClose,
-      onScoreUpdate: fetchUserStats
-    };
-
-    switch (selectedGame.type) {
-      case 'memory':
-        return <MemoryGame {...gameProps} />;
-      case 'speed':
-        return <SpeedGame {...gameProps} />;
-      case 'puzzle':
-        return <PuzzleGame {...gameProps} />;
-      case 'reaction':
-        return <ReactionGame {...gameProps} />;
-      case 'math':
-        return <MathGame {...gameProps} />;
-      default:
-        return <div>Juego no disponible</div>;
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="minigames-container">
-        <div className="loading">Cargando minijuegos...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="minigames-container">
-        <div className="error">{error}</div>
-      </div>
-    );
-  }
+  ];
 
   return (
     <div className="minigames-container">
       <div className="minigames-header">
         <h1>🎮 Minijuegos</h1>
-        <div className="user-stats">
-          <div className="stat-item">
-            <span className="stat-label">Juegos Jugados:</span>
-            <span className="stat-value">{userStats.gamesPlayed || 0}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Puntuación Total:</span>
-            <span className="stat-value">{userStats.totalScore || 0}</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-label">Monedas Ganadas:</span>
-            <span className="stat-value">🪙 {userStats.coinsEarned || 0}</span>
-          </div>
-        </div>
+        <p>¡Juega y gana monedas para tu mascota!</p>
       </div>
 
-      <div className="minigames-grid">
-        {minigames.map(game => (
-          <div key={game._id} className="minigame-card">
-            <div className="minigame-header">
-              <span className="minigame-icon">{game.icon}</span>
-              <h3>{game.name}</h3>
-              <span className={`difficulty-badge ${game.difficulty}`}>
-                {game.difficulty}
-              </span>
+      <div className="games-grid">
+        {games.map((game) => (
+          <div
+            key={game.id}
+            className="game-card"
+            style={{ '--game-color': game.color }}
+            onClick={game.onClick}
+          >
+            <div className="game-icon">{game.icon}</div>
+            <h3>{game.name}</h3>
+            <p>{game.description}</p>
+            <div className="game-reward">
+              <span>💰 +10-50 monedas</span>
             </div>
-            
-            <div className="minigame-info">
-              <p>{game.description}</p>
-              <div className="reward-info">
-                <span>Recompensa: 🪙 {game.baseReward}-{game.maxReward}</span>
-              </div>
-              
-              {userStats.minigameStats && userStats.minigameStats[game._id] && (
-                <div className="user-score">
-                  <span>Mejor puntuación: {userStats.minigameStats[game._id].bestScore || 0}</span>
-                </div>
-              )}
-            </div>
-
-            <div className="game-instructions">
-              <p><strong>Instrucciones:</strong></p>
-              <p>{game.instructions}</p>
-            </div>
-
-            <button 
-              className="play-button"
-              onClick={() => handleGameSelect(game)}
-            >
-              🎮 Jugar
-            </button>
           </div>
         ))}
       </div>
 
-      {selectedGame && (
-        <div className="game-modal-overlay">
-          <div className="game-modal">
-            <div className="game-modal-header">
-              <h2>{selectedGame.name}</h2>
-              <button className="close-button" onClick={handleGameClose}>
-                ✕
-              </button>
-            </div>
-            <div className="game-modal-content">
-              {renderGameComponent()}
-            </div>
+      {/* Modales de juegos */}
+      {showMathGame && (
+        <MathGame
+          onGameEnd={handleGameEnd}
+          onClose={() => setShowMathGame(false)}
+        />
+      )}
+
+      {showMemoryGame && (
+        <div className="game-modal">
+          <div className="modal-content">
+            <h2>🧠 Memoria</h2>
+            <p>¡Próximamente!</p>
+            <button onClick={() => setShowMemoryGame(false)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+
+      {showSpeedGame && (
+        <div className="game-modal">
+          <div className="modal-content">
+            <h2>⚡ Velocidad</h2>
+            <p>¡Próximamente!</p>
+            <button onClick={() => setShowSpeedGame(false)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+
+      {showReactionGame && (
+        <div className="game-modal">
+          <div className="modal-content">
+            <h2>🎯 Reacción</h2>
+            <p>¡Próximamente!</p>
+            <button onClick={() => setShowReactionGame(false)}>Cerrar</button>
+          </div>
+        </div>
+      )}
+
+      {showPuzzleGame && (
+        <div className="game-modal">
+          <div className="modal-content">
+            <h2>🧩 Puzzle</h2>
+            <p>¡Próximamente!</p>
+            <button onClick={() => setShowPuzzleGame(false)}>Cerrar</button>
           </div>
         </div>
       )}
     </div>
   );
-} 
+};
+
+export default Minigames; 

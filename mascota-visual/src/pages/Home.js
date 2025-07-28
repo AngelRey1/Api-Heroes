@@ -97,7 +97,16 @@ export default function Home({ hero, mascota, estado, alimentar, limpiar, jugar,
                   <img src="/assets/sombrero.png" alt="Sombrero" style={{ position: 'absolute', top: 0, left: 20, width: 60, pointerEvents: 'none' }} />
                 )}
               </div>
-              {alerta && <div style={{ color: 'red', fontWeight: 'bold', margin: '8px 0' }}>{alerta}</div>}
+              {/* Alertas de estado de la mascota */}
+              {mascota && mascota.status === 'dead' && (
+                <div style={{ color: 'red', fontWeight: 'bold', margin: '8px 0' }}>¡Tu mascota ha muerto!</div>
+              )}
+              {mascota && mascota.health < 30 && mascota.status !== 'dead' && (
+                <div style={{ color: 'orange', fontWeight: 'bold', margin: '8px 0' }}>¡Tu mascota está enferma!</div>
+              )}
+              {mascota && mascota.happiness < 30 && (
+                <div style={{ color: 'blue', fontWeight: 'bold', margin: '8px 0' }}>¡Tu mascota está triste!</div>
+              )}
               <div className="mascota-stats">
                 <Barra label="Salud" value={mascota.health ?? 100} color="#e74c3c" />
                 <Barra label="Felicidad" value={mascota.happiness ?? 100} color="#f1c40f" />
