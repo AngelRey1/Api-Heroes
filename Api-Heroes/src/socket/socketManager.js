@@ -22,7 +22,11 @@ function initializeSocket(server) {
         return next(new Error('Token no proporcionado'));
       }
 
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
+const decoded = jwt.verify(token, JWT_SECRET);
       socket.userId = decoded.userId;
       next();
     } catch (error) {

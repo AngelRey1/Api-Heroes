@@ -20,4 +20,14 @@ router.post('/:id/face-villain', authMiddleware, faceVillain);
 router.get('/:id/pets', authMiddleware, getHeroPets);
 router.put('/:id/customize', authMiddleware, customizeHero);
 
+// Rutas públicas (sin autenticación)
+router.get('/ranking', async (req, res) => {
+    try {
+        const heroes = await Hero.find().populate('owner', 'username').sort({ level: -1 }).limit(10);
+        res.json(heroes);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router; 

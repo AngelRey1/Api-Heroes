@@ -450,42 +450,52 @@ function App() {
 
   if (!token) {
     return (
-      <div className="App">
-        <h1>{showRegister ? 'Registro' : 'Login'}</h1>
-        <form onSubmit={showRegister ? handleRegister : handleLogin}>
-          <input
-            type="text"
-            placeholder="Usuario"
-            value={username}
-            onChange={e => setUsername(e.target.value)}
-            required
-          />
-          {showRegister && (
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-            />
-          )}
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-          />
-          <button type="submit" disabled={loading}>
-            {showRegister ? 'Registrarse' : 'Entrar'}
+      <div className="login-container">
+        <div className="login-card">
+          <h1>{showRegister ? 'Registro' : 'Login'}</h1>
+          <form className="login-form" onSubmit={showRegister ? handleRegister : handleLogin}>
+            <div className="form-group">
+              <input
+                type="text"
+                placeholder="Usuario"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                required
+              />
+            </div>
+            {showRegister && (
+              <div className="form-group">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+            )}
+            <div className="form-group">
+              <input
+                type="password"
+                placeholder="Contraseña"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className="login-btn" disabled={loading}>
+              {loading ? <span className="loading"></span> : (showRegister ? 'Registrarse' : 'Entrar')}
+            </button>
+          </form>
+          <button 
+            className="toggle-btn"
+            onClick={() => { setShowRegister(!showRegister); setError(''); setSuccess(''); }}
+          >
+            {showRegister ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
           </button>
-        </form>
-        <button onClick={() => { setShowRegister(!showRegister); setError(''); setSuccess(''); }}>
-          {showRegister ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
-        </button>
-        {loading && <p>Cargando...</p>}
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        {success && <p style={{ color: 'green' }}>{success}</p>}
+          {error && <div className="message error">{error}</div>}
+          {success && <div className="message success">{success}</div>}
+        </div>
       </div>
     );
   }
