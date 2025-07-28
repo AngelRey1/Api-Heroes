@@ -15,7 +15,9 @@ export default async function authMiddleware(req, res, next) {
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    console.log('Token decodificado:', decoded);
+    const user = await User.findById(decoded.userId);
+    console.log('Usuario encontrado:', user ? user.username : 'null');
     if (!user) {
       return res.status(401).json({ error: 'Usuario no encontrado para el token proporcionado.' });
     }

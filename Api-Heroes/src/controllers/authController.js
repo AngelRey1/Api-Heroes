@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js';
 import Hero from '../models/heroModel.js';
+import Pet from '../models/petModel.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
@@ -20,16 +21,11 @@ export const register = async (req, res) => {
     }
     const hashed = await bcrypt.hash(password, 10);
     const user = await User.create({ username, email, password: hashed });
-    // Crear héroe automáticamente
-    const hero = await Hero.create({
-      name: username,
-      alias: username,
-      owner: user._id,
-      city: '',
-      team: '',
-      pets: []
+    
+    res.status(201).json({ 
+      message: 'Usuario registrado correctamente. ¡Crea tu héroe y adopta tu primera mascota!', 
+      user
     });
-    res.status(201).json({ message: 'Usuario y héroe registrados correctamente', user, hero });
   } catch (err) {
     res.status(400).json({ error: err.message });
   }

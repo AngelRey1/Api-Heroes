@@ -44,8 +44,18 @@ const server = http.createServer(app);
 // Inicializar Socket.IO
 const io = socketManager.initializeSocket(server);
 
-// Habilitar CORS para todos los orígenes
-app.use(cors());
+// Configuración de CORS más específica
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://tu-app.onrender.com',
+    'https://api-heroes-gh4i.onrender.com'
+  ],
+  credentials: true,
+  optionsSuccessStatus: 200
+};
+app.use(cors(corsOptions));
 
 // Configuración Swagger
 const swaggerDefinition = {

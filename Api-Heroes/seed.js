@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
+import bcrypt from 'bcryptjs';
 import User from './src/models/userModel.js';
 import Item from './src/models/itemModel.js';
 import Achievement from './src/models/achievementModel.js';
@@ -46,11 +47,14 @@ async function seed() {
     { userId: null, type: 'weekly', title: 'Gana 5 minijuegos', description: 'Gana 5 veces en minijuegos', progress: 0, goal: 5, completed: false, claimed: false, reward: { coins: 50 } }
   ]);
 
+  // Hashear la contraseña correctamente
+  const hashedPassword = await bcrypt.hash('demo123', 10);
+
   // Crear usuario de prueba
   const user = await User.create({
     username: 'demo',
     email: 'demo@email.com',
-    password: 'hashedpassword', // Recuerda cambiar por un hash real en producción
+    password: hashedPassword,
     coins: 200,
     inventory: [
       { itemId: items[0]._id, quantity: 5 },
@@ -91,6 +95,9 @@ async function seed() {
   await hero.save();
 
   console.log('Datos de ejemplo insertados correctamente.');
+  console.log('Usuario demo creado con:');
+  console.log('- Username: demo');
+  console.log('- Password: demo123');
   process.exit();
 }
 

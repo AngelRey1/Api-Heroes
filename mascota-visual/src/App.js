@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
 import { login, getMascotas, alimentarMascota, register, getItems, unequipAccessory, sleepPet as sleepPetApi, bathPet as bathPetApi, playWithPet as playWithPetApi, getUserProfile } from './api';
+import WelcomeGuide from './components/WelcomeGuide';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -83,9 +84,11 @@ function App() {
   const [activePetId, setActivePetId] = useState(null);
   const [items, setItems] = useState([]); // Guardar todos los items para visualización
   const [userBackground, setUserBackground] = useState('');
+  const [user, setUser] = useState(null);
   const [achievementNotification, setAchievementNotification] = useState(null);
   const [missionNotification, setMissionNotification] = useState(null);
   const [eventNotification, setEventNotification] = useState(null);
+  const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
 
   // Cargar items al iniciar
   useEffect(() => {
@@ -100,7 +103,10 @@ function App() {
 
   useEffect(() => {
     if (!token) return;
-    getUserProfile(token).then(u => setUserBackground(u.background || ''));
+    getUserProfile(token).then(u => {
+      setUserBackground(u.background || '');
+      setUser(u);
+    });
   }, [token]);
 
   const handleLogin = async (e) => {
@@ -109,20 +115,27 @@ function App() {
     try {
       const data = await login(username, password);
       setToken(data.token);
+      // Obtener héroe real
+      const userProfile = await getUserProfile(data.token);
+      setUser(userProfile);
+      if (userProfile.heroes && userProfile.heroes.length > 0) {
+        setHero(userProfile.heroes[0]);
+      } else {
+        setSuccess('¡Bienvenido! Ve a "Personalización de Héroe" para crear tu primer héroe.');
+        setShowWelcomeGuide(true);
+      }
+      
       // Obtener mascotas del usuario
       const mascotas = await getMascotas(data.token);
       if (mascotas.length > 0) {
         setMascota(mascotas[0]);
         setEstado(mascotas[0].status || 'normal');
       } else {
-        setError('No tienes mascotas registradas.');
+        // Si no tiene mascotas, mostrar mensaje informativo
+        setSuccess(prev => prev ? prev + ' Luego ve a "Mascotas" para adoptar tu primera mascota.' : '¡Bienvenido! Ve a "Mascotas" para adoptar tu primera mascota.');
+        setShowWelcomeGuide(true);
       }
       setCoins(data.user?.coins || 0);
-      // Obtener héroe real
-      const userProfile = await getUserProfile(data.token);
-      if (userProfile.heroes && userProfile.heroes.length > 0) {
-        setHero(userProfile.heroes[0]);
-      }
     } catch (err) {
       setError('Login fallido o error al obtener mascota.');
     }
@@ -139,17 +152,24 @@ function App() {
       // Login automático tras registro
       const loginData = await login(username, password);
       setToken(loginData.token);
+      // Obtener héroe real
+      const userProfile = await getUserProfile(loginData.token);
+      setUser(userProfile);
+      if (userProfile.heroes && userProfile.heroes.length > 0) {
+        setHero(userProfile.heroes[0]);
+      } else {
+        setSuccess('¡Bienvenido! Ve a "Personalización de Héroe" para crear tu primer héroe.');
+        setShowWelcomeGuide(true);
+      }
+      
       const mascotas = await getMascotas(loginData.token);
       if (mascotas.length > 0) {
         setMascota(mascotas[0]);
         setEstado(mascotas[0].status || 'normal');
       } else {
-        setError('No tienes mascotas registradas.');
-      }
-      // Obtener héroe real
-      const userProfile = await getUserProfile(loginData.token);
-      if (userProfile.heroes && userProfile.heroes.length > 0) {
-        setHero(userProfile.heroes[0]);
+        // Si no tiene mascotas, mostrar mensaje informativo
+        setSuccess(prev => prev ? prev + ' Luego ve a "Mascotas" para adoptar tu primera mascota.' : '¡Bienvenido! Ve a "Mascotas" para adoptar tu primera mascota.');
+        setShowWelcomeGuide(true);
       }
     } catch (err) {
       setError('Error al registrar. ¿Usuario o email ya existen?');
@@ -160,7 +180,7 @@ function App() {
 
   const alimentar = async () => {
     if (!mascota || !mascota._id) {
-      setError('No hay mascota válida para alimentar.');
+      setError('No tienes mascotas. Ve a la sección "Mascotas" para adoptar tu primera mascota.');
       return;
     }
     setLoading(true);
@@ -257,7 +277,7 @@ function App() {
 
   const dormir = async () => {
     if (!mascota || !mascota._id) {
-      setError('No hay mascota válida para dormir.');
+      setError('No tienes mascotas. Ve a la sección "Mascotas" para adoptar tu primera mascota.');
       return;
     }
     setLoading(true);
@@ -310,7 +330,7 @@ function App() {
 
   const limpiar = async () => {
     if (!mascota || !mascota._id) {
-      setError('No hay mascota válida para limpiar.');
+      setError('No tienes mascotas. Ve a la sección "Mascotas" para adoptar tu primera mascota.');
       return;
     }
     setLoading(true);
@@ -363,7 +383,7 @@ function App() {
 
   const jugar = async () => {
     if (!mascota || !mascota._id) {
-      setError('No hay mascota válida para jugar.');
+      setError('No tienes mascotas. Ve a la sección "Mascotas" para adoptar tu primera mascota.');
       return;
     }
     setLoading(true);
@@ -558,6 +578,15 @@ function App() {
             <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{eventNotification.title}</div>
             <div style={{ fontSize: '0.9em' }}>{eventNotification.message}</div>
           </div>
+        )}
+        
+        {/* Guía de bienvenida */}
+        {showWelcomeGuide && (
+          <WelcomeGuide 
+            onClose={() => setShowWelcomeGuide(false)}
+            hasHero={hero && hero._id}
+            hasPet={mascota && mascota._id}
+          />
         )}
       </div>
     </Router>

@@ -478,4 +478,111 @@ export const deleteConversation = async (conversationId, token) => {
   return res.data;
 };
 
- 
+// Funciones de torneos
+export const getActiveTournaments = async () => {
+  const res = await axios.get(`${API_URL}/tournaments`);
+  return res.data;
+};
+
+export const getUserTournaments = async (token) => {
+  const res = await axios.get(`${API_URL}/tournaments/user`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const registerForTournament = async (tournamentId, token) => {
+  const res = await axios.post(`${API_URL}/tournaments/${tournamentId}/register`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const updateTournamentScore = async (tournamentId, score, time, token) => {
+  const res = await axios.post(`${API_URL}/tournaments/${tournamentId}/score`, { score, time }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const createWeeklyTournament = async (token) => {
+  const res = await axios.post(`${API_URL}/tournaments/create-weekly`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const createMonthlyTournament = async (token) => {
+  const res = await axios.post(`${API_URL}/tournaments/create-monthly`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const createSpecialTournament = async (type, token) => {
+  const res = await axios.post(`${API_URL}/tournaments/create-special`, { type }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+// Funciones de ligas
+export const getUserLeague = async (token) => {
+  const res = await axios.get(`${API_URL}/tournaments/leagues/user`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const getLeagueRanking = async (leagueName, season) => {
+  const res = await axios.get(`${API_URL}/tournaments/leagues/${leagueName}/${season}/ranking`);
+  return res.data;
+};
+
+export const updateLeagueScore = async (leagueId, gameResult, score, token) => {
+  const res = await axios.post(`${API_URL}/tournaments/leagues/${leagueId}/score`, { gameResult, score }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const createLeagueSeason = async (leagueName, season, token) => {
+  const res = await axios.post(`${API_URL}/tournaments/leagues/create-season`, { leagueName, season }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+// Funciones de estadísticas
+export const getUserStatistics = async (token) => {
+  const res = await axios.get(`${API_URL}/statistics/user`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const getComparativeStatistics = async (token) => {
+  const res = await axios.get(`${API_URL}/statistics/comparative`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const getGlobalStatistics = async () => {
+  const res = await axios.get(`${API_URL}/statistics/global`);
+  return res.data;
+};
+
+export const getUserActivityHistory = async (days, token) => {
+  const res = await axios.get(`${API_URL}/statistics/activity-history?days=${days}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const getUserRecommendations = async (token) => {
+  const res = await axios.get(`${API_URL}/statistics/recommendations`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
