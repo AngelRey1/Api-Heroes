@@ -1,0 +1,313 @@
+.events-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.no-event {
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 20px;
+  color: white;
+  margin: 20px 0;
+}
+
+.no-event h2 {
+  font-size: 2.5em;
+  margin-bottom: 20px;
+}
+
+.no-event p {
+  font-size: 1.2em;
+  margin: 10px 0;
+  opacity: 0.9;
+}
+
+.event-banner {
+  border-radius: 20px;
+  padding: 30px;
+  margin-bottom: 30px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.event-banner::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="sparkles" patternUnits="userSpaceOnUse" width="20" height="20"><circle cx="10" cy="10" r="1" fill="rgba(255,255,255,0.3)"/></pattern></defs><rect width="100" height="100" fill="url(%23sparkles)"/></svg>');
+  opacity: 0.3;
+  animation: sparkle 3s linear infinite;
+}
+
+@keyframes sparkle {
+  0% { transform: translateX(-20px) translateY(-20px); }
+  100% { transform: translateX(20px) translateY(20px); }
+}
+
+.event-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.event-icon {
+  font-size: 4em;
+  animation: bounce 2s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-10px); }
+  60% { transform: translateY(-5px); }
+}
+
+.event-info h2 {
+  margin: 0 0 10px 0;
+  font-size: 2.5em;
+  font-weight: bold;
+}
+
+.event-info p {
+  margin: 0 0 15px 0;
+  font-size: 1.2em;
+  opacity: 0.9;
+}
+
+.event-timer {
+  background: rgba(255,255,255,0.2);
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  display: inline-block;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.event-content {
+  background: white;
+  border-radius: 20px;
+  padding: 30px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.objectives-section {
+  margin-bottom: 40px;
+}
+
+.objectives-section h3 {
+  color: #333;
+  font-size: 1.8em;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.objectives-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.objective-card {
+  background: #f8f9fa;
+  border-radius: 15px;
+  padding: 20px;
+  border: 3px solid #e9ecef;
+  transition: all 0.3s ease;
+}
+
+.objective-card.completed {
+  border-color: #2ecc40;
+  background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+  box-shadow: 0 6px 20px rgba(46, 204, 64, 0.2);
+}
+
+.objective-card.active {
+  border-color: #3498db;
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+}
+
+.objective-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.objective-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.objective-icon {
+  font-size: 2em;
+}
+
+.objective-info {
+  flex: 1;
+}
+
+.objective-info h4 {
+  margin: 0 0 5px 0;
+  color: #333;
+  font-size: 1.1em;
+}
+
+.objective-info p {
+  margin: 0;
+  color: #666;
+  font-size: 0.9em;
+}
+
+.completed-badge {
+  font-size: 1.5em;
+  animation: completePulse 0.6s ease-in-out;
+}
+
+@keyframes completePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.objective-progress {
+  text-align: center;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3498db, #2ecc40);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.objective-progress span {
+  font-size: 0.9em;
+  color: #666;
+  font-weight: bold;
+}
+
+.rewards-section {
+  margin-bottom: 40px;
+}
+
+.rewards-section h3 {
+  color: #333;
+  font-size: 1.8em;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.rewards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.reward-card {
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  border-radius: 15px;
+  padding: 20px;
+  text-align: center;
+  border: 3px solid #f39c12;
+  transition: all 0.3s ease;
+}
+
+.reward-card.special {
+  background: linear-gradient(135deg, #9b59b6, #8e44ad);
+  border-color: #8e44ad;
+  color: white;
+}
+
+.reward-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(243, 156, 18, 0.3);
+}
+
+.reward-icon {
+  font-size: 3em;
+  margin-bottom: 10px;
+}
+
+.reward-info h4 {
+  margin: 0 0 5px 0;
+  font-size: 1.2em;
+}
+
+.reward-info p {
+  margin: 0;
+  font-size: 1em;
+  opacity: 0.9;
+}
+
+.participation-info {
+  text-align: center;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 15px;
+  border: 2px dashed #dee2e6;
+}
+
+.participation-info h3 {
+  color: #333;
+  font-size: 1.5em;
+  margin-bottom: 10px;
+}
+
+.participation-info p {
+  color: #666;
+  font-size: 1.1em;
+  margin: 0;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .event-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .event-icon {
+    font-size: 3em;
+  }
+  
+  .event-info h2 {
+    font-size: 2em;
+  }
+  
+  .objectives-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .rewards-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .event-banner {
+    padding: 20px;
+  }
+  
+  .event-content {
+    padding: 20px;
+  }
+} 

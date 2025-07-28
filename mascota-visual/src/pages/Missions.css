@@ -1,0 +1,238 @@
+.missions-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.missions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.missions-header h2 {
+  color: #333;
+  font-size: 2.5em;
+  margin: 0;
+}
+
+.btn-generate {
+  background: linear-gradient(135deg, #3498db, #2980b9);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 25px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.btn-generate:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+}
+
+.btn-generate:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.missions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 20px;
+}
+
+.mission-card {
+  background: #fff;
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: all 0.3s ease;
+  border: 3px solid #e0e0e0;
+  position: relative;
+  overflow: hidden;
+}
+
+.mission-card.completed {
+  border-color: #2ecc40;
+  box-shadow: 0 6px 20px rgba(46, 204, 64, 0.2);
+  background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+}
+
+.mission-card.active {
+  border-color: #3498db;
+  box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+}
+
+.mission-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.mission-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.mission-icon {
+  font-size: 2.5em;
+  flex-shrink: 0;
+}
+
+.mission-info {
+  flex: 1;
+}
+
+.mission-info h3 {
+  margin: 0 0 8px 0;
+  color: #333;
+  font-size: 1.2em;
+}
+
+.mission-info p {
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.difficulty-badge {
+  color: white;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.8em;
+  font-weight: bold;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.mission-progress {
+  margin: 15px 0;
+  text-align: center;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #3498db, #2ecc40);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.mission-progress span {
+  font-size: 0.9em;
+  color: #666;
+  font-weight: bold;
+}
+
+.mission-reward {
+  text-align: center;
+  margin: 15px 0;
+  padding: 10px;
+  background: linear-gradient(135deg, #ffd700, #ffed4e);
+  border-radius: 8px;
+  font-weight: bold;
+  color: #8b4513;
+  font-size: 0.9em;
+}
+
+.btn-claim {
+  width: 100%;
+  background: linear-gradient(135deg, #2ecc40, #27ae60);
+  color: white;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 10px;
+}
+
+.btn-claim:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(46, 204, 64, 0.3);
+}
+
+.btn-claim:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.claimed-badge {
+  text-align: center;
+  margin-top: 10px;
+  padding: 8px;
+  background: #95a5a6;
+  color: white;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 0.9em;
+}
+
+.no-missions {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+  background: #f8f9fa;
+  border-radius: 15px;
+  border: 2px dashed #dee2e6;
+}
+
+.no-missions p {
+  color: #6c757d;
+  font-size: 1.1em;
+  margin-bottom: 20px;
+}
+
+/* Animación para misiones completadas */
+@keyframes completePulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
+}
+
+.mission-card.completed {
+  animation: completePulse 0.6s ease-in-out;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .missions-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .missions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .mission-card {
+    margin: 0 10px;
+  }
+  
+  .mission-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .difficulty-badge {
+    align-self: center;
+  }
+} 

@@ -1,0 +1,1033 @@
+{
+	"info": {
+		"_postman_id": "api-heroes-collection",
+		"name": "API Superhéroes y Mascotas",
+		"description": "Colección completa para probar la API de superhéroes y mascotas con autenticación JWT y pruebas automatizadas",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3001",
+			"type": "string"
+		},
+		{
+			"key": "authToken",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "userId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "heroId",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "petId",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{authToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Script que se ejecuta antes de cada request",
+					"console.log('Ejecutando request:', pm.request.name);"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"// Script que se ejecuta después de cada request",
+					"pm.test('Status code is 200 or 201', function () {",
+					"    pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+					"});",
+					"",
+					"pm.test('Response has JSON body', function () {",
+					"    pm.response.to.have.jsonBody();",
+					"});",
+					"",
+					"// Guardar token de autenticación automáticamente",
+					"if (pm.response.code === 200 || pm.response.code === 201) {",
+					"    const responseJson = pm.response.json();",
+					"    if (responseJson.token) {",
+					"        pm.collectionVariables.set('authToken', responseJson.token);",
+					"        console.log('Token guardado automáticamente');",
+					"    }",
+					"    if (responseJson.user && responseJson.user._id) {",
+					"        pm.collectionVariables.set('userId', responseJson.user._id);",
+					"        console.log('User ID guardado automáticamente');",
+					"    }",
+					"}"
+				]
+			}
+		}
+	],
+	"item": [
+		{
+			"name": "Autenticación",
+			"item": [
+				{
+					"name": "Registrar Usuario",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Usuario registrado exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(201);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.equal('Usuario registrado correctamente');",
+									"    pm.expect(responseJson.user).to.be.an('object');",
+									"    pm.expect(responseJson.user.username).to.equal('testuser');",
+									"    pm.expect(responseJson.user.email).to.equal('test@example.com');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"email\": \"test@example.com\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"register"
+							]
+						}
+					}
+				},
+				{
+					"name": "Iniciar Sesión",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Login exitoso', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.equal('Login exitoso');",
+									"    pm.expect(responseJson.token).to.be.a('string');",
+									"    pm.expect(responseJson.user).to.be.an('object');",
+									"});",
+									"",
+									"// Guardar token automáticamente",
+									"if (pm.response.code === 200) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson.token) {",
+									"        pm.collectionVariables.set('authToken', responseJson.token);",
+									"        console.log('Token JWT guardado:', responseJson.token);",
+									"    }",
+									"    if (responseJson.user && responseJson.user._id) {",
+									"        pm.collectionVariables.set('userId', responseJson.user._id);",
+									"        console.log('User ID guardado:', responseJson.user._id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser\",\n    \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"auth",
+								"login"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Superhéroes",
+			"item": [
+				{
+					"name": "Crear Héroe",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Héroe creado exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(201);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.name).to.equal('Roberto Gómez Bolaños');",
+									"    pm.expect(responseJson.alias).to.equal('Chapulín Colorado');",
+									"    pm.expect(responseJson.city).to.equal('CDMX');",
+									"    pm.expect(responseJson.team).to.equal('Independiente');",
+									"    pm.expect(responseJson._id).to.be.a('string');",
+									"});",
+									"",
+									"// Guardar ID del héroe creado",
+									"if (pm.response.code === 201) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson._id) {",
+									"        pm.collectionVariables.set('heroId', responseJson._id);",
+									"        console.log('Hero ID guardado:', responseJson._id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Roberto Gómez Bolaños\",\n    \"alias\": \"Chapulín Colorado\",\n    \"city\": \"CDMX\",\n    \"team\": \"Independiente\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/heroes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"heroes"
+							]
+						}
+					}
+				},
+				{
+					"name": "Obtener Todos los Héroes",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Lista de héroes obtenida', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"    pm.expect(responseJson.length).to.be.greaterThan(0);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/heroes",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"heroes"
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Héroes por Ciudad",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Héroes de CDMX encontrados', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/heroes/city/CDMX",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"heroes",
+								"city",
+								"CDMX"
+							]
+						}
+					}
+				},
+				{
+					"name": "Enfrentar Héroe con Villano",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Enfrentamiento exitoso', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.be.a('string');",
+									"    pm.expect(responseJson.message).to.include('Chapulín Colorado');",
+									"    pm.expect(responseJson.message).to.include('Joker');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"villain\": \"Joker\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/heroes/{{heroId}}/enfrentar",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"heroes",
+								"{{heroId}}",
+								"enfrentar"
+							]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Héroe",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Héroe actualizado exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.name).to.equal('Roberto Gómez Bolaños Actualizado');",
+									"    pm.expect(responseJson.alias).to.equal('Chapulín Colorado 2.0');",
+									"    pm.expect(responseJson.city).to.equal('Guadalajara');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Roberto Gómez Bolaños Actualizado\",\n    \"alias\": \"Chapulín Colorado 2.0\",\n    \"city\": \"Guadalajara\",\n    \"team\": \"Equipo Mejorado\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/heroes/{{heroId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"heroes",
+								"{{heroId}}"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Mascotas",
+			"item": [
+				{
+					"name": "Crear Mascota",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Mascota creada exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(201);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.name).to.equal('Firulais');",
+									"    pm.expect(responseJson.type).to.equal('Perro');",
+									"    pm.expect(responseJson.superPower).to.equal('Volar');",
+									"    pm.expect(responseJson._id).to.be.a('string');",
+									"});",
+									"",
+									"// Guardar ID de la mascota creada",
+									"if (pm.response.code === 201) {",
+									"    const responseJson = pm.response.json();",
+									"    if (responseJson._id) {",
+									"        pm.collectionVariables.set('petId', responseJson._id);",
+									"        console.log('Pet ID guardado:', responseJson._id);",
+									"    }",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Firulais\",\n    \"type\": \"Perro\",\n    \"superPower\": \"Volar\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pets"
+							]
+						}
+					}
+				},
+				{
+					"name": "Obtener Todas las Mascotas",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Lista de mascotas obtenida', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"    pm.expect(responseJson.length).to.be.greaterThan(0);",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/pets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pets"
+							]
+						}
+					}
+				},
+				{
+					"name": "Obtener Mascota por ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Mascota obtenida exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson._id).to.equal(pm.collectionVariables.get('petId'));",
+									"    pm.expect(responseJson.name).to.equal('Firulais');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/pets/{{petId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pets",
+								"{{petId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Mascota",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Mascota actualizada exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.name).to.equal('Firulais Actualizado');",
+									"    pm.expect(responseJson.superPower).to.equal('Super Velocidad');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Firulais Actualizado\",\n    \"type\": \"Perro\",\n    \"superPower\": \"Super Velocidad\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pets/{{petId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pets",
+								"{{petId}}"
+							]
+						}
+					}
+				},
+				{
+					"name": "Adoptar Mascota",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Mascota adoptada exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('adoptada');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"heroId\": \"{{heroId}}\",\n    \"reason\": \"Necesita compañía\",\n    \"notes\": \"Mascota muy cariñosa\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pets/{{petId}}/adopt",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pets",
+								"{{petId}}",
+								"adopt"
+							]
+						}
+					}
+				},
+				{
+					"name": "Obtener Mascotas del Héroe",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Mascotas del héroe obtenidas', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/heroes/{{heroId}}/pets",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"heroes",
+								"{{heroId}}",
+								"pets"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Cuidado de Mascotas (Pou)",
+			"item": [
+				{
+					"name": "Alimentar Mascota",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Mascota alimentada exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('alimentada');",
+									"    pm.expect(responseJson.hunger).to.be.a('number');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"food\": \"Croquetas Premium\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pet-care/{{petId}}/feed",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pet-care",
+								"{{petId}}",
+								"feed"
+							]
+						}
+					}
+				},
+				{
+					"name": "Pasear Mascota",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Mascota paseada exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('paseada');",
+									"    pm.expect(responseJson.happiness).to.be.a('number');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/pet-care/{{petId}}/walk",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pet-care",
+								"{{petId}}",
+								"walk"
+							]
+						}
+					}
+				},
+				{
+					"name": "Customizar Mascota",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Mascota customizada exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('customizada');",
+									"    pm.expect(responseJson.customizations).to.be.an('array');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"item\": \"Sombrero de Vaquero\",\n    \"type\": \"accesorio\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pet-care/{{petId}}/customize",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pet-care",
+								"{{petId}}",
+								"customize"
+							]
+						}
+					}
+				},
+				{
+					"name": "Enfermar Mascota",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Mascota enfermada exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('enferma');",
+									"    pm.expect(responseJson.health).to.be.a('number');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"disease\": \"Gripe Canina\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pet-care/{{petId}}/sick",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pet-care",
+								"{{petId}}",
+								"sick"
+							]
+						}
+					}
+				},
+				{
+					"name": "Curar Mascota",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Mascota curada exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('curada');",
+									"    pm.expect(responseJson.health).to.be.a('number');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"disease\": \"Gripe Canina\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pet-care/{{petId}}/heal",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pet-care",
+								"{{petId}}",
+								"heal"
+							]
+						}
+					}
+				},
+				{
+					"name": "Simular Decaimiento",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Decaimiento simulado exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('decaimiento');",
+									"    pm.expect(responseJson.hunger).to.be.a('number');",
+									"    pm.expect(responseJson.happiness).to.be.a('number');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"hours\": 5\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/pet-care/{{petId}}/decay",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pet-care",
+								"{{petId}}",
+								"decay"
+							]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Limpieza",
+			"item": [
+				{
+					"name": "Eliminar Mascota",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"pm.test('Mascota eliminada exitosamente', function () {",
+									"    pm.expect(pm.response.code).to.equal(200);",
+									"    const responseJson = pm.response.json();",
+									"    pm.expect(responseJson.message).to.include('eliminada');",
+									"});"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{authToken}}"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/pets/{{petId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"pets",
+								"{{petId}}"
+							]
+						}
+					}
+				}
+			]
+		}
+	]
+} 
