@@ -38,15 +38,34 @@ function descifrarCesar(texto, desplazamiento) {
   }).join('');
 }
 
+// Middleware para validar el body
+function validarBody(req, res, next) {
+  const { mensaje, desplazamiento } = req.body;
+  
+  if (!mensaje || typeof mensaje !== 'string') {
+    return res.status(400).json({ 
+      error: 'El campo "mensaje" es requerido y debe ser una cadena de texto' 
+    });
+  }
+  
+  if (desplazamiento === undefined || typeof desplazamiento !== 'number') {
+    return res.status(400).json({ 
+      error: 'El campo "desplazamiento" es requerido y debe ser un número' 
+    });
+  }
+
+  next();
+}
+
 // Ruta para encriptar
-app.post('/encriptar', (req, res) => {
+app.post('/encriptar', validarBody, (req, res) => {
   const { mensaje, desplazamiento } = req.body;
   const resultado = cifrarCesar(mensaje.toLowerCase(), desplazamiento);
   res.json({ mensaje_encriptado: resultado });
 });
 
 // Ruta para desencriptar
-app.post('/desencriptar', (req, res) => {
+app.post('/desencriptar', validarBody, (req, res) => {
   const { mensaje, desplazamiento } = req.body;
   const resultado = descifrarCesar(mensaje.toLowerCase(), desplazamiento);
   res.json({ mensaje_desencriptado: resultado });
