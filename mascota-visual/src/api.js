@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Cambia la URL base de la API para producción en Render
-const API_URL = process.env.REACT_APP_API_URL || 'https://api-heroes-gh4i.onrender.com/api';
+// Cambia la URL base de la API para desarrollo local
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
 
 export const login = async (username, password) => {
   const res = await axios.post(`${API_URL}/auth/login`, { username, password });

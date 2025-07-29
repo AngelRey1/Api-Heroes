@@ -10,20 +10,20 @@ class SoundManager {
 
            loadSounds() {
            const soundFiles = {
-             click: '/assets/click.mp3',
-             coin: '/assets/coin.mp3',
-             feed: '/assets/feed.mp3',
-             use: '/assets/use.mp3',
-             stat: '/assets/stat.mp3',
-             celebrate: '/assets/celebrate.mp3',
-             levelup: '/assets/levelup.mp3',
-             achievement: '/assets/achievement.mp3',
-             notification: '/assets/notification.mp3',
-             error: '/assets/error.mp3',
-             success: '/assets/success.mp3',
-             clean: '/assets/clean.mp3',
-             play: '/assets/play.mp3',
-             sleep: '/assets/sleep.mp3'
+             click: '/assets/click.wav',
+             coin: '/assets/coin.wav',
+             feed: '/assets/feed.wav',
+             use: '/assets/use.wav',
+             stat: '/assets/stat.wav',
+             celebrate: '/assets/celebrate.wav',
+             levelup: '/assets/levelup.wav',
+             achievement: '/assets/achievement.wav',
+             notification: '/assets/notification.wav',
+             error: '/assets/error.wav',
+             success: '/assets/success.wav',
+             clean: '/assets/clean.wav',
+             play: '/assets/play.wav',
+             sleep: '/assets/sleep.wav'
            };
        
            Object.entries(soundFiles).forEach(([key, src]) => {
@@ -32,7 +32,10 @@ class SoundManager {
              
              // Manejar errores de carga de audio
              audio.addEventListener('error', () => {
-               console.warn(`Could not load audio file: ${src}`);
+               console.warn(`Could not load audio file: ${src} - Audio disabled for this session`);
+               // Deshabilitar audio si hay errores de carga
+               this.enabled = false;
+               localStorage.setItem('soundEnabled', false);
              });
              
              audio.addEventListener('loadeddata', () => {
@@ -50,16 +53,22 @@ class SoundManager {
              const sound = this.sounds[soundName];
              // Verificar si el archivo de audio es válido
              if (sound.duration === 0 || sound.duration === Infinity) {
-               console.warn(`Audio file for ${soundName} is not valid`);
+               console.warn(`Audio file for ${soundName} is not valid - skipping playback`);
                return;
              }
              sound.currentTime = 0;
              sound.volume = this.volume;
              sound.play().catch(error => {
                console.warn(`Could not play sound ${soundName}:`, error);
+               // Deshabilitar audio si hay errores de reproducción
+               this.enabled = false;
+               localStorage.setItem('soundEnabled', false);
              });
            } catch (error) {
              console.warn('Error playing sound:', error);
+             // Deshabilitar audio si hay errores
+             this.enabled = false;
+             localStorage.setItem('soundEnabled', false);
            }
          }
 

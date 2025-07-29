@@ -71,6 +71,46 @@
   background: #87CEEB;
 }
 
+/* Estados de cooldown y disabled */
+.action-btn.cooldown {
+  background: #f0f0f0;
+  color: #666;
+  position: relative;
+}
+
+.action-btn.disabled {
+  background: #e0e0e0;
+  color: #999;
+  cursor: not-allowed;
+}
+
+.cooldown-text {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: #ff4444;
+  color: white;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+/* Animaciones para feedback visual */
+.action-btn:not(:disabled):not(.cooldown):hover {
+  animation: pulse 0.3s ease-in-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .action-buttons {

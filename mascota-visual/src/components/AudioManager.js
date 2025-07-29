@@ -27,27 +27,27 @@ const AudioManager = () => {
   const musicTracks = {
     home: {
       name: '🏠 Música de Casa',
-      url: '/assets/music/home-theme.mp3',
+      url: '/assets/music/home-theme.wav',
       description: 'Música relajante para el hogar'
     },
     shop: {
       name: '🛍️ Música de Tienda',
-      url: '/assets/music/shop-theme.mp3',
+      url: '/assets/music/shop-theme.wav',
       description: 'Música alegre para compras'
     },
     minigames: {
       name: '🎮 Música de Juegos',
-      url: '/assets/music/game-theme.mp3',
+      url: '/assets/music/game-theme.wav',
       description: 'Música energética para minijuegos'
     },
     achievements: {
       name: '🏆 Música de Logros',
-      url: '/assets/music/achievement-theme.mp3',
+      url: '/assets/music/achievement-theme.wav',
       description: 'Música épica para logros'
     },
     friends: {
       name: '👥 Música Social',
-      url: '/assets/music/social-theme.mp3',
+      url: '/assets/music/social-theme.wav',
       description: 'Música amigable para socializar'
     }
   };

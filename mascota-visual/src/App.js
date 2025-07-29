@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { apiLogin, register, alimentarMascota } from './api';
+import { login as apiLogin, register, alimentarMascota } from './api';
 import { UserProvider, useUser } from './context/UserContext';
 import Home from './pages/Home';
 import Minigames from './pages/Minigames';
@@ -29,7 +29,7 @@ import AudioManager from './components/AudioManager';
 import './App.css';
 
 function AppContent() {
-  const { token, user, coins, login, logout, fetchUserData, loading: userLoading } = useUser();
+  const { token, user, coins, login: contextLogin, logout, fetchUserData, loading: userLoading } = useUser();
   const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
   const [error, setError] = useState('');
   const [isLogin, setIsLogin] = useState(true);
@@ -71,7 +71,7 @@ function AppContent() {
       setLoading(true);
       setError('');
       const response = await apiLogin(username, password);
-      login(response.token, response.user);
+      contextLogin(response.token, response.user);
     } catch (err) {
       setError(err.response?.data?.error || 'Error al iniciar sesión');
     } finally {
@@ -84,7 +84,7 @@ function AppContent() {
       setLoading(true);
       setError('');
       const response = await register(username, email, password);
-      login(response.token, response.user);
+      contextLogin(response.token, response.user);
     } catch (err) {
       setError(err.response?.data?.error || 'Error al registrarse');
     } finally {

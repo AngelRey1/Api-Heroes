@@ -26,7 +26,7 @@ function Toast({ message, color = '#e74c3c', onClose }) {
 }
 
 export default function Home({ mascota, hero, alimentar, limpiar, jugar, dormir, loading: loadingProp, animacionStat, animar }) {
-  const { token, fetchUserData } = useUser();
+  const { token, fetchUserData, updateCoins } = useUser();
 
   // Determinar imagen dinámica según estado
   let mascotaImg = '/assets/dog_normal.svg';
@@ -74,11 +74,66 @@ export default function Home({ mascota, hero, alimentar, limpiar, jugar, dormir,
     else if ((mascota.health ?? 100) < 30 || (mascota.diseases && mascota.diseases.length > 0)) mascotaAnimClass = 'mascota-enferma';
   }
 
-  // Funciones de mascota - usar las props pasadas desde App.js
-  const handleAlimentar = alimentar;
-  const handleLimpiar = limpiar;
-  const handleJugar = jugar;
-  const handleDormir = dormir;
+  // Funciones de mascota mejoradas con feedback visual
+  const handleAlimentar = async () => {
+    if (!mascota) return;
+    setLoading(true);
+    try {
+      await alimentar();
+      setNotification({ message: '¡Mascota alimentada! +5 felicidad', type: 'success' });
+      // Dar monedas por alimentar
+      updateCoins(prev => prev + 2);
+    } catch (error) {
+      setNotification({ message: 'Error al alimentar mascota', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLimpiar = async () => {
+    if (!mascota) return;
+    setLoading(true);
+    try {
+      await limpiar();
+      setNotification({ message: '¡Mascota limpiada! +10 salud', type: 'success' });
+      // Dar monedas por limpiar
+      updateCoins(prev => prev + 3);
+    } catch (error) {
+      setNotification({ message: 'Error al limpiar mascota', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJugar = async () => {
+    if (!mascota) return;
+    setLoading(true);
+    try {
+      await jugar();
+      setNotification({ message: '¡Jugando con mascota! +15 felicidad', type: 'success' });
+      // Dar monedas por jugar
+      updateCoins(prev => prev + 5);
+    } catch (error) {
+      setNotification({ message: 'Error al jugar con mascota', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDormir = async () => {
+    if (!mascota) return;
+    setLoading(true);
+    try {
+      await dormir();
+      setNotification({ message: '¡Mascota durmiendo! +20 energía', type: 'success' });
+      // Dar monedas por dormir
+      updateCoins(prev => prev + 1);
+    } catch (error) {
+      setNotification({ message: 'Error al dormir mascota', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="home-container">
@@ -238,6 +293,7 @@ export default function Home({ mascota, hero, alimentar, limpiar, jugar, dormir,
             onPlay={handleJugar}
             onSleep={handleDormir}
             loading={loadingProp}
+            mascota={mascota}
           />
         </div>
       )}
