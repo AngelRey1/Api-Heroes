@@ -37,6 +37,7 @@ import tournamentService from './src/services/tournamentService.js';
 import secretAchievementRoutes from './src/routes/secretAchievementRoutes.js';
 import secretAchievementService from './src/services/secretAchievementService.js';
 import statisticsRoutes from './src/routes/statisticsRoutes.js';
+import customizationRoutes from './src/routes/customizationRoutes.js';
 
 // Middleware de seguridad y manejo de errores
 import { errorHandler } from './src/middleware/errorHandler.js';
@@ -139,6 +140,7 @@ app.use('/api/missions', missionRoutes);
 app.use('/api/tournaments', tournamentRoutes);
 app.use('/api/secret-achievements', secretAchievementRoutes);
 app.use('/api/statistics', statisticsRoutes);
+app.use('/api/customization', customizationRoutes);
 
 // Inicializar logros por defecto
 achievementService.initializeAchievements().then(() => {
@@ -238,6 +240,6 @@ server.listen(PORT, () => {
   console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
   console.log(`📖 Documentación disponible en: http://localhost:${PORT}/api-docs`);
   console.log(`🏥 Health check disponible en: http://localhost:${PORT}/health`);
-});
+}); 
 
 export default app; 
