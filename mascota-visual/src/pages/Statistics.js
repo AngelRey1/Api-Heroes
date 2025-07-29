@@ -1,440 +1,261 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  getUserStatistics, 
-  getComparativeStatistics, 
-  getGlobalStatistics,
-  getUserActivityHistory,
-  getUserRecommendations
-} from '../api';
+import { useUser } from '../context/UserContext';
+import { getUserStatistics, getComparativeStatistics, getUserActivityHistory, getUserRecommendations } from '../api';
+import { useSoundEffects } from '../components/SoundEffects';
+import NotificationToast from '../components/NotificationToast';
 import './Statistics.css';
 
-export default function Statistics({ token }) {
-  const [userStats, setUserStats] = useState(null);
-  const [comparativeStats, setComparativeStats] = useState(null);
-  const [globalStats, setGlobalStats] = useState(null);
+const Statistics = () => {
+  const { token } = useUser();
+  const { playClick } = useSoundEffects();
+  const [stats, setStats] = useState(null);
+  const [comparative, setComparative] = useState(null);
   const [activityHistory, setActivityHistory] = useState([]);
-  const [recommendations, setRecommendations] = useState(null);
+  const [recommendations, setRecommendations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('overview');
+  const [selectedPeriod, setSelectedPeriod] = useState(30);
+  const [notification, setNotification] = useState({ message: '', type: 'info' });
 
   useEffect(() => {
     fetchStatistics();
-  }, [token]);
+  }, [token, selectedPeriod]);
 
   const fetchStatistics = async () => {
     try {
       setLoading(true);
-      const [stats, comparative, global, history, recs] = await Promise.all([
-        getUserStatistics(token),
-        getComparativeStatistics(token),
-        getGlobalStatistics(),
-        getUserActivityHistory(30, token),
-        getUserRecommendations(token)
-      ]);
-
-      setUserStats(stats);
-      setComparativeStats(comparative);
-      setGlobalStats(global);
-      setActivityHistory(history);
+      
+      // Obtener estadísticas del usuario
+      const userStats = await getUserStatistics(token);
+      setStats(userStats);
+      
+      // Obtener estadísticas comparativas
+      const compStats = await getComparativeStatistics(token);
+      setComparative(compStats);
+      
+      // Obtener historial de actividad
+      const activity = await getUserActivityHistory(selectedPeriod, token);
+      setActivityHistory(activity);
+      
+      // Obtener recomendaciones
+      const recs = await getUserRecommendations(token);
       setRecommendations(recs);
+      
     } catch (err) {
-      setError('Error al cargar estadísticas');
+      console.error('Error fetching statistics:', err);
+      setNotification({ message: 'Error al cargar estadísticas', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const formatNumber = (num) => {
-    return new Intl.NumberFormat('es-ES').format(num);
+  const getStatIcon = (statType) => {
+    switch (statType) {
+      case 'pets': return '🐾';
+      case 'heroes': return '🦸‍♂️';
+      case 'games': return '🎮';
+      case 'achievements': return '🏆';
+      case 'coins': return '💰';
+      case 'time': return '⏰';
+      default: return '📊';
+    }
   };
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('es-ES');
+  const getStatColor = (statType) => {
+    switch (statType) {
+      case 'pets': return '#FFB6C1';
+      case 'heroes': return '#87CEEB';
+      case 'games': return '#DDA0DD';
+      case 'achievements': return '#FFD700';
+      case 'coins': return '#90EE90';
+      case 'time': return '#F0E68C';
+      default: return '#FFE4E1';
+    }
   };
 
-  const getProgressColor = (percentage) => {
-    if (percentage >= 80) return '#4CAF50';
-    if (percentage >= 60) return '#FF9800';
-    if (percentage >= 40) return '#FFC107';
-    return '#F44336';
+  const formatTime = (minutes) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
   };
 
   if (loading) {
     return (
       <div className="statistics-container">
-        <div className="loading">Cargando estadísticas...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="statistics-container">
-        <div className="error">{error}</div>
+        <div className="loading-message">
+          <div className="loading-spinner">📊</div>
+          <p>Cargando estadísticas...</p>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="statistics-container">
-      <div className="statistics-header">
-        <h1>📊 Estadísticas Avanzadas</h1>
-        <p>Analiza tu progreso y rendimiento en el juego</p>
+      <NotificationToast 
+        message={notification.message} 
+        type={notification.type} 
+        onClose={() => setNotification({ message: '', type: 'info' })} 
+      />
+
+      {/* Header */}
+      <div className="stats-header">
+        <h1>📊 Estadísticas</h1>
+        <div className="period-selector">
+          <label>Período:</label>
+          <select 
+            value={selectedPeriod} 
+            onChange={(e) => {
+              setSelectedPeriod(parseInt(e.target.value));
+              playClick();
+            }}
+          >
+            <option value={7}>7 días</option>
+            <option value={30}>30 días</option>
+            <option value={90}>90 días</option>
+          </select>
+        </div>
       </div>
 
-      <div className="statistics-content">
-        <div className="statistics-sidebar">
-          <div className="tab-navigation">
-            <button 
-              className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('overview')}
-            >
-              📈 Resumen
-            </button>
-            <button 
-              className={`tab-button ${activeTab === 'comparative' ? 'active' : ''}`}
-              onClick={() => setActiveTab('comparative')}
-            >
-              🏆 Comparativas
-            </button>
-            <button 
-              className={`tab-button ${activeTab === 'activity' ? 'active' : ''}`}
-              onClick={() => setActiveTab('activity')}
-            >
-              📅 Actividad
-            </button>
-            <button 
-              className={`tab-button ${activeTab === 'recommendations' ? 'active' : ''}`}
-              onClick={() => setActiveTab('recommendations')}
-            >
-              💡 Recomendaciones
-            </button>
+      {/* Estadísticas principales */}
+      <div className="stats-grid">
+        <div className="stat-card" style={{ backgroundColor: getStatColor('pets') }}>
+          <div className="stat-icon">🐾</div>
+          <div className="stat-info">
+            <h3>Mascotas</h3>
+            <div className="stat-value">{stats?.pets?.total || 0}</div>
+            <div className="stat-detail">Creadas: {stats?.pets?.created || 0}</div>
           </div>
         </div>
 
-        <div className="statistics-main">
-          {activeTab === 'overview' && userStats && (
-            <div className="overview-section">
-              <div className="stats-grid">
-                <div className="stat-card general">
-                  <h3>🎮 General</h3>
-                  <div className="stat-item">
-                    <span className="stat-label">Nivel:</span>
-                    <span className="stat-value">{userStats.general.level}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Experiencia:</span>
-                    <span className="stat-value">{formatNumber(userStats.general.experience)}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Monedas:</span>
-                    <span className="stat-value">{formatNumber(userStats.general.coins)}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Juegos Jugados:</span>
-                    <span className="stat-value">{formatNumber(userStats.general.gamesPlayed)}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Días Activo:</span>
-                    <span className="stat-value">{userStats.general.daysActive}</span>
-                  </div>
-                </div>
+        <div className="stat-card" style={{ backgroundColor: getStatColor('heroes') }}>
+          <div className="stat-icon">🦸‍♂️</div>
+          <div className="stat-info">
+            <h3>Héroes</h3>
+            <div className="stat-value">{stats?.heroes?.total || 0}</div>
+            <div className="stat-detail">Nivel: {stats?.heroes?.level || 1}</div>
+          </div>
+        </div>
 
-                <div className="stat-card pets">
-                  <h3>🐾 Mascotas</h3>
-                  <div className="stat-item">
-                    <span className="stat-label">Total Mascotas:</span>
-                    <span className="stat-value">{userStats.pets.totalPets}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Nivel Promedio:</span>
-                    <span className="stat-value">{userStats.pets.averagePetLevel}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Acciones Totales:</span>
-                    <span className="stat-value">{formatNumber(userStats.pets.totalPetActions)}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Tipo Favorito:</span>
-                    <span className="stat-value">{userStats.pets.favoritePetType}</span>
-                  </div>
-                </div>
+        <div className="stat-card" style={{ backgroundColor: getStatColor('games') }}>
+          <div className="stat-icon">🎮</div>
+          <div className="stat-info">
+            <h3>Juegos</h3>
+            <div className="stat-value">{stats?.games?.played || 0}</div>
+            <div className="stat-detail">Mejor: {stats?.games?.bestScore || 0}</div>
+          </div>
+        </div>
 
-                <div className="stat-card achievements">
-                  <h3>🏆 Logros</h3>
-                  <div className="stat-item">
-                    <span className="stat-label">Total Logros:</span>
-                    <span className="stat-value">{userStats.achievements.totalAchievements}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Logros Secretos:</span>
-                    <span className="stat-value">{userStats.achievements.secretAchievements}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Progreso:</span>
-                    <span className="stat-value">{userStats.achievements.achievementProgress}%</span>
-                  </div>
-                  <div className="progress-bar">
-                    <div 
-                      className="progress-fill" 
-                      style={{ 
-                        width: `${userStats.achievements.achievementProgress}%`,
-                        backgroundColor: getProgressColor(userStats.achievements.achievementProgress)
-                      }}
-                    ></div>
-                  </div>
-                </div>
+        <div className="stat-card" style={{ backgroundColor: getStatColor('achievements') }}>
+          <div className="stat-icon">🏆</div>
+          <div className="stat-info">
+            <h3>Logros</h3>
+            <div className="stat-value">{stats?.achievements?.unlocked || 0}</div>
+            <div className="stat-detail">Total: {stats?.achievements?.total || 0}</div>
+          </div>
+        </div>
 
-                <div className="stat-card social">
-                  <h3>👥 Social</h3>
-                  <div className="stat-item">
-                    <span className="stat-label">Amigos:</span>
-                    <span className="stat-value">{userStats.social.friendsCount}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Regalos Enviados:</span>
-                    <span className="stat-value">{userStats.social.giftsSent}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Regalos Recibidos:</span>
-                    <span className="stat-value">{userStats.social.giftsReceived}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Visitas Recibidas:</span>
-                    <span className="stat-value">{userStats.social.visitsReceived}</span>
-                  </div>
-                </div>
+        <div className="stat-card" style={{ backgroundColor: getStatColor('coins') }}>
+          <div className="stat-icon">💰</div>
+          <div className="stat-info">
+            <h3>Monedas</h3>
+            <div className="stat-value">{stats?.coins?.current || 0}</div>
+            <div className="stat-detail">Ganadas: {stats?.coins?.earned || 0}</div>
+          </div>
+        </div>
 
-                <div className="stat-card minigames">
-                  <h3>🎮 Minijuegos</h3>
-                  <div className="stat-item">
-                    <span className="stat-label">Juegos Jugados:</span>
-                    <span className="stat-value">{formatNumber(userStats.minigames.gamesPlayed)}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Puntuación Total:</span>
-                    <span className="stat-value">{formatNumber(userStats.minigames.totalScore)}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Monedas Ganadas:</span>
-                    <span className="stat-value">{formatNumber(userStats.minigames.coinsEarned)}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Juego Favorito:</span>
-                    <span className="stat-value">{userStats.minigames.favoriteGame}</span>
-                  </div>
-                </div>
-
-                <div className="stat-card shop">
-                  <h3>🛒 Tienda</h3>
-                  <div className="stat-item">
-                    <span className="stat-label">Compras Totales:</span>
-                    <span className="stat-value">{userStats.shop.totalPurchases}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Total Gastado:</span>
-                    <span className="stat-value">{formatNumber(userStats.shop.totalSpent)}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Tipo Favorito:</span>
-                    <span className="stat-value">{userStats.shop.favoriteItemType}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Compra Más Cara:</span>
-                    <span className="stat-value">{formatNumber(userStats.shop.mostExpensivePurchase)}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'comparative' && comparativeStats && (
-            <div className="comparative-section">
-              <h2>🏆 Comparativas con Otros Jugadores</h2>
-              
-              <div className="comparison-grid">
-                <div className="comparison-card">
-                  <h3>Nivel</h3>
-                  <div className="comparison-info">
-                    <span className="rank">#{comparativeStats.comparisons.level.rank}</span>
-                    <span className="percentage">Top {comparativeStats.comparisons.level.percentage}%</span>
-                  </div>
-                  <div className="comparison-bar">
-                    <div 
-                      className="comparison-fill" 
-                      style={{ width: `${comparativeStats.comparisons.level.percentage}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="comparison-card">
-                  <h3>Monedas</h3>
-                  <div className="comparison-info">
-                    <span className="rank">#{comparativeStats.comparisons.coins.rank}</span>
-                    <span className="percentage">Top {comparativeStats.comparisons.coins.percentage}%</span>
-                  </div>
-                  <div className="comparison-bar">
-                    <div 
-                      className="comparison-fill" 
-                      style={{ width: `${comparativeStats.comparisons.coins.percentage}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                <div className="comparison-card">
-                  <h3>Logros</h3>
-                  <div className="comparison-info">
-                    <span className="rank">#{comparativeStats.comparisons.achievements.rank}</span>
-                    <span className="percentage">Top {comparativeStats.comparisons.achievements.percentage}%</span>
-                  </div>
-                  <div className="comparison-bar">
-                    <div 
-                      className="comparison-fill" 
-                      style={{ width: `${comparativeStats.comparisons.achievements.percentage}%` }}
-                    ></div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="global-stats">
-                <h3>📊 Estadísticas Globales</h3>
-                <div className="global-grid">
-                  <div className="global-item">
-                    <span className="global-label">Total Jugadores:</span>
-                    <span className="global-value">{formatNumber(globalStats.totalUsers)}</span>
-                  </div>
-                  <div className="global-item">
-                    <span className="global-label">Nivel Promedio:</span>
-                    <span className="global-value">{globalStats.averageLevel}</span>
-                  </div>
-                  <div className="global-item">
-                    <span className="global-label">Monedas Promedio:</span>
-                    <span className="global-value">{formatNumber(globalStats.averageCoins)}</span>
-                  </div>
-                  <div className="global-item">
-                    <span className="global-label">Logros Promedio:</span>
-                    <span className="global-value">{globalStats.averageAchievements}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'activity' && (
-            <div className="activity-section">
-              <h2>📅 Historial de Actividad (Últimos 30 días)</h2>
-              
-              <div className="activity-chart">
-                {activityHistory.map((day, index) => (
-                  <div key={index} className="activity-day">
-                    <div className="activity-date">{day.date}</div>
-                    <div className="activity-bars">
-                      <div 
-                        className="activity-bar games" 
-                        style={{ height: `${(day.gamesPlayed / 10) * 100}%` }}
-                        title={`${day.gamesPlayed} juegos`}
-                      ></div>
-                      <div 
-                        className="activity-bar achievements" 
-                        style={{ height: `${(day.achievementsUnlocked / 3) * 100}%` }}
-                        title={`${day.achievementsUnlocked} logros`}
-                      ></div>
-                      <div 
-                        className="activity-bar missions" 
-                        style={{ height: `${(day.missionsCompleted / 5) * 100}%` }}
-                        title={`${day.missionsCompleted} misiones`}
-                      ></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="activity-summary">
-                <div className="summary-item">
-                  <span className="summary-label">Total Juegos:</span>
-                  <span className="summary-value">
-                    {activityHistory.reduce((sum, day) => sum + day.gamesPlayed, 0)}
-                  </span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">Total Logros:</span>
-                  <span className="summary-value">
-                    {activityHistory.reduce((sum, day) => sum + day.achievementsUnlocked, 0)}
-                  </span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">Total Misiones:</span>
-                  <span className="summary-value">
-                    {activityHistory.reduce((sum, day) => sum + day.missionsCompleted, 0)}
-                  </span>
-                </div>
-                <div className="summary-item">
-                  <span className="summary-label">Tiempo Total:</span>
-                  <span className="summary-value">
-                    {activityHistory.reduce((sum, day) => sum + day.timeSpent, 0)} min
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'recommendations' && recommendations && (
-            <div className="recommendations-section">
-              <h2>💡 Recomendaciones Personalizadas</h2>
-              
-              <div className="recommendations-grid">
-                {recommendations.recommendations.map((rec, index) => (
-                  <div key={index} className={`recommendation-card ${rec.priority}`}>
-                    <div className="recommendation-icon">
-                      {rec.type === 'achievement' && '🏆'}
-                      {rec.type === 'social' && '👥'}
-                      {rec.type === 'pet' && '🐾'}
-                      {rec.type === 'tournament' && '🏆'}
-                      {rec.type === 'economy' && '💰'}
-                    </div>
-                    <div className="recommendation-content">
-                      <h4>{rec.title}</h4>
-                      <p>{rec.description}</p>
-                      <button className="recommendation-action">
-                        {rec.action}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="predictions-section">
-                <h3>🔮 Predicciones</h3>
-                <div className="predictions-grid">
-                  <div className="prediction-card">
-                    <h4>Próximo Nivel</h4>
-                    <div className="prediction-info">
-                      <span>Nivel Actual: {recommendations.predictions.nextLevel.currentLevel}</span>
-                      <span>Próximo: {recommendations.predictions.nextLevel.nextLevel}</span>
-                      <span>Exp Necesaria: {recommendations.predictions.nextLevel.experienceNeeded}</span>
-                    </div>
-                  </div>
-                  
-                  <div className="prediction-card">
-                    <h4>Monedas en 1 Semana</h4>
-                    <div className="prediction-value">
-                      {formatNumber(recommendations.predictions.coinsInWeek)}
-                    </div>
-                  </div>
-                  
-                  <div className="prediction-card">
-                    <h4>Logros en 1 Mes</h4>
-                    <div className="prediction-value">
-                      {recommendations.predictions.achievementsInMonth}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
+        <div className="stat-card" style={{ backgroundColor: getStatColor('time') }}>
+          <div className="stat-icon">⏰</div>
+          <div className="stat-info">
+            <h3>Tiempo</h3>
+            <div className="stat-value">{formatTime(stats?.time?.total || 0)}</div>
+            <div className="stat-detail">Promedio: {formatTime(stats?.time?.average || 0)}</div>
+          </div>
         </div>
       </div>
+
+      {/* Comparativas */}
+      {comparative && (
+        <div className="comparative-section">
+          <h2>📈 Comparativas</h2>
+          <div className="comparative-grid">
+            <div className="comparative-card">
+              <h3>🎯 Rendimiento</h3>
+              <div className="comparative-item">
+                <span>Tu puntuación:</span>
+                <span className="comparative-value">{comparative.performance?.user || 0}</span>
+              </div>
+              <div className="comparative-item">
+                <span>Promedio:</span>
+                <span className="comparative-value">{comparative.performance?.average || 0}</span>
+              </div>
+              <div className="comparative-item">
+                <span>Mejor:</span>
+                <span className="comparative-value">{comparative.performance?.best || 0}</span>
+              </div>
+            </div>
+
+            <div className="comparative-card">
+              <h3>🏆 Ranking</h3>
+              <div className="comparative-item">
+                <span>Tu posición:</span>
+                <span className="comparative-value">#{comparative.ranking?.position || 'N/A'}</span>
+              </div>
+              <div className="comparative-item">
+                <span>Total jugadores:</span>
+                <span className="comparative-value">{comparative.ranking?.total || 0}</span>
+              </div>
+              <div className="comparative-item">
+                <span>Percentil:</span>
+                <span className="comparative-value">{comparative.ranking?.percentile || 0}%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Historial de actividad */}
+      {activityHistory.length > 0 && (
+        <div className="activity-section">
+          <h2>📅 Actividad Reciente</h2>
+          <div className="activity-timeline">
+            {activityHistory.map((activity, index) => (
+              <div key={index} className="activity-item">
+                <div className="activity-icon">
+                  {getStatIcon(activity.type)}
+                </div>
+                <div className="activity-content">
+                  <h4>{activity.title}</h4>
+                  <p>{activity.description}</p>
+                  <span className="activity-time">{activity.time}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Recomendaciones */}
+      {recommendations.length > 0 && (
+        <div className="recommendations-section">
+          <h2>💡 Recomendaciones</h2>
+          <div className="recommendations-grid">
+            {recommendations.map((rec, index) => (
+              <div key={index} className="recommendation-card">
+                <div className="recommendation-icon">💡</div>
+                <h4>{rec.title}</h4>
+                <p>{rec.description}</p>
+                {rec.reward && (
+                  <div className="recommendation-reward">
+                    Recompensa: {rec.reward}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
-} 
+};
+
+export default Statistics; 

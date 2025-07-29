@@ -1,19 +1,19 @@
 import eventService from '../services/eventService.js';
 
 /**
- * Obtiene el evento activo actual
+ * Obtiene los eventos activos
  */
 export const getActiveEvent = async (req, res) => {
   try {
-    const event = await eventService.getActiveEvent();
-    res.json(event);
+    const events = await eventService.getActiveEvents();
+    res.json(events);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
 /**
- * Obtiene el progreso del usuario en el evento activo
+ * Obtiene el progreso del usuario en eventos
  */
 export const getUserEventProgress = async (req, res) => {
   try {
@@ -25,16 +25,12 @@ export const getUserEventProgress = async (req, res) => {
 };
 
 /**
- * Genera un nuevo evento especial (admin)
+ * Programa eventos automáticos
  */
-export const generateEvent = async (req, res) => {
+export const scheduleEvents = async (req, res) => {
   try {
-    const event = await eventService.generateRandomEvent();
-    if (event) {
-      res.json({ message: 'Evento generado', event });
-    } else {
-      res.json({ message: 'Ya hay un evento activo' });
-    }
+    await eventService.scheduleEvents();
+    res.json({ message: 'Eventos programados correctamente' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

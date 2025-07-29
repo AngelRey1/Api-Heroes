@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useUser } from '../../context/UserContext';
+import { saveMinigameScore } from '../../api';
+import { useSoundEffects } from '../SoundEffects';
 import './MathGame.css';
 
 const MathGame = ({ onGameEnd, onClose }) => {
+  const { token, updateCoins } = useUser();
+  const { playClick, playCoin, playCelebrate } = useSoundEffects();
   const [score, setScore] = useState(0);
   const [timeLeft, setTimeLeft] = useState(60);
   const [currentQuestion, setCurrentQuestion] = useState(null);
@@ -75,6 +80,7 @@ const MathGame = ({ onGameEnd, onClose }) => {
     const isCorrect = parseInt(userAnswer) === currentQuestion.answer;
     
     if (isCorrect) {
+      playClick();
       setScore(score + (level * 10));
       setFeedback('¡Correcto! 🎉');
       setTimeout(() => {
@@ -98,10 +104,30 @@ const MathGame = ({ onGameEnd, onClose }) => {
     setLevel(1);
   };
 
-  const endGame = () => {
+  const endGame = async () => {
     setIsPlaying(false);
     const coinsEarned = Math.floor(score / 10);
-    onGameEnd(coinsEarned);
+    
+    try {
+      // Guardar puntuación en el servidor
+      if (token) {
+        await saveMinigameScore('math', score, token);
+      }
+      
+      // Actualizar monedas
+      updateCoins(coinsEarned);
+      
+      // Reproducir sonidos
+      playCoin();
+      if (coinsEarned > 20) {
+        playCelebrate();
+      }
+      
+      onGameEnd(coinsEarned);
+    } catch (err) {
+      console.error('Error saving score:', err);
+      onGameEnd(coinsEarned);
+    }
   };
 
   const handleKeyPress = (e) => {

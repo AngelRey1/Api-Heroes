@@ -1,192 +1,190 @@
-import React, { useEffect, useState } from 'react';
-import { getItems, buyItem, equipAccessory, equipHeroAccessory, updateUserBackground, getUserProfile } from '../api';
+import React, { useState, useEffect } from 'react';
+import { useUser } from '../context/UserContext';
+import { getItems, buyItem } from '../api';
+import { useSoundEffects } from '../components/SoundEffects';
+import NotificationToast from '../components/NotificationToast';
+import './Shop.css';
 
-function PreviewMascota({ accessoryImg }) {
-  return (
-    <div style={{ position: 'relative', width: 90, height: 90, margin: '0 auto 8px auto' }}>
-      <img src="/assets/dog_normal.png" alt="Mascota" style={{ width: 90, height: 90, objectFit: 'contain' }} />
-      {accessoryImg && <img src={accessoryImg} alt="Accesorio" style={{ position: 'absolute', top: 0, left: 18, width: 54, pointerEvents: 'none' }} />}
-    </div>
-  );
-}
-
-function PreviewHero({ accessoryImg }) {
-  return (
-    <div style={{ position: 'relative', width: 90, height: 90, margin: '0 auto 8px auto' }}>
-      <img src="/assets/hero.png" alt="Héroe" style={{ width: 90, height: 90, objectFit: 'contain', borderRadius: '50%' }} />
-      {accessoryImg && <img src={accessoryImg} alt="Accesorio" style={{ position: 'absolute', top: 0, left: 18, width: 54, pointerEvents: 'none' }} />}
-    </div>
-  );
-}
-
-function Shop({ token, onPurchase, activePetId }) {
+const Shop = () => {
+  const { token, coins, updateCoins } = useUser();
+  const { playClick, playCoin } = useSoundEffects();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [buying, setBuying] = useState('');
-  const [success, setSuccess] = useState('');
-  const [equipping, setEquipping] = useState('');
-  const [previewAcc, setPreviewAcc] = useState(null);
-  const [activeHeroId, setActiveHeroId] = useState(null);
-  const [userBackground, setUserBackground] = useState('');
+  const [buying, setBuying] = useState(false);
+  const [notification, setNotification] = useState({ message: '', type: 'info' });
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const data = await getItems();
-        setItems(data);
-      } catch (err) {
-        setError('Error al cargar la tienda.');
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchItems();
-  }, []);
-
-  useEffect(() => {
-    if (!token) return;
-    getUserProfile(token).then(u => setUserBackground(u.background || ''));
   }, [token]);
 
-  const handleBuy = async (itemId) => {
-    setBuying(itemId);
-    setError('');
-    setSuccess('');
+  const fetchItems = async () => {
     try {
-      await buyItem(itemId, 1, token);
-      setSuccess('¡Compra exitosa!');
-      if (onPurchase) onPurchase();
+      setLoading(true);
+      const itemsData = await getItems(token);
+      setItems(itemsData);
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al comprar.');
+      console.error('Error fetching items:', err);
+      setNotification({ message: 'Error al cargar items', type: 'error' });
     } finally {
-      setBuying('');
+      setLoading(false);
     }
   };
 
-  const handleEquip = async (itemId) => {
-    if (!activePetId) {
-      setError('Selecciona una mascota activa para equipar.');
+  const handleBuyItem = async (itemId, price) => {
+    if (coins < price) {
+      setNotification({ message: '¡No tienes suficientes monedas!', type: 'warning' });
       return;
     }
-    setEquipping(itemId);
-    setError('');
-    setSuccess('');
+
     try {
-      await equipAccessory(token, activePetId, itemId);
-      setSuccess('¡Accesorio equipado!');
+      setBuying(true);
+      playClick();
+      
+      const result = await buyItem(itemId, 1, token);
+      updateCoins(coins - price);
+      
+      setNotification({ 
+        message: `¡${result.item.name} comprado por ${price} monedas!`, 
+        type: 'success' 
+      });
+      
+      playCoin();
     } catch (err) {
-      setError(err.response?.data?.error || 'Error al equipar.');
+      console.error('Error buying item:', err);
+      setNotification({ message: 'Error al comprar item', type: 'error' });
     } finally {
-      setEquipping('');
+      setBuying(false);
     }
   };
 
-  const handleEquipHero = async (itemId) => {
-    if (!activeHeroId) {
-      setError('Selecciona un héroe activo para equipar.');
-      return;
-    }
-    setEquipping(itemId);
-    setError('');
-    setSuccess('');
-    try {
-      await equipHeroAccessory(token, activeHeroId, itemId);
-      setSuccess('¡Accesorio equipado en el héroe!');
-    } catch (err) {
-      setError(err.response?.data?.error || 'Error al equipar.');
-    } finally {
-      setEquipping('');
+  const categories = [
+    { id: 'all', name: 'Todos', icon: '🛍️' },
+    { id: 'food', name: 'Comida', icon: '🍖' },
+    { id: 'toys', name: 'Juguetes', icon: '🎲' },
+    { id: 'accessories', name: 'Accesorios', icon: '👒' },
+    { id: 'medicine', name: 'Medicina', icon: '💊' },
+    { id: 'special', name: 'Especiales', icon: '⭐' }
+  ];
+
+  const filteredItems = selectedCategory === 'all' 
+    ? items 
+    : items.filter(item => item.category === selectedCategory);
+
+  const getItemIcon = (category) => {
+    switch (category) {
+      case 'food': return '🍖';
+      case 'toys': return '🎲';
+      case 'accessories': return '👒';
+      case 'medicine': return '💊';
+      case 'special': return '⭐';
+      default: return '📦';
     }
   };
 
-  const handleSetBackground = async (bg) => {
-    if (!token) return;
-    await updateUserBackground(token, bg);
-    setUserBackground(bg);
-    setSuccess('¡Fondo aplicado!');
-  };
-
-  const accesorios = items.filter(i => i.type === 'accessory');
-  const fondos = items.filter(i => i.type === 'background');
-  const skins = items.filter(i => i.type === 'skin');
-  const accesoriosHero = items.filter(i => i.type === 'hero-accessory');
+  if (loading) {
+    return (
+      <div className="shop-container">
+        <div className="loading-message">
+          <div className="loading-spinner">🛍️</div>
+          <p>Cargando tienda...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="shop-page">
-      <h2>Tienda</h2>
-      {loading && <p>Cargando...</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-      {success && <p style={{ color: 'green' }}>{success}</p>}
-      <h3>Accesorios</h3>
-      <div className="shop-items">
-        {accesorios.map(item => (
-          <div key={item._id} className="shop-item"
-            onMouseEnter={() => setPreviewAcc(item.image)}
-            onMouseLeave={() => setPreviewAcc(null)}>
-            <PreviewMascota accessoryImg={previewAcc === item.image ? item.image : null} />
-            {item.image && <img src={item.image} alt={item.name} className="shop-item-img" />}
-            <h3>{item.name}</h3>
-            <p>Precio: <b>{item.price}</b> 🪙</p>
-            <button onClick={() => handleBuy(item._id)} disabled={buying === item._id || !token}>
-              {buying === item._id ? 'Comprando...' : 'Comprar'}
-            </button>
-            <button onClick={() => handleEquip(item._id)} disabled={equipping === item._id || !token}>
-              {equipping === item._id ? 'Equipando...' : 'Equipar'}
-            </button>
-          </div>
+    <div className="shop-container">
+      <NotificationToast 
+        message={notification.message} 
+        type={notification.type} 
+        onClose={() => setNotification({ message: '', type: 'info' })} 
+      />
+
+      {/* Header de la tienda */}
+      <div className="shop-header">
+        <h1>🛒 Tienda</h1>
+        <div className="coins-display">
+          <span className="coins-icon">💰</span>
+          <span className="coins-amount">{coins}</span>
+        </div>
+      </div>
+
+      {/* Categorías */}
+      <div className="categories-container">
+        {categories.map(category => (
+          <button
+            key={category.id}
+            className={`category-btn ${selectedCategory === category.id ? 'active' : ''}`}
+            onClick={() => {
+              setSelectedCategory(category.id);
+              playClick();
+            }}
+          >
+            <span className="category-icon">{category.icon}</span>
+            <span className="category-name">{category.name}</span>
+          </button>
         ))}
       </div>
-      <h3>Accesorios para Héroes</h3>
-      <div className="shop-items">
-        {accesoriosHero.map(item => (
-          <div key={item._id} className="shop-item"
-            onMouseEnter={() => setPreviewAcc(item.image)}
-            onMouseLeave={() => setPreviewAcc(null)}>
-            <PreviewHero accessoryImg={previewAcc === item.image ? item.image : null} />
-            {item.image && <img src={item.image} alt={item.name} className="shop-item-img" />}
-            <h3>{item.name}</h3>
-            <p>Precio: <b>{item.price}</b> 🪙</p>
-            <button onClick={() => handleBuy(item._id)} disabled={buying === item._id || !token}>
-              {buying === item._id ? 'Comprando...' : 'Comprar'}
-            </button>
-            <button onClick={() => handleEquipHero(item._id)} disabled={equipping === item._id || !token}>
-              {equipping === item._id ? 'Equipando...' : 'Equipar'}
-            </button>
+
+      {/* Grid de items */}
+      <div className="items-grid">
+        {filteredItems.length === 0 ? (
+          <div className="no-items">
+            <div className="no-items-icon">📦</div>
+            <p>No hay items en esta categoría</p>
           </div>
-        ))}
+        ) : (
+          filteredItems.map(item => (
+            <div key={item._id} className="item-card">
+              <div className="item-icon">
+                {getItemIcon(item.category)}
+              </div>
+              <div className="item-info">
+                <h3 className="item-name">{item.name}</h3>
+                <p className="item-description">{item.description}</p>
+                <div className="item-stats">
+                  {item.effects && Object.entries(item.effects).map(([stat, value]) => (
+                    <span key={stat} className="item-stat">
+                      {stat === 'health' && '❤️'}
+                      {stat === 'happiness' && '😊'}
+                      {stat === 'energy' && '⚡'}
+                      {stat === 'cleanliness' && '🧼'}
+                      {value > 0 ? '+' : ''}{value}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="item-price">
+                <span className="price-amount">{item.price}</span>
+                <span className="price-icon">💰</span>
+              </div>
+              <button
+                className={`buy-btn ${coins < item.price ? 'disabled' : ''}`}
+                onClick={() => handleBuyItem(item._id, item.price)}
+                disabled={coins < item.price || buying}
+              >
+                {buying ? 'Comprando...' : 'Comprar'}
+              </button>
+            </div>
+          ))
+        )}
       </div>
-      <h3>Fondos</h3>
-      <div className="shop-items">
-        {fondos.map(item => (
-          <div key={item._id} className="shop-item">
-            {item.image && <img src={item.image} alt={item.name} className="shop-item-img" />}
-            <h3>{item.name}</h3>
-            <p>Precio: <b>{item.price}</b> 🪙</p>
-            <button onClick={() => handleBuy(item._id)} disabled={buying === item._id || !token}>
-              {buying === item._id ? 'Comprando...' : 'Comprar'}
-            </button>
-            <button onClick={() => handleSetBackground(item.image)} disabled={userBackground === item.image}>
-              {userBackground === item.image ? 'Aplicado' : 'Aplicar'}
-            </button>
-          </div>
-        ))}
-      </div>
-      <h3>Skins</h3>
-      <div className="shop-items">
-        {skins.map(item => (
-          <div key={item._id} className="shop-item">
-            {item.image && <img src={item.image} alt={item.name} className="shop-item-img" />}
-            <h3>{item.name}</h3>
-            <p>Precio: <b>{item.price}</b> 🪙</p>
-            <button onClick={() => handleBuy(item._id)} disabled={buying === item._id || !token}>
-              {buying === item._id ? 'Comprando...' : 'Comprar'}
-            </button>
-          </div>
-        ))}
+
+      {/* Información adicional */}
+      <div className="shop-info">
+        <div className="info-card">
+          <h3>💡 Consejos</h3>
+          <ul>
+            <li>Alimenta a tu mascota regularmente</li>
+            <li>Los juguetes aumentan la felicidad</li>
+            <li>La medicina cura enfermedades</li>
+            <li>Los accesorios son solo decorativos</li>
+          </ul>
+        </div>
       </div>
     </div>
   );
-}
+};
 
 export default Shop; 

@@ -1,48 +1,55 @@
 import React from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import './Navbar.css';
 
-const links = [
-  { to: '/home', label: 'Inicio', icon: '🏠' },
-  { to: '/shop', label: 'Tienda', icon: '🛒' },
-  { to: '/inventory', label: 'Inventario', icon: '🎒' },
-  { to: '/profile', label: 'Perfil', icon: '👤' },
-  { to: '/minigames', label: 'Minijuegos', icon: '🎮' },
-  { to: '/achievements', label: 'Logros', icon: '🏆' },
-  { to: '/pets', label: 'Mascotas', icon: '🐾' },
-  { to: '/hero-customization', label: 'Héroe', icon: '🦸‍♂️' },
-  { to: '/events', label: 'Eventos', icon: '🎉' },
-  { to: '/missions', label: 'Misiones', icon: '📋' },
-  { to: '/ranking', label: 'Ranking', icon: '🥇' },
-  { to: '/secret-achievements', label: 'Secretos', icon: '🔒' },
-];
+function Navbar({ onLogout }) {
+  const location = useLocation();
 
-export default function Navbar({ token }) {
+  const navItems = [
+    { path: '/', label: '🏠 Inicio', icon: '🏠' },
+    { path: '/minigames', label: '🎮 Juegos', icon: '🎮' },
+    { path: '/achievements', label: '🏆 Logros', icon: '🏆' },
+    { path: '/shop', label: '🛒 Tienda', icon: '🛒' },
+    { path: '/statistics', label: '📊 Estadísticas', icon: '📊' },
+    { path: '/missions', label: '📋 Misiones', icon: '📋' },
+    { path: '/events', label: '🎉 Eventos', icon: '🎉' },
+    { path: '/friends', label: '👥 Amigos', icon: '👥' },
+    { path: '/chat', label: '💬 Chat', icon: '💬' },
+    { path: '/tournaments', label: '🏆 Torneos', icon: '🏆' },
+    { path: '/ranking', label: '🏅 Ranking', icon: '🏅' },
+    { path: '/inventory', label: '🎒 Inventario', icon: '🎒' },
+    { path: '/pet-collection', label: '🐾 Mascotas', icon: '🐾' },
+    { path: '/customization', label: '🎨 Personalizar', icon: '🎨' },
+    { path: '/settings', label: '⚙️ Ajustes', icon: '⚙️' }
+  ];
+
   return (
     <nav className="navbar">
-      <div className="navbar-logo">
-        <span role="img" aria-label="logo">🐾</span> Mascota Hero
-      </div>
-      <div className="navbar-links">
-        {links.map(link => (
-          <NavLink
-            key={link.to}
-            to={link.to}
-            className={({ isActive }) => 'navbar-link' + (isActive ? ' active' : '')}
-          >
-            <span>{link.icon}</span> {link.label}
-          </NavLink>
-        ))}
-        <Link to="/tournaments" className="nav-link">
-          🏆 Torneos
+      <div className="nav-container">
+        <Link to="/" className="nav-logo">
+          🎮 Mascota Hero
         </Link>
-        <Link to="/customization" className="nav-link">
-          🎨 Personalización
-        </Link>
-        <Link to="/statistics" className="nav-link">
-          📊 Estadísticas
-        </Link>
+        
+        <div className="nav-links">
+          {navItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
+            >
+              <span className="nav-icon">{item.icon}</span>
+              <span className="nav-label">{item.label.split(' ')[1]}</span>
+            </Link>
+          ))}
+          
+          <button onClick={onLogout} className="nav-link logout-btn">
+            <span className="nav-icon">🚪</span>
+            <span className="nav-label">Salir</span>
+          </button>
+        </div>
       </div>
     </nav>
   );
-} 
+}
+
+export default Navbar; 

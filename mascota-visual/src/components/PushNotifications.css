@@ -1,0 +1,316 @@
+/* Push Notifications - Estilo Pou */
+.push-notifications-container {
+  padding: 20px;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.notification-card {
+  background: #FFE4E1;
+  border: 4px solid #000;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 8px 8px 0px #000;
+}
+
+.notification-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #000;
+}
+
+.notification-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.notification-header h3 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 2px 2px 0px #fff;
+  margin: 0;
+}
+
+.notification-content {
+  margin-bottom: 25px;
+}
+
+.permission-status {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  padding: 15px;
+  background: #FFD700;
+  border: 2px solid #000;
+  border-radius: 10px;
+  box-shadow: 3px 3px 0px #000;
+}
+
+.status-label {
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+}
+
+.status-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  text-shadow: 1px 1px 0px #fff;
+  border: 2px solid #000;
+}
+
+.status-badge.granted {
+  background: #90EE90;
+  color: #000;
+}
+
+.status-badge.denied {
+  background: #FF6B6B;
+  color: #000;
+}
+
+.status-badge.default {
+  background: #FFD700;
+  color: #000;
+}
+
+.notification-features {
+  margin-bottom: 25px;
+}
+
+.notification-features h4 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+  margin: 0 0 15px 0;
+}
+
+.features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.features-list li {
+  background: #FFD700;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 14px;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+  box-shadow: 3px 3px 0px #000;
+}
+
+.notification-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.notification-btn {
+  padding: 12px 20px;
+  border: 3px solid #000;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 4px 4px 0px #000;
+  text-shadow: 1px 1px 0px #fff;
+}
+
+.notification-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px #000;
+}
+
+.notification-btn:disabled {
+  background: #D3D3D3;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 4px 4px 0px #000;
+}
+
+.primary-btn {
+  background: #90EE90;
+  color: #000;
+}
+
+.primary-btn:hover:not(:disabled) {
+  background: #7CFC00;
+}
+
+.test-btn {
+  background: #87CEEB;
+  color: #000;
+}
+
+.test-btn:hover:not(:disabled) {
+  background: #5F9EA0;
+}
+
+.secondary-btn {
+  background: #FF6B6B;
+  color: #000;
+}
+
+.secondary-btn:hover:not(:disabled) {
+  background: #FF5252;
+}
+
+.permission-help {
+  background: #FFE4E1;
+  border: 2px solid #000;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 3px 3px 0px #000;
+}
+
+.permission-help p {
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+  margin: 0 0 15px 0;
+}
+
+.permission-help ol {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.permission-help li {
+  font-size: 14px;
+  color: #333;
+  text-shadow: 1px 1px 0px #fff;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.notification-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #FFE4E1;
+  border: 3px solid #000;
+  border-radius: 10px;
+  padding: 15px 20px;
+  box-shadow: 6px 6px 0px #000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 10000;
+  animation: toastSlideIn 0.3s ease-out;
+  max-width: 400px;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.notification-toast.success {
+  background: #90EE90;
+}
+
+.notification-toast.error {
+  background: #FF6B6B;
+}
+
+.notification-toast.info {
+  background: #87CEEB;
+}
+
+.toast-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+  flex: 1;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.toast-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .push-notifications-container {
+    padding: 15px;
+  }
+  
+  .notification-card {
+    padding: 20px;
+  }
+  
+  .notification-header h3 {
+    font-size: 20px;
+  }
+  
+  .notification-icon {
+    font-size: 28px;
+  }
+  
+  .permission-status {
+    flex-direction: column;
+    gap: 10px;
+    text-align: center;
+  }
+  
+  .features-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .notification-btn {
+    font-size: 14px;
+    padding: 10px 16px;
+  }
+  
+  .notification-toast {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+} 

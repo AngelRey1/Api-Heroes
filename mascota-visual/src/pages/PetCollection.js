@@ -5,8 +5,8 @@ import './PetCollection.css';
 import PetCustomization from './PetCustomization'; // Assuming PetCustomization is in the same directory
 
 const petAvatars = {
-  Perro: '/assets/dog_normal.png',
-  Gato: '/assets/cat_normal.png',
+  Perro: '/assets/dog_normal.svg',
+  Gato: '/assets/cat_normal.svg',
 };
 
 export default function PetCollection({ token, activePetId, onActiveChange }) {

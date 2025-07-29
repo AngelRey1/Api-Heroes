@@ -1,0 +1,93 @@
+/* Notification Toast - Estilo Pou */
+.notification-toast {
+  position: fixed;
+  top: 150px;
+  right: 20px;
+  z-index: 10000;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+}
+
+.notification-toast.visible {
+  transform: translateX(0);
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 20px;
+  border: 3px solid #000;
+  border-radius: 12px;
+  box-shadow: 6px 6px 0px #000;
+  min-width: 250px;
+  max-width: 350px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+}
+
+.notification-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.notification-message {
+  flex: 1;
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s;
+}
+
+.notification-close:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* Animaciones */
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(100%);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .notification-toast {
+    top: 120px;
+    right: 10px;
+    left: 10px;
+  }
+  
+  .notification-content {
+    min-width: auto;
+    max-width: none;
+  }
+} 

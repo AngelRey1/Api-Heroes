@@ -19,6 +19,79 @@ class AchievementService {
   }
 
   /**
+   * Obtener todos los logros
+   */
+  async getAllAchievements() {
+    return await Achievement.find();
+  }
+
+  /**
+   * Obtener logro por ID
+   */
+  async getAchievementById(id) {
+    return await Achievement.findById(id);
+  }
+
+  /**
+   * Crear logro
+   */
+  async createAchievement(achievementData) {
+    return await Achievement.create(achievementData);
+  }
+
+  /**
+   * Actualizar logro
+   */
+  async updateAchievement(id, updateData) {
+    return await Achievement.findByIdAndUpdate(id, updateData, { new: true });
+  }
+
+  /**
+   * Eliminar logro
+   */
+  async deleteAchievement(id) {
+    return await Achievement.findByIdAndDelete(id);
+  }
+
+  /**
+   * Reclamar logro
+   */
+  async claimAchievement(userId, achievementId) {
+    const user = await User.findById(userId);
+    const achievement = await Achievement.findById(achievementId);
+
+    if (!user || !achievement) {
+      throw new Error('Usuario o logro no encontrado');
+    }
+
+    // Verificar si ya está desbloqueado
+    const alreadyUnlocked = user.unlockedAchievements.some(
+      ua => ua.achievement.toString() === achievementId
+    );
+
+    if (alreadyUnlocked) {
+      throw new Error('Logro ya desbloqueado');
+    }
+
+    // Desbloquear logro
+    user.unlockedAchievements.push({
+      achievement: achievementId,
+      unlockedAt: new Date()
+    });
+
+    // Otorgar recompensa
+    user.coins = (user.coins || 0) + (achievement.reward?.coins || 0);
+
+    await user.save();
+
+    return {
+      message: 'Logro desbloqueado',
+      achievement: achievement,
+      coinReward: achievement.reward?.coins || 0
+    };
+  }
+
+  /**
    * Verificar logros de alimentación
    */
   async checkFeedingAchievements(userId) {

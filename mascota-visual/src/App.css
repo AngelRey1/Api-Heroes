@@ -1,4 +1,4 @@
-/* Reset y configuración base */
+/* Reset y configuración base - Estilo Pou */
 * {
   margin: 0;
   padding: 0;
@@ -6,73 +6,258 @@
 }
 
 body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', cursive;
+  background: #FF69B4; /* Rosa vibrante como Pou */
   min-height: 100vh;
-  color: #333;
+  overflow-x: hidden;
+  color: #000;
 }
 
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #FF1493;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C71585;
+}
+
+/* Contenedor principal */
 .App {
   min-height: 100vh;
   position: relative;
+  background: #FF69B4;
 }
 
-/* Barra de monedas mejorada */
-.monedas-bar {
+/* Barra superior estilo Pou */
+.top-bar {
   position: fixed;
-  top: 20px;
-  right: 20px;
-  background: linear-gradient(135deg, #ffd700, #ffed4e);
-  color: #333;
-  padding: 12px 20px;
-  border-radius: 25px;
-  font-weight: bold;
-  font-size: 1.1em;
-  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 80px;
+  background: #FFB6C1; /* Rosa claro */
+  border-bottom: 3px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
   z-index: 1000;
-  border: 2px solid #fff;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
 }
 
-.monedas-bar-anim {
-  animation: coinPulse 0.6s ease-in-out;
+/* Monedas estilo Pou */
+.coins-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  font-size: 18px;
 }
 
-@keyframes coinPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
+.coin-icon {
+  width: 30px;
+  height: 30px;
+  background: #FFD700;
+  border: 3px solid #000;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  color: #000;
 }
 
-/* Formulario de login/registro mejorado */
+/* Iconos de acción estilo Pou */
+.action-icons {
+  display: flex;
+  gap: 10px;
+}
+
+.action-icon {
+  width: 35px;
+  height: 35px;
+  border: 3px solid #000;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.action-icon:hover {
+  transform: scale(1.1);
+}
+
+.action-icon.yellow {
+  background: #FFD700;
+}
+
+.action-icon.green {
+  background: #90EE90;
+}
+
+.action-icon.black {
+  background: #000;
+  color: #fff;
+}
+
+.action-icon.white {
+  background: #fff;
+}
+
+/* Barra de navegación estilo Pou */
+.nav-bar {
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: #FFB6C1;
+  border-bottom: 3px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  z-index: 999;
+}
+
+.nav-icon {
+  width: 30px;
+  height: 30px;
+  border: 2px solid #000;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  cursor: pointer;
+}
+
+.nav-title {
+  font-size: 20px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 2px 2px 0px #fff;
+}
+
+/* Contenedor principal */
+.main-container {
+  margin-top: 240px; /* Espacio para las barras superiores + navbar */
+  margin-bottom: 120px; /* Espacio para la barra inferior */
+  min-height: calc(100vh - 360px);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Personaje principal estilo Pou */
+.character-container {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.character {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 20px;
+  position: relative;
+}
+
+.character img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Barra inferior estilo Pou */
+.bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100px;
+  background: #8B4513; /* Marrón como suelo */
+  border-top: 3px solid #000;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  padding: 10px 20px;
+  z-index: 1000;
+}
+
+.bottom-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.bottom-item:hover {
+  transform: scale(1.1);
+}
+
+.bottom-icon {
+  width: 50px;
+  height: 50px;
+  border: 3px solid #000;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  font-size: 24px;
+}
+
+.bottom-text {
+  font-size: 14px;
+  font-weight: bold;
+  color: #fff;
+  text-shadow: 1px 1px 0px #000;
+}
+
+/* Contenedor de login estilo Pou */
 .login-container {
+  min-height: 100vh;
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: #FF69B4;
   padding: 20px;
 }
 
 .login-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
+  background: #FFB6C1;
+  border: 4px solid #000;
+  border-radius: 15px;
   padding: 40px;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  box-shadow: 8px 8px 0px #000;
   width: 100%;
   max-width: 400px;
   text-align: center;
 }
 
 .login-card h1 {
-  color: #333;
+  font-size: 32px;
+  font-weight: bold;
+  color: #000;
   margin-bottom: 30px;
-  font-size: 2.5em;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  text-shadow: 2px 2px 0px #fff;
 }
 
 .login-form {
@@ -82,278 +267,375 @@ body {
 }
 
 .form-group {
-  position: relative;
+  text-align: left;
 }
 
 .form-group input {
   width: 100%;
-  padding: 15px 20px;
-  border: 2px solid #e1e5e9;
-  border-radius: 12px;
-  font-size: 1em;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.9);
+  padding: 15px;
+  border: 3px solid #000;
+  border-radius: 10px;
+  font-size: 16px;
+  font-family: inherit;
+  background: #fff;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  transform: translateY(-2px);
+  border-color: #FF1493;
+  box-shadow: 0 0 10px rgba(255, 20, 147, 0.3);
 }
 
 .login-btn {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  border: none;
+  background: #FFD700;
+  color: #000;
+  border: 3px solid #000;
+  border-radius: 10px;
   padding: 15px 30px;
-  border-radius: 12px;
-  font-size: 1.1em;
+  font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 10px;
+  transition: all 0.2s;
+  font-family: inherit;
 }
 
 .login-btn:hover {
+  background: #FFA500;
   transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  box-shadow: 4px 4px 0px #000;
 }
 
-.login-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
+.login-btn:active {
+  transform: translateY(0);
+  box-shadow: 2px 2px 0px #000;
 }
 
 .toggle-btn {
-  background: transparent;
-  border: 2px solid #667eea;
-  color: #667eea;
-  padding: 12px 25px;
-  border-radius: 12px;
-  font-size: 1em;
+  background: none;
+  border: none;
+  color: #000;
+  font-size: 16px;
   cursor: pointer;
-  transition: all 0.3s ease;
-  margin-top: 20px;
+  text-decoration: underline;
+  font-family: inherit;
+  margin-top: 15px;
 }
 
 .toggle-btn:hover {
-  background: #667eea;
-  color: white;
-  transform: translateY(-2px);
+  color: #FF1493;
 }
 
-/* Mensajes de estado */
 .message {
   padding: 15px;
-  border-radius: 12px;
+  border-radius: 10px;
   margin: 15px 0;
-  font-weight: 500;
+  font-weight: bold;
+  animation: slideInUp 0.3s ease-out;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .error {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-  color: white;
-  box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+  background: #FF6B6B;
+  color: #fff;
+  border: 2px solid #000;
 }
 
 .success {
-  background: linear-gradient(135deg, #2ecc40, #27ae60);
-  color: white;
-  box-shadow: 0 4px 15px rgba(46, 204, 64, 0.3);
+  background: #90EE90;
+  color: #000;
+  border: 2px solid #000;
 }
 
-/* Loading spinner */
 .loading {
   display: inline-block;
   width: 20px;
   height: 20px;
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid #000;
   border-radius: 50%;
-  border-top-color: #fff;
-  animation: spin 1s ease-in-out infinite;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
-/* Navegación mejorada */
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 24px;
+  font-weight: bold;
+  text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+}
+
+/* Navegación principal */
 .navbar {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 15px 0;
-  position: sticky;
-  top: 0;
-  z-index: 1000;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.1);
+  position: fixed;
+  top: 140px;
+  left: 0;
+  right: 0;
+  background: #FFB6C1;
+  border-bottom: 3px solid #000;
+  z-index: 998;
 }
 
 .nav-container {
-  max-width: 1200px;
-  margin: 0 auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 10px 20px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .nav-logo {
-  font-size: 1.5em;
+  font-size: 24px;
   font-weight: bold;
-  color: #667eea;
-  text-decoration: none;
+  color: #000;
+  text-shadow: 2px 2px 0px #fff;
 }
 
 .nav-links {
   display: flex;
   gap: 20px;
-  list-style: none;
 }
 
 .nav-links a {
-  color: #333;
+  color: #000;
   text-decoration: none;
+  font-weight: bold;
   padding: 10px 15px;
+  border: 2px solid #000;
   border-radius: 8px;
-  transition: all 0.3s ease;
-  font-weight: 500;
+  background: #fff;
+  transition: all 0.2s;
 }
 
 .nav-links a:hover {
-  background: rgba(102, 126, 234, 0.1);
-  color: #667eea;
+  background: #FFD700;
   transform: translateY(-2px);
+  box-shadow: 4px 4px 0px #000;
 }
 
-/* Contenedor principal */
-.main-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  min-height: calc(100vh - 80px);
-}
-
-/* Cards mejoradas */
+/* Tarjetas estilo Pou */
 .card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 30px;
-  margin: 20px 0;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
+  background: #FFB6C1;
+  border: 4px solid #000;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 15px;
+  box-shadow: 6px 6px 0px #000;
+  transition: all 0.2s;
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
+  box-shadow: 8px 8px 0px #000;
 }
 
-.card h2 {
-  color: #333;
-  margin-bottom: 20px;
-  font-size: 1.8em;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-/* Botones mejorados */
+/* Botones estilo Pou */
 .btn {
+  background: #FFD700;
+  color: #000;
+  border: 3px solid #000;
+  border-radius: 10px;
   padding: 12px 24px;
-  border: none;
-  border-radius: 12px;
+  font-size: 16px;
   font-weight: bold;
   cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 1em;
+  transition: all 0.2s;
+  font-family: inherit;
   text-decoration: none;
   display: inline-block;
-  text-align: center;
+}
+
+.btn:hover {
+  background: #FFA500;
+  transform: translateY(-2px);
+  box-shadow: 4px 4px 0px #000;
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 2px 2px 0px #000;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
+  background: #FFD700;
 }
 
 .btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+  background: #FFA500;
 }
 
 .btn-secondary {
-  background: linear-gradient(135deg, #95a5a6, #7f8c8d);
-  color: white;
+  background: #90EE90;
+}
+
+.btn-secondary:hover {
+  background: #32CD32;
 }
 
 .btn-success {
-  background: linear-gradient(135deg, #2ecc40, #27ae60);
-  color: white;
+  background: #90EE90;
+}
+
+.btn-success:hover {
+  background: #32CD32;
 }
 
 .btn-danger {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
-  color: white;
+  background: #FF6B6B;
+}
+
+.btn-danger:hover {
+  background: #FF4500;
 }
 
 /* Grid responsivo */
 .grid {
   display: grid;
-  gap: 20px;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-/* Animaciones */
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.fade-in {
-  animation: fadeIn 0.5s ease-out;
+  gap: 20px;
+  padding: 20px;
 }
 
 /* Responsive */
 @media (max-width: 768px) {
   .login-card {
-    padding: 30px 20px;
+    margin: 20px;
+    padding: 30px;
   }
-  
-  .nav-links {
+
+  .login-card h1 {
+    font-size: 28px;
+  }
+
+  .nav-container {
     flex-direction: column;
-    gap: 10px;
+    gap: 15px;
   }
-  
+
+  .nav-links {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
   .grid {
     grid-template-columns: 1fr;
   }
-  
-  .card {
-    padding: 20px;
+
+  .top-bar {
+    height: 60px;
+    padding: 0 15px;
+  }
+
+  .nav-bar {
+    top: 60px;
+    height: 50px;
+  }
+
+  .main-container {
+    margin-top: 200px;
+  }
+
+  .bottom-bar {
+    height: 80px;
   }
 }
 
-/* Scrollbar personalizada */
-::-webkit-scrollbar {
-  width: 8px;
+/* Animaciones */
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
 }
 
-::-webkit-scrollbar-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  border-radius: 4px;
+.bounce-in {
+  animation: bounceIn 0.6s ease-out;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #5a6fd8, #6a4190);
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Efectos de partículas */
+.particle {
+  position: absolute;
+  pointer-events: none;
+  animation: particleFloat 2s ease-out forwards;
+}
+
+@keyframes particleFloat {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50px) scale(0.5);
+  }
+}
+
+/* Efectos hover */
+.hover-lift {
+  transition: transform 0.2s;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* Fondos de gradiente */
+.gradient-bg {
+  background: linear-gradient(45deg, #FF69B4, #FF1493);
+  animation: gradientShift 3s ease-in-out infinite;
+}
+
+@keyframes gradientShift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }

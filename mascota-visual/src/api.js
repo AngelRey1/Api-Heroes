@@ -28,18 +28,24 @@ export const register = async (username, email, password) => {
 };
 
 // --- NUEVOS SERVICIOS ---
-export const getItems = async () => {
-  const res = await axios.get(`${API_URL}/items`);
+export const getItems = async (token) => {
+  const res = await axios.get(`${API_URL}/items`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
-export const getAchievements = async () => {
-  const res = await axios.get(`${API_URL}/achievements`);
+export const getAchievements = async (token) => {
+  const res = await axios.get(`${API_URL}/achievements`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
-export const getMinigames = async () => {
-  const res = await axios.get(`${API_URL}/minigames`);
+export const getMinigames = async (token) => {
+  const res = await axios.get(`${API_URL}/minigames`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
@@ -72,12 +78,7 @@ export const getUserProfile = async (token) => {
   return res.data;
 };
 
-export const updateUserProfile = async (token, data) => {
-  const res = await axios.put(`${API_URL}/users/me`, data, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
+
 
 export const updateUserBackground = async (token, background) => {
   const res = await axios.put(`${API_URL}/users/background`, { background }, {
@@ -184,6 +185,13 @@ export const updateHero = async (token, heroId, data) => {
   return res.data;
 };
 
+export const createHero = async (token, data) => {
+  const res = await axios.post(`${API_URL}/heroes`, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
 export const equipHeroAccessory = async (token, heroId, itemId) => {
   const res = await axios.post(`${API_URL}/heroes/${heroId}/equip`, { itemId }, {
     headers: { Authorization: `Bearer ${token}` }
@@ -280,18 +288,24 @@ export const customizePet = async (petId, token, { item, type, color, forma }) =
   return res.data;
 };
 
-export const getHeroRanking = async () => {
-  const res = await axios.get(`${API_URL}/heroes/ranking`);
+export const getHeroRanking = async (token) => {
+  const res = await axios.get(`${API_URL}/heroes/ranking`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
-export const getHeroProfile = async (heroId) => {
-  const res = await axios.get(`${API_URL}/heroes/${heroId}/perfil`);
+export const getHeroProfile = async (heroId, token) => {
+  const res = await axios.get(`${API_URL}/heroes/${heroId}/perfil`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
-export const sendHeroPraise = async (heroId, mensaje, autor) => {
-  const res = await axios.post(`${API_URL}/heroes/${heroId}/elogio`, { mensaje, autor });
+export const sendHeroPraise = async (heroId, mensaje, autor, token) => {
+  const res = await axios.post(`${API_URL}/heroes/${heroId}/elogio`, { mensaje, autor }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
@@ -323,8 +337,10 @@ export const generateMissions = async (token) => {
   return res.data;
 };
 
-export const getActiveEvent = async () => {
-  const res = await axios.get(`${API_URL}/events/active`);
+export const getActiveEvent = async (token) => {
+  const res = await axios.get(`${API_URL}/events/active`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
@@ -335,18 +351,24 @@ export const getUserEventProgress = async (token) => {
   return res.data;
 };
 
-export const getAllMinigames = async () => {
-  const res = await axios.get(`${API_URL}/minigames`);
+export const getAllMinigames = async (token) => {
+  const res = await axios.get(`${API_URL}/minigames`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
-export const getMinigameById = async (id) => {
-  const res = await axios.get(`${API_URL}/minigames/${id}`);
+export const getMinigameById = async (id, token) => {
+  const res = await axios.get(`${API_URL}/minigames/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
-export const getMinigameHighScores = async (minigameId, limit = 10) => {
-  const res = await axios.get(`${API_URL}/minigames/${minigameId}/highscores?limit=${limit}`);
+export const getMinigameHighScores = async (minigameId, limit = 10, token) => {
+  const res = await axios.get(`${API_URL}/minigames/${minigameId}/highscores?limit=${limit}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
@@ -479,8 +501,10 @@ export const deleteConversation = async (conversationId, token) => {
 };
 
 // Funciones de torneos
-export const getActiveTournaments = async () => {
-  const res = await axios.get(`${API_URL}/tournaments`);
+export const getActiveTournaments = async (token) => {
+  const res = await axios.get(`${API_URL}/tournaments`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
@@ -568,8 +592,10 @@ export const getComparativeStatistics = async (token) => {
   return res.data;
 };
 
-export const getGlobalStatistics = async () => {
-  const res = await axios.get(`${API_URL}/statistics/global`);
+export const getGlobalStatistics = async (token) => {
+  const res = await axios.get(`${API_URL}/statistics/global`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return res.data;
 };
 
@@ -585,4 +611,247 @@ export const getUserRecommendations = async (token) => {
     headers: { Authorization: `Bearer ${token}` }
   });
   return res.data;
+};
+
+// Funciones de perfil
+export const updateUserProfile = async (profileData, token) => {
+  try {
+    const response = await axios.put(`${API_URL}/users/profile`, profileData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const changePassword = async (passwordData, token) => {
+  try {
+    const response = await axios.put(`${API_URL}/users/change-password`, passwordData, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const deleteAccount = async (token) => {
+  try {
+    const response = await axios.delete(`${API_URL}/users/account`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const exportUserData = async (token) => {
+  try {
+    const response = await axios.get(`${API_URL}/users/export-data`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getProfileStatistics = async (token) => {
+  try {
+    const response = await axios.get(`${API_URL}/users/profile-statistics`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Funciones de chat
+export const getMessages = async (conversationId, token) => {
+  try {
+    const response = await axios.get(`${API_URL}/chat/conversations/${conversationId}/messages`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const markAsRead = async (conversationId, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/chat/conversations/${conversationId}/read`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getUnreadCount = async (token) => {
+  try {
+    const response = await axios.get(`${API_URL}/chat/unread-count`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data.unreadCount || 0;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Funciones de logros
+export const claimAchievementReward = async (achievementId, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/achievements/${achievementId}/claim-reward`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Funciones de personalización
+export const getPetCustomizations = async (token) => {
+  try {
+    const response = await axios.get(`${API_URL}/customization/pets`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getHeroCustomizations = async (token) => {
+  try {
+    const response = await axios.get(`${API_URL}/customization/heroes`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const applyPetCustomization = async (petId, customizationId, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/customization/pets/${petId}/apply`, {
+      customizationId
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const applyHeroCustomization = async (heroId, customizationId, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/customization/heroes/${heroId}/apply`, {
+      customizationId
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const buyCustomization = async (customizationId, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/customization/buy`, {
+      customizationId
+    }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Funciones de eventos
+export const joinEvent = async (eventId, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/events/${eventId}/join`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const leaveEvent = async (eventId, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/events/${eventId}/leave`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getEventParticipants = async (eventId, token) => {
+  try {
+    const response = await axios.get(`${API_URL}/events/${eventId}/participants`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const claimEventReward = async (eventId, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/events/${eventId}/claim-reward`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Funciones de amigos
+export const acceptFriendRequest = async (requestId, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/friends/requests/${requestId}/accept`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const rejectFriendRequest = async (requestId, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/friends/requests/${requestId}/reject`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const visitFriend = async (friendId, token) => {
+  try {
+    const response = await axios.post(`${API_URL}/friends/${friendId}/visit`, {}, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
 };

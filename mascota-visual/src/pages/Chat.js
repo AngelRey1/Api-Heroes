@@ -1,37 +1,39 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useUser } from '../context/UserContext';
 import { 
   getConversations, 
-  getConversationMessages, 
-  sendMessage, 
-  markMessagesAsRead,
-  getUnreadMessagesCount,
-  searchMessages
+  getMessages, 
+  sendMessage,
+  markAsRead,
+  getUnreadCount
 } from '../api';
+import { useSoundEffects } from '../components/SoundEffects';
+import NotificationToast from '../components/NotificationToast';
 import './Chat.css';
 
-export default function Chat({ token }) {
+const Chat = () => {
+  const { token, user } = useUser();
+  const { playClick, playCoin } = useSoundEffects();
   const [conversations, setConversations] = useState([]);
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [sending, setSending] = useState(false);
+  const [notification, setNotification] = useState({ message: '', type: 'info' });
   const [unreadCount, setUnreadCount] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
   const messagesEndRef = useRef(null);
-  const messageInputRef = useRef(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchConversations();
-    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000); // Actualizar cada 30 segundos
+    return () => clearInterval(interval);
   }, [token]);
 
   useEffect(() => {
     if (selectedConversation) {
-      fetchMessages(selectedConversation.otherParticipant._id);
-      markAsRead(selectedConversation.otherParticipant._id);
+      fetchMessages(selectedConversation._id);
     }
   }, [selectedConversation]);
 
@@ -40,43 +42,46 @@ export default function Chat({ token }) {
   }, [messages]);
 
   const fetchConversations = async () => {
-    setLoading(true);
-    setError('');
     try {
-      const data = await getConversations(token);
-      setConversations(data);
+      setLoading(true);
+      const conversationsData = await getConversations(token);
+      setConversations(conversationsData);
     } catch (err) {
-      setError('Error al cargar conversaciones.');
+      console.error('Error fetching conversations:', err);
+      setNotification({ message: 'Error al cargar conversaciones', type: 'error' });
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchMessages = async (userId) => {
+  const fetchMessages = async (conversationId) => {
     try {
-      const data = await getConversationMessages(userId, token);
-      setMessages(data);
+      const messagesData = await getMessages(conversationId, token);
+      setMessages(messagesData);
+      
+      // Marcar como leído
+      await markAsRead(conversationId, token);
+      
+      // Actualizar conversación
+      setConversations(prev => 
+        prev.map(conv => 
+          conv._id === conversationId 
+            ? { ...conv, unreadCount: 0 }
+            : conv
+        )
+      );
     } catch (err) {
-      setError('Error al cargar mensajes.');
+      console.error('Error fetching messages:', err);
+      setNotification({ message: 'Error al cargar mensajes', type: 'error' });
     }
   };
 
   const fetchUnreadCount = async () => {
     try {
-      const data = await getUnreadMessagesCount(token);
-      setUnreadCount(data.unreadCount);
+      const count = await getUnreadCount(token);
+      setUnreadCount(count);
     } catch (err) {
       console.error('Error fetching unread count:', err);
-    }
-  };
-
-  const markAsRead = async (senderId) => {
-    try {
-      await markMessagesAsRead(senderId, token);
-      fetchUnreadCount();
-      fetchConversations(); // Actualizar contadores
-    } catch (err) {
-      console.error('Error marking as read:', err);
     }
   };
 
@@ -84,12 +89,31 @@ export default function Chat({ token }) {
     if (!newMessage.trim() || !selectedConversation) return;
 
     try {
-      await sendMessage(selectedConversation.otherParticipant._id, newMessage.trim(), token);
+      setSending(true);
+      playClick();
+      
+      const messageData = await sendMessage(selectedConversation._id, newMessage, token);
+      
+      // Agregar mensaje a la lista
+      setMessages(prev => [...prev, messageData]);
+      
+      // Limpiar input
       setNewMessage('');
-      fetchMessages(selectedConversation.otherParticipant._id);
-      fetchConversations(); // Actualizar última mensaje
+      
+      // Actualizar última actividad en conversación
+      setConversations(prev => 
+        prev.map(conv => 
+          conv._id === selectedConversation._id 
+            ? { ...conv, lastMessage: newMessage, lastActivity: new Date() }
+            : conv
+        )
+      );
+      
     } catch (err) {
-      setError('Error al enviar mensaje.');
+      console.error('Error sending message:', err);
+      setNotification({ message: 'Error al enviar mensaje', type: 'error' });
+    } finally {
+      setSending(false);
     }
   };
 
@@ -100,226 +124,244 @@ export default function Chat({ token }) {
     }
   };
 
-  const handleSearch = async () => {
-    if (!searchQuery.trim()) return;
-    
-    setIsSearching(true);
-    try {
-      const results = await searchMessages(searchQuery, token);
-      setSearchResults(results);
-    } catch (err) {
-      setError('Error al buscar mensajes.');
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  const formatTime = (dateString) => {
-    const date = new Date(dateString);
+  const formatTime = (timestamp) => {
+    const date = new Date(timestamp);
     const now = new Date();
-    const diffInHours = (now - date) / (1000 * 60 * 60);
-
-    if (diffInHours < 24) {
-      return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
-    } else if (diffInHours < 48) {
-      return 'Ayer';
-    } else {
-      return date.toLocaleDateString('es-ES');
-    }
+    const diff = now - date;
+    
+    if (diff < 60000) return 'Ahora';
+    if (diff < 3600000) return `${Math.floor(diff / 60000)}m`;
+    if (diff < 86400000) return `${Math.floor(diff / 3600000)}h`;
+    return date.toLocaleDateString();
   };
 
-  const getMessageTypeStyle = (message) => {
-    switch (message.type) {
-      case 'system':
-        return 'message-system';
-      case 'achievement':
-        return 'message-achievement';
-      case 'gift':
-        return 'message-gift';
-      default:
-        return message.sender ? 'message-sent' : 'message-received';
-    }
-  };
+  const filteredConversations = conversations.filter(conv => 
+    conv.participant.username.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
-  if (loading) return <div className="chat-container"><p>Cargando chat...</p></div>;
+  if (loading) {
+    return (
+      <div className="chat-container">
+        <div className="loading-message">
+          <div className="loading-spinner">💬</div>
+          <p>Cargando chat...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="chat-container">
+      <NotificationToast 
+        message={notification.message} 
+        type={notification.type} 
+        onClose={() => setNotification({ message: '', type: 'info' })} 
+      />
+
+      {/* Header */}
       <div className="chat-header">
-        <h2>💬 Chat</h2>
-        {unreadCount > 0 && (
-          <div className="unread-badge">{unreadCount}</div>
-        )}
+        <h1>💬 Chat</h1>
+        <div className="chat-stats">
+          <div className="stat-item">
+            <span className="stat-icon">💬</span>
+            <span className="stat-label">Conversaciones:</span>
+            <span className="stat-value">{conversations.length}</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-icon">📨</span>
+            <span className="stat-label">No leídos:</span>
+            <span className="stat-value">{unreadCount}</span>
+          </div>
+        </div>
       </div>
 
-      {error && <p className="error-message">{error}</p>}
-
-      <div className="chat-layout">
-        {/* Panel de conversaciones */}
-        <div className="conversations-panel">
-          <div className="search-section">
+      <div className="chat-content">
+        {/* Lista de conversaciones */}
+        <div className="conversations-sidebar">
+          <div className="search-container">
             <input
               type="text"
-              placeholder="Buscar mensajes..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+              placeholder="Buscar conversaciones..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
             />
-            <button onClick={handleSearch} disabled={isSearching}>
-              {isSearching ? '🔍' : 'Buscar'}
-            </button>
           </div>
 
-          {searchResults.length > 0 ? (
-            <div className="search-results">
-              <h3>Resultados de búsqueda</h3>
-              {searchResults.map(message => (
-                <div key={message._id} className="search-result-item">
-                  <div className="search-result-header">
-                    <span className="sender">
-                      {message.sender ? message.sender.username : 'Sistema'}
-                    </span>
-                    <span className="time">{formatTime(message.createdAt)}</span>
-                  </div>
-                  <div className="search-result-content">{message.content}</div>
-                </div>
-              ))}
-              <button 
-                className="clear-search"
-                onClick={() => {
-                  setSearchResults([]);
-                  setSearchQuery('');
-                }}
-              >
-                Limpiar búsqueda
-              </button>
-            </div>
-          ) : (
-            <div className="conversations-list">
-              {conversations.length === 0 ? (
-                <p className="no-conversations">No tienes conversaciones. ¡Agrega amigos para chatear!</p>
-              ) : (
-                conversations.map(conv => (
-                  <div
-                    key={conv._id}
-                    className={`conversation-item ${selectedConversation?._id === conv._id ? 'active' : ''}`}
-                    onClick={() => setSelectedConversation(conv)}
-                  >
-                    <div className="conversation-avatar">
-                      {conv.otherParticipant.avatar ? (
-                        <img src={conv.otherParticipant.avatar} alt={conv.otherParticipant.heroName} />
-                      ) : (
-                        <div className="default-avatar">👤</div>
-                      )}
-                    </div>
-                    <div className="conversation-info">
-                      <div className="conversation-header">
-                        <h4>{conv.otherParticipant.heroName}</h4>
-                        {conv.unreadCount > 0 && (
-                          <span className="unread-count">{conv.unreadCount}</span>
-                        )}
-                      </div>
-                      <p className="last-message">
-                        {conv.lastMessage?.content || 'Sin mensajes'}
-                      </p>
-                      <span className="last-time">
-                        {conv.lastMessage ? formatTime(conv.lastMessage.createdAt) : ''}
-                      </span>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Panel de mensajes */}
-        <div className="messages-panel">
-          {selectedConversation ? (
-            <>
-              <div className="messages-header">
-                <div className="selected-user">
-                  <div className="user-avatar">
-                    {selectedConversation.otherParticipant.avatar ? (
-                      <img src={selectedConversation.otherParticipant.avatar} alt={selectedConversation.otherParticipant.heroName} />
-                    ) : (
-                      <div className="default-avatar">👤</div>
+          <div className="conversations-list">
+            {filteredConversations.length === 0 ? (
+              <div className="no-conversations">
+                <div className="no-conversations-icon">💬</div>
+                <h3>No hay conversaciones</h3>
+                <p>¡Inicia una conversación con tus amigos!</p>
+              </div>
+            ) : (
+              filteredConversations.map(conversation => (
+                <div 
+                  key={conversation._id} 
+                  className={`conversation-item ${selectedConversation?._id === conversation._id ? 'active' : ''}`}
+                  onClick={() => {
+                    setSelectedConversation(conversation);
+                    playClick();
+                  }}
+                >
+                  <div className="conversation-avatar">
+                    <img 
+                      src={conversation.participant.avatar || '/assets/hero.svg'} 
+                      alt={conversation.participant.username}
+                      className="avatar-img"
+                    />
+                    {conversation.participant.online && (
+                      <div className="online-indicator"></div>
                     )}
                   </div>
-                  <div className="user-info">
-                    <h3>{selectedConversation.otherParticipant.heroName}</h3>
-                    <p>@{selectedConversation.otherParticipant.username}</p>
+                  
+                  <div className="conversation-info">
+                    <div className="conversation-header">
+                      <h3 className="conversation-name">{conversation.participant.username}</h3>
+                      <span className="conversation-time">
+                        {formatTime(conversation.lastActivity)}
+                      </span>
+                    </div>
+                    
+                    <p className="conversation-preview">
+                      {conversation.lastMessage || 'No hay mensajes'}
+                    </p>
+                  </div>
+                  
+                  {conversation.unreadCount > 0 && (
+                    <div className="unread-badge">
+                      {conversation.unreadCount}
+                    </div>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Área de mensajes */}
+        <div className="messages-area">
+          {selectedConversation ? (
+            <>
+              {/* Header del chat */}
+              <div className="chat-messages-header">
+                <div className="chat-participant">
+                  <img 
+                    src={selectedConversation.participant.avatar || '/assets/hero.svg'} 
+                    alt={selectedConversation.participant.username}
+                    className="participant-avatar"
+                  />
+                  <div className="participant-info">
+                    <h3 className="participant-name">{selectedConversation.participant.username}</h3>
+                    <span className="participant-status">
+                      {selectedConversation.participant.online ? '🟢 En línea' : '⚪ Desconectado'}
+                    </span>
                   </div>
                 </div>
               </div>
 
+              {/* Mensajes */}
               <div className="messages-container">
                 {messages.length === 0 ? (
                   <div className="no-messages">
-                    <p>No hay mensajes aún. ¡Inicia la conversación!</p>
+                    <div className="no-messages-icon">💬</div>
+                    <h3>No hay mensajes</h3>
+                    <p>¡Inicia la conversación!</p>
                   </div>
                 ) : (
                   messages.map(message => (
-                    <div key={message._id} className={`message ${getMessageTypeStyle(message)}`}>
-                      {message.sender && (
+                    <div 
+                      key={message._id} 
+                      className={`message ${message.sender._id === user?._id ? 'own' : 'other'}`}
+                    >
+                      <div className="message-content">
+                        <p className="message-text">{message.content}</p>
+                        <span className="message-time">
+                          {formatTime(message.timestamp)}
+                        </span>
+                      </div>
+                      
+                      {message.sender._id !== user?._id && (
                         <div className="message-avatar">
-                          {message.sender.heroes && message.sender.heroes.length > 0 ? (
-                            <img src={message.sender.heroes[0].avatar} alt={message.sender.username} />
-                          ) : (
-                            <div className="default-avatar">👤</div>
-                          )}
+                          <img 
+                            src={message.sender.avatar || '/assets/hero.svg'} 
+                            alt={message.sender.username}
+                            className="avatar-img"
+                          />
                         </div>
                       )}
-                      <div className="message-content">
-                        <div className="message-header">
-                          <span className="message-sender">
-                            {message.sender ? message.sender.username : 'Sistema'}
-                          </span>
-                          <span className="message-time">{formatTime(message.createdAt)}</span>
-                        </div>
-                        <div className="message-text">{message.content}</div>
-                        {message.metadata?.emoji && (
-                          <div className="message-emoji">{message.metadata.emoji}</div>
-                        )}
-                      </div>
                     </div>
                   ))
                 )}
                 <div ref={messagesEndRef} />
               </div>
 
+              {/* Input de mensaje */}
               <div className="message-input-container">
-                <textarea
-                  ref={messageInputRef}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Escribe un mensaje..."
-                  rows="3"
-                />
-                <button 
-                  onClick={handleSendMessage}
-                  disabled={!newMessage.trim()}
-                  className="send-button"
-                >
-                  📤
-                </button>
+                <div className="message-input-wrapper">
+                  <textarea
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Escribe un mensaje..."
+                    className="message-input"
+                    rows="1"
+                  />
+                  <button
+                    className="send-btn"
+                    onClick={handleSendMessage}
+                    disabled={sending || !newMessage.trim()}
+                  >
+                    {sending ? '⏳' : '📤'}
+                  </button>
+                </div>
               </div>
             </>
           ) : (
-            <div className="no-conversation-selected">
-              <div className="select-conversation">
-                <h3>💬 Selecciona una conversación</h3>
-                <p>Elige un amigo de la lista para comenzar a chatear</p>
-              </div>
+            <div className="no-chat-selected">
+              <div className="no-chat-icon">💬</div>
+              <h3>Selecciona una conversación</h3>
+              <p>Elige una conversación para comenzar a chatear</p>
             </div>
           )}
         </div>
       </div>
+
+      {/* Información adicional */}
+      <div className="chat-info">
+        <div className="info-card">
+          <h3>💡 Funciones del Chat</h3>
+          <div className="chat-features">
+            <div className="feature-item">
+              <span className="feature-icon">💬</span>
+              <span className="feature-name">Mensajes</span>
+              <span className="feature-desc">Envía mensajes en tiempo real</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">👥</span>
+              <span className="feature-name">Conversaciones</span>
+              <span className="feature-desc">Chatea con tus amigos</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">📨</span>
+              <span className="feature-name">Notificaciones</span>
+              <span className="feature-desc">Recibe notificaciones de nuevos mensajes</span>
+            </div>
+            <div className="feature-item">
+              <span className="feature-icon">🟢</span>
+              <span className="feature-name">Estado en línea</span>
+              <span className="feature-desc">Ve quién está conectado</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
-} 
+};
+
+export default Chat; 

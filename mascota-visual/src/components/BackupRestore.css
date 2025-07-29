@@ -1,0 +1,399 @@
+/* Backup Restore - Estilo Pou */
+.backup-restore-container {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.backup-restore-card {
+  background: #FFE4E1;
+  border: 4px solid #000;
+  border-radius: 15px;
+  padding: 25px;
+  box-shadow: 8px 8px 0px #000;
+}
+
+.backup-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #000;
+}
+
+.backup-icon {
+  font-size: 32px;
+  flex-shrink: 0;
+}
+
+.backup-header h3 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 2px 2px 0px #fff;
+  margin: 0;
+}
+
+.backup-content {
+  margin-bottom: 25px;
+}
+
+.backup-section {
+  background: #FFD700;
+  border: 3px solid #000;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 20px;
+  box-shadow: 4px 4px 0px #000;
+}
+
+.backup-section h4 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+  margin: 0 0 10px 0;
+}
+
+.backup-section p {
+  font-size: 14px;
+  color: #333;
+  text-shadow: 1px 1px 0px #fff;
+  margin: 0 0 15px 0;
+  line-height: 1.4;
+}
+
+.backup-btn {
+  padding: 12px 20px;
+  border: 3px solid #000;
+  border-radius: 10px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 4px 4px 0px #000;
+  text-shadow: 1px 1px 0px #fff;
+  margin-right: 10px;
+  margin-bottom: 10px;
+}
+
+.backup-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 6px 6px 0px #000;
+}
+
+.backup-btn:disabled {
+  background: #D3D3D3;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 4px 4px 0px #000;
+}
+
+.create-btn {
+  background: #90EE90;
+  color: #000;
+}
+
+.create-btn:hover:not(:disabled) {
+  background: #7CFC00;
+}
+
+.restore-btn {
+  background: #87CEEB;
+  color: #000;
+}
+
+.restore-btn:hover:not(:disabled) {
+  background: #5F9EA0;
+}
+
+.confirm-btn {
+  background: #FFD700;
+  color: #000;
+}
+
+.confirm-btn:hover:not(:disabled) {
+  background: #FFC107;
+}
+
+.clear-btn {
+  background: #FF6B6B;
+  color: #000;
+}
+
+.clear-btn:hover {
+  background: #FF5252;
+}
+
+.file-input-container {
+  margin-bottom: 15px;
+}
+
+.file-input {
+  display: none;
+}
+
+.file-label {
+  display: inline-block;
+  background: #FFE4E1;
+  color: #000;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 10px 15px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 3px 3px 0px #000;
+  text-shadow: 1px 1px 0px #fff;
+}
+
+.file-label:hover {
+  background: #FFD700;
+  transform: translateY(-1px);
+  box-shadow: 4px 4px 0px #000;
+}
+
+.file-info {
+  background: #FFE4E1;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 3px 3px 0px #000;
+}
+
+.file-name {
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+}
+
+.file-size {
+  font-size: 12px;
+  color: #333;
+  text-shadow: 1px 1px 0px #fff;
+}
+
+.backup-preview {
+  background: #FFE4E1;
+  border: 3px solid #000;
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 4px 4px 0px #000;
+}
+
+.backup-preview h4 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+  margin: 0 0 15px 0;
+  text-align: center;
+}
+
+.preview-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.preview-item {
+  background: #FFD700;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 3px 3px 0px #000;
+}
+
+.preview-label {
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+}
+
+.preview-value {
+  font-size: 14px;
+  color: #333;
+  text-shadow: 1px 1px 0px #fff;
+  font-weight: bold;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.backup-info {
+  background: #FFD700;
+  border: 3px solid #000;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 4px 4px 0px #000;
+}
+
+.backup-info h4 {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+  margin: 0 0 15px 0;
+  text-align: center;
+}
+
+.info-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.info-list li {
+  background: #FFE4E1;
+  border: 2px solid #000;
+  border-radius: 8px;
+  padding: 10px 15px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  color: #333;
+  text-shadow: 1px 1px 0px #fff;
+  box-shadow: 3px 3px 0px #000;
+}
+
+.info-list li:last-child {
+  margin-bottom: 0;
+}
+
+.backup-toast {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #FFE4E1;
+  border: 3px solid #000;
+  border-radius: 10px;
+  padding: 15px 20px;
+  box-shadow: 6px 6px 0px #000;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 10000;
+  animation: toastSlideIn 0.3s ease-out;
+  max-width: 400px;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.backup-toast.success {
+  background: #90EE90;
+}
+
+.backup-toast.error {
+  background: #FF6B6B;
+}
+
+.backup-toast.info {
+  background: #87CEEB;
+}
+
+.toast-icon {
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.toast-message {
+  font-size: 14px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+  flex: 1;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  color: #000;
+  cursor: pointer;
+  padding: 0;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.toast-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .backup-restore-container {
+    padding: 15px;
+  }
+  
+  .backup-restore-card {
+    padding: 20px;
+  }
+  
+  .backup-header h3 {
+    font-size: 20px;
+  }
+  
+  .backup-icon {
+    font-size: 28px;
+  }
+  
+  .backup-section {
+    padding: 15px;
+  }
+  
+  .backup-section h4 {
+    font-size: 16px;
+  }
+  
+  .backup-btn {
+    font-size: 14px;
+    padding: 10px 16px;
+    margin-bottom: 8px;
+  }
+  
+  .preview-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .preview-actions {
+    flex-direction: column;
+  }
+  
+  .backup-toast {
+    top: 10px;
+    right: 10px;
+    left: 10px;
+    max-width: none;
+  }
+} 

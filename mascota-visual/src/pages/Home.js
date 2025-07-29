@@ -1,60 +1,68 @@
 import React from 'react';
+import { useUser } from '../context/UserContext';
+import ActionButtons from '../components/ActionButtons';
+import NotificationToast from '../components/NotificationToast';
 import './Home.css';
 
 function Toast({ message, color = '#e74c3c', onClose }) {
   if (!message) return null;
   return (
-    <div style={{ position: 'fixed', top: 24, right: 24, background: color, color: '#fff', padding: '16px 32px', borderRadius: 12, fontWeight: 'bold', zIndex: 9999, boxShadow: '0 2px 12px rgba(0,0,0,0.18)' }} onClick={onClose}>
+    <div style={{ 
+      position: 'fixed', 
+      top: 150, 
+      right: 24, 
+      background: color, 
+      color: '#fff', 
+      padding: '16px 32px', 
+      borderRadius: 12, 
+      fontWeight: 'bold', 
+      zIndex: 9999, 
+      boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
+      border: '3px solid #000'
+    }} onClick={onClose}>
       {message}
     </div>
   );
 }
 
-export default function Home({ hero, mascota, estado, alimentar, limpiar, jugar, loading, animacionStat, animar, dormir }) {
+export default function Home({ mascota, hero, alimentar, limpiar, jugar, dormir, loading: loadingProp, animacionStat, animar }) {
+  const { token, fetchUserData } = useUser();
+
   // Determinar imagen dinámica según estado
-  let mascotaImg = '/assets/dog_normal.png';
+  let mascotaImg = '/assets/dog_normal.svg';
   if (mascota) {
     if (mascota.status === 'dead' || mascota.health === 0) {
-      mascotaImg = mascota.type === 'Gato' ? '/assets/cat_dead.png' : '/assets/dog_dead.png';
+      mascotaImg = mascota.type === 'Gato' ? '/assets/cat_dead.svg' : '/assets/dog_dead.svg';
     } else if ((mascota.happiness ?? 100) > 80 && (mascota.health ?? 100) > 80) {
-      mascotaImg = mascota.type === 'Gato' ? '/assets/cat_happy.png' : '/assets/dog_happy.png';
+      mascotaImg = mascota.type === 'Gato' ? '/assets/cat_happy.svg' : '/assets/dog_happy.svg';
     } else {
-      mascotaImg = mascota.type === 'Gato' ? '/assets/cat_normal.png' : '/assets/dog_normal.png';
+      mascotaImg = mascota.type === 'Gato' ? '/assets/cat_normal.svg' : '/assets/dog_normal.svg';
     }
   }
 
   // Notificaciones visuales
-  const [toast, setToast] = React.useState('');
+  const [notification, setNotification] = React.useState({ message: '', type: 'info' });
+  const [loading, setLoading] = React.useState(false);
+
   React.useEffect(() => {
     if (!mascota) return;
     if (mascota.status === 'dead' || mascota.health === 0) {
-      setToast('¡Tu mascota ha muerto!');
+      setNotification({ message: '¡Tu mascota ha muerto!', type: 'error' });
     } else if ((mascota.health ?? 100) < 30) {
-      setToast('¡Tu mascota está muy enferma!');
+      setNotification({ message: '¡Tu mascota está muy enferma!', type: 'warning' });
     } else if ((mascota.happiness ?? 100) < 30) {
-      setToast('¡Tu mascota está triste!');
+      setNotification({ message: '¡Tu mascota está triste!', type: 'warning' });
     } else if ((mascota.energy ?? 50) < 30) {
-      setToast('¡Tu mascota está cansada!');
+      setNotification({ message: '¡Tu mascota está cansada!', type: 'warning' });
     } else if (mascota.diseases && mascota.diseases.length > 0) {
-      setToast(`Enfermedades: ${mascota.diseases.join(', ')}`);
+      setNotification({ message: `Enfermedades: ${mascota.diseases.join(', ')}`, type: 'error' });
     } else {
-      setToast('');
+      setNotification({ message: '', type: 'info' });
     }
   }, [mascota]);
 
-  // Barras de progreso
-  const Barra = ({ label, value, color }) => (
-    <div style={{ marginBottom: 4 }}>
-      <span style={{ fontWeight: 'bold' }}>{label}: </span>
-      <div style={{ background: '#eee', borderRadius: 8, height: 16, width: 120, display: 'inline-block', verticalAlign: 'middle', marginLeft: 4 }}>
-        <div style={{ width: `${value}%`, background: color, height: '100%', borderRadius: 8, transition: 'width 0.3s' }} />
-      </div>
-      <span style={{ marginLeft: 8 }}>{value}</span>
-    </div>
-  );
-
   // Imagen y color del héroe
-  const heroImg = hero?.avatar || '/assets/hero.png';
+  const heroImg = hero?.avatar || '/assets/hero.svg';
   const heroColor = hero?.color || '#3498db';
 
   // Determinar clase de animación para la mascota
@@ -65,88 +73,197 @@ export default function Home({ hero, mascota, estado, alimentar, limpiar, jugar,
     else if ((mascota.happiness ?? 100) < 30) mascotaAnimClass = 'mascota-triste';
     else if ((mascota.health ?? 100) < 30 || (mascota.diseases && mascota.diseases.length > 0)) mascotaAnimClass = 'mascota-enferma';
   }
-  // Determinar clase de animación para el héroe (ejemplo: feliz si mascota está feliz)
-  let heroAnimClass = '';
-  if (mascota && hero) {
-    if (mascota.status === 'dead' || mascota.health === 0) heroAnimClass = 'hero-triste';
-    else if ((mascota.happiness ?? 100) > 80 && (mascota.health ?? 100) > 80) heroAnimClass = 'hero-feliz';
-    else if ((mascota.happiness ?? 100) < 30) heroAnimClass = 'hero-triste';
-    else if ((mascota.health ?? 100) < 30 || (mascota.diseases && mascota.diseases.length > 0)) heroAnimClass = 'hero-enfermo';
-  }
+
+  // Funciones de mascota - usar las props pasadas desde App.js
+  const handleAlimentar = alimentar;
+  const handleLimpiar = limpiar;
+  const handleJugar = jugar;
+  const handleDormir = dormir;
 
   return (
     <div className="home-container">
-      <Toast message={toast} onClose={() => setToast('')} />
-      <div className="home-header">
-        <h1>¡Bienvenido a Mascota Hero!</h1>
-        <p>Cuida, juega y personaliza a tu mascota y héroe virtual.</p>
-      </div>
-      <div className="home-main" style={{ display: 'flex', gap: 32, justifyContent: 'center', alignItems: 'flex-start' }}>
-        <div className="home-card mascota-card">
-          <h2>Mascota</h2>
-          {mascota ? (
-            <>
-              <div style={{ position: 'relative', display: 'inline-block' }}>
+      <NotificationToast 
+        message={notification.message} 
+        type={notification.type} 
+        onClose={() => setNotification({ message: '', type: 'info' })} 
+      />
+      
+      {/* Personajes principales estilo Pou */}
+      <div className="characters-container">
+        {/* Mascota */}
+        <div className="character-section">
+          <h3 style={{ 
+            fontSize: '20px', 
+            fontWeight: 'bold', 
+            color: '#000', 
+            textShadow: '2px 2px 0px #fff',
+            marginBottom: '15px'
+          }}>
+            Mascota
+          </h3>
+          <div className="character">
+            {mascota ? (
+              <>
                 <img
                   src={mascotaImg}
                   alt="Mascota"
-                  className={`mascota-img ${animar ? 'mascota-anim' : ''} ${mascotaAnimClass}`}
+                  className={`character-img ${mascotaAnimClass}`}
                 />
                 {/* Accesorio visual: sombrero */}
                 {mascota && mascota.accessories && mascota.accessories.includes('sombrero') && (
-                  <img src="/assets/sombrero.png" alt="Sombrero" style={{ position: 'absolute', top: 0, left: 20, width: 60, pointerEvents: 'none' }} />
+                  <img 
+                    src="/assets/sombrero.svg" 
+                    alt="Sombrero" 
+                    style={{ 
+                      position: 'absolute', 
+                      top: 0, 
+                      left: 20, 
+                      width: 60, 
+                      pointerEvents: 'none' 
+                    }} 
+                  />
                 )}
+              </>
+            ) : (
+              <div className="character-placeholder">
+                <div className="character-blob">🐾</div>
+                <p>¡Crea tu mascota!</p>
               </div>
-              {/* Alertas de estado de la mascota */}
-              {mascota && mascota.status === 'dead' && (
-                <div style={{ color: 'red', fontWeight: 'bold', margin: '8px 0' }}>¡Tu mascota ha muerto!</div>
-              )}
-              {mascota && mascota.health < 30 && mascota.status !== 'dead' && (
-                <div style={{ color: 'orange', fontWeight: 'bold', margin: '8px 0' }}>¡Tu mascota está enferma!</div>
-              )}
-              {mascota && mascota.happiness < 30 && (
-                <div style={{ color: 'blue', fontWeight: 'bold', margin: '8px 0' }}>¡Tu mascota está triste!</div>
-              )}
-              <div className="mascota-stats">
-                <Barra label="Salud" value={mascota.health ?? 100} color="#e74c3c" />
-                <Barra label="Felicidad" value={mascota.happiness ?? 100} color="#f1c40f" />
-                <Barra label="Energía" value={mascota.energy ?? 50} color="#3498db" />
-                <div><span role="img" aria-label="Estado">🦴</span> Estado: {estado}</div>
-              </div>
-              <div className="mascota-actions">
-                <button onClick={alimentar} disabled={loading} className="btn-main">🍖 Alimentar</button>
-                <button onClick={limpiar} disabled={loading} className="btn-main">🧼 Limpiar</button>
-                <button onClick={jugar} disabled={loading} className="btn-main">🎲 Jugar</button>
-                <button onClick={dormir} disabled={loading} className="btn-main">🛌 Dormir</button>
-              </div>
-            </>
-          ) : (
-            <div className="mascota-empty">No tienes mascota registrada.</div>
-          )}
+            )}
+          </div>
         </div>
-        <div className="home-card hero-card" style={{ background: heroColor, color: '#fff', minWidth: 220, alignSelf: 'center' }}>
-          <h2>Héroe</h2>
-          {hero ? (
-            <>
-              <div style={{ position: 'relative', display: 'inline-block' }}>
-                <img src={heroImg} alt="Héroe" className={`hero-img ${heroAnimClass}`} style={{ borderRadius: '50%', background: '#fff', width: 90, height: 90, objectFit: 'cover', marginBottom: 8 }} />
+
+        {/* Héroe */}
+        <div className="character-section">
+          <h3 style={{ 
+            fontSize: '20px', 
+            fontWeight: 'bold', 
+            color: '#000', 
+            textShadow: '2px 2px 0px #fff',
+            marginBottom: '15px'
+          }}>
+            Héroe
+          </h3>
+          <div className="character">
+            {hero ? (
+              <>
+                <img
+                  src={hero?.avatar || '/assets/hero.png'}
+                  alt="Héroe"
+                  className="character-img"
+                  style={{ 
+                    borderRadius: '50%', 
+                    background: hero?.color || '#3498db',
+                    border: '3px solid #000'
+                  }}
+                />
                 {/* Accesorio visual: sombrero */}
                 {hero && hero.accessories && hero.accessories.includes('sombrero') && (
-                  <img src="/assets/sombrero.png" alt="Sombrero" style={{ position: 'absolute', top: 0, left: 15, width: 50, pointerEvents: 'none' }} />
+                  <img 
+                    src="/assets/sombrero.svg" 
+                    alt="Sombrero" 
+                    style={{ 
+                      position: 'absolute', 
+                      top: 0, 
+                      left: 20, 
+                      width: 60, 
+                      pointerEvents: 'none' 
+                    }} 
+                  />
                 )}
+              </>
+            ) : (
+              <div className="character-placeholder">
+                <div className="character-blob">🦸‍♂️</div>
+                <p>¡Crea tu héroe!</p>
               </div>
-              <div className="hero-stats">
-                <div><span role="img" aria-label="Nombre">🦸‍♂️</span> {hero.name}</div>
-                <div><span role="img" aria-label="Nivel">⭐</span> Nivel: {hero.level || 1}</div>
-                <div><span role="img" aria-label="Equipo">👥</span> Equipo: {hero.team || 'Independiente'}</div>
-              </div>
-              <button className="btn-main">Personalizar héroe</button>
-            </>
-          ) : (
-            <div className="hero-empty">No tienes héroe creado.</div>
-          )}
+            )}
+          </div>
         </div>
       </div>
+
+      {/* Información del personaje estilo Pou */}
+      {mascota && (
+        <div className="character-info">
+          <h2 style={{ 
+            fontSize: '24px', 
+            fontWeight: 'bold', 
+            color: '#000', 
+            textShadow: '2px 2px 0px #fff',
+            marginBottom: '15px'
+          }}>
+            {mascota.name || 'Mi Mascota'}
+          </h2>
+          
+          {/* Estadísticas simples */}
+          <div className="stats-container">
+            <div className="stat-item">
+              <span className="stat-label">Salud:</span>
+              <div className="stat-bar">
+                <div 
+                  className="stat-fill health" 
+                  style={{ width: `${mascota.health || 100}%` }}
+                ></div>
+              </div>
+              <span className="stat-value">{mascota.health || 100}%</span>
+            </div>
+            
+            <div className="stat-item">
+              <span className="stat-label">Felicidad:</span>
+              <div className="stat-bar">
+                <div 
+                  className="stat-fill happiness" 
+                  style={{ width: `${mascota.happiness || 100}%` }}
+                ></div>
+              </div>
+              <span className="stat-value">{mascota.happiness || 100}%</span>
+            </div>
+            
+            <div className="stat-item">
+              <span className="stat-label">Energía:</span>
+              <div className="stat-bar">
+                <div 
+                  className="stat-fill energy" 
+                  style={{ width: `${mascota.energy || 50}%` }}
+                ></div>
+              </div>
+              <span className="stat-value">{mascota.energy || 50}%</span>
+            </div>
+          </div>
+          
+          {/* Botones de acción */}
+          <ActionButtons 
+            onFeed={handleAlimentar}
+            onClean={handleLimpiar}
+            onPlay={handleJugar}
+            onSleep={handleDormir}
+            loading={loadingProp}
+          />
+        </div>
+      )}
+
+      {/* Mensaje de bienvenida si no hay mascota */}
+      {!mascota && (
+        <div className="welcome-message">
+          <h2 style={{ 
+            fontSize: '28px', 
+            fontWeight: 'bold', 
+            color: '#000', 
+            textShadow: '2px 2px 0px #fff',
+            marginBottom: '20px'
+          }}>
+            ¡Bienvenido a Mascota Hero!
+          </h2>
+          <p style={{ 
+            fontSize: '18px', 
+            color: '#000', 
+            textShadow: '1px 1px 0px #fff',
+            textAlign: 'center'
+          }}>
+            Crea tu mascota y comienza tu aventura
+          </p>
+        </div>
+      )}
     </div>
   );
 } 

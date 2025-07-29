@@ -1,10 +1,13 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
+const getJWTSecret = () => {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return JWT_SECRET;
+};
 
 export default async function authMiddleware(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -17,7 +20,7 @@ export default async function authMiddleware(req, res, next) {
   }
   const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, getJWTSecret());
     console.log('Token decodificado:', decoded);
     const user = await User.findById(decoded.userId);
     console.log('Usuario encontrado:', user ? user.username : 'null');

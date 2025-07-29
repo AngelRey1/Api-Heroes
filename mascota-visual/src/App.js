@@ -1,612 +1,322 @@
-import React, { useState, useRef, useEffect } from 'react';
-import './App.css';
-import { login, getMascotas, alimentarMascota, register, getItems, unequipAccessory, sleepPet as sleepPetApi, bathPet as bathPetApi, playWithPet as playWithPetApi, getUserProfile } from './api';
-import WelcomeGuide from './components/WelcomeGuide';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Navbar from './components/Navbar';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { apiLogin, register, alimentarMascota } from './api';
+import { UserProvider, useUser } from './context/UserContext';
 import Home from './pages/Home';
-import Shop from './pages/Shop';
-import Inventory from './pages/Inventory';
-import Profile from './pages/Profile';
 import Minigames from './pages/Minigames';
 import Achievements from './pages/Achievements';
-import Settings from './pages/Settings';
-import Hero from './Hero';
-import Mascota from './Mascota';
-import PetCollection from './pages/PetCollection';
-import HeroCustomization from './pages/HeroCustomization';
-import Events from './pages/Events';
-import Missions from './pages/Missions';
-import Ranking from './pages/Ranking';
-import SecretAchievements from './pages/SecretAchievements';
-import Tournaments from './pages/Tournaments';
-import Customization from './pages/Customization';
+import Shop from './pages/Shop';
 import Statistics from './pages/Statistics';
+import Missions from './pages/Missions';
+import Events from './pages/Events';
+import Friends from './pages/Friends';
+import Chat from './pages/Chat';
+import Tournaments from './pages/Tournaments';
+import Ranking from './pages/Ranking';
+import Inventory from './pages/Inventory';
+import PetCollection from './pages/PetCollection';
+import PetCustomization from './pages/PetCustomization';
+import HeroCustomization from './pages/HeroCustomization';
+import Customization from './pages/Customization';
+import Settings from './pages/Settings';
+import SecretAchievements from './pages/SecretAchievements';
+import WelcomeGuide from './components/WelcomeGuide';
+import ParticleEffect from './components/ParticleEffect';
+import Navbar from './components/Navbar';
+import ErrorBoundary from './components/ErrorBoundary';
+import Tutorial from './components/Tutorial';
+import AudioManager from './components/AudioManager';
+import './App.css';
 
-const imagenesMascotas = {
-  perro: {
-    normal: '/assets/dog_normal.png',
-    happy: '/assets/dog_happy.png',
-    dead: '/assets/dog_dead.png',
-  },
-  gato: {
-    normal: '/assets/cat_normal.png',
-    happy: '/assets/cat_happy.png',
-    dead: '/assets/cat_dead.png',
-  },
-};
-const imagenesHeroe = {
-  default: '/assets/hero.png',
-};
-
-function BarraEstado({ mascota }) {
-  if (!mascota) return null;
-  return (
-    <div className="barra-estado">
-      <div className="estado-item"><span className="estado-icono">❤️</span> {mascota.health ?? 100}</div>
-      <div className="estado-item"><span className="estado-icono">😊</span> {mascota.happiness ?? 100}</div>
-      <div className="estado-item"><span className="estado-icono">⚡</span> {mascota.energy ?? 100}</div>
-    </div>
-  );
-}
-
-function PanelAcciones({ onAlimentar, onLimpiar, onJugar, onDormir }) {
-  return (
-    <div className="panel-acciones">
-      <div className="icono-accion" title="Alimentar" onClick={onAlimentar}>🍖</div>
-      <div className="icono-accion" title="Limpiar" onClick={onLimpiar}>🧼</div>
-      <div className="icono-accion" title="Jugar" onClick={onJugar}>🎲</div>
-      <div className="icono-accion" title="Dormir" onClick={onDormir}>🛌</div>
-    </div>
-  );
-}
-
-function App() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [token, setToken] = useState('');
-  const [mascota, setMascota] = useState(null);
-  const [animacionStat, setAnimacionStat] = useState('');
-  const [estado, setEstado] = useState('normal');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [showRegister, setShowRegister] = useState(false);
-  const [email, setEmail] = useState('');
-  const [success, setSuccess] = useState('');
-  const [hero, setHero] = useState({ name: 'Héroe', level: 1, avatar: imagenesHeroe.default });
-  const [coins, setCoins] = useState(0);
-  const [inventoryRefresh, setInventoryRefresh] = useState(0);
-  const [animarMascota, setAnimarMascota] = useState(false);
-  const [monedasAnim, setMonedasAnim] = useState(false);
-  const monedasRef = useRef(coins);
-  const audioCompraRef = useRef(null);
-  const audioUsarRef = useRef(null);
-  const [activePetId, setActivePetId] = useState(null);
-  const [items, setItems] = useState([]); // Guardar todos los items para visualización
-  const [userBackground, setUserBackground] = useState('');
-  const [user, setUser] = useState(null);
-  const [achievementNotification, setAchievementNotification] = useState(null);
-  const [missionNotification, setMissionNotification] = useState(null);
-  const [eventNotification, setEventNotification] = useState(null);
+function AppContent() {
+  const { token, user, coins, login, logout, fetchUserData, loading: userLoading } = useUser();
   const [showWelcomeGuide, setShowWelcomeGuide] = useState(false);
+  const [error, setError] = useState('');
+  const [isLogin, setIsLogin] = useState(true);
+  const [showTutorial, setShowTutorial] = useState(false);
+  const [hasSeenTutorial, setHasSeenTutorial] = useState(() => {
+    return localStorage.getItem('hasSeenTutorial') === 'true';
+  });
+  const [loading, setLoading] = useState(false);
 
-  // Cargar items al iniciar
-  useEffect(() => {
-    const fetchItems = async () => {
-      try {
-        const data = await getItems();
-        setItems(data);
-      } catch {}
-    };
-    fetchItems();
-  }, []);
-
-  useEffect(() => {
-    if (!token) return;
-    getUserProfile(token).then(u => {
-      setUserBackground(u.background || '');
-      setUser(u);
-    });
-  }, [token]);
-
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      const data = await login(username, password);
-      setToken(data.token);
-      // Obtener héroe real
-      const userProfile = await getUserProfile(data.token);
-      setUser(userProfile);
-      if (userProfile.heroes && userProfile.heroes.length > 0) {
-        setHero(userProfile.heroes[0]);
-      } else {
-        setSuccess('¡Bienvenido! Ve a "Personalización de Héroe" para crear tu primer héroe.');
-        setShowWelcomeGuide(true);
-      }
-      
-      // Obtener mascotas del usuario
-      const mascotas = await getMascotas(data.token);
-      if (mascotas.length > 0) {
-        setMascota(mascotas[0]);
-        setEstado(mascotas[0].status || 'normal');
-      } else {
-        // Si no tiene mascotas, mostrar mensaje informativo
-        setSuccess(prev => prev ? prev + ' Luego ve a "Mascotas" para adoptar tu primera mascota.' : '¡Bienvenido! Ve a "Mascotas" para adoptar tu primera mascota.');
-        setShowWelcomeGuide(true);
-      }
-      setCoins(data.user?.coins || 0);
-    } catch (err) {
-      setError('Login fallido o error al obtener mascota.');
+  // Verificar si necesita crear héroe o mascota
+  React.useEffect(() => {
+    if (user && (!user.heroes || user.heroes.length === 0 || 
+        !user.pets || user.pets.length === 0)) {
+      setShowWelcomeGuide(true);
     }
+  }, [user]);
+
+  useEffect(() => {
+    // Mostrar tutorial si es la primera vez
+    if (user && !hasSeenTutorial) {
+      setShowTutorial(true);
+    }
+  }, [user, hasSeenTutorial]);
+
+  const handleTutorialComplete = () => {
+    setShowTutorial(false);
+    setHasSeenTutorial(true);
+    localStorage.setItem('hasSeenTutorial', 'true');
   };
 
-  const handleRegister = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
-    setLoading(true);
+  const handleTutorialSkip = () => {
+    setShowTutorial(false);
+    setHasSeenTutorial(true);
+    localStorage.setItem('hasSeenTutorial', 'true');
+  };
+
+  const handleLogin = async (username, password) => {
     try {
-      const data = await register(username, email, password);
-      setSuccess('¡Registro exitoso! Iniciando sesión...');
-      // Login automático tras registro
-      const loginData = await login(username, password);
-      setToken(loginData.token);
-      // Obtener héroe real
-      const userProfile = await getUserProfile(loginData.token);
-      setUser(userProfile);
-      if (userProfile.heroes && userProfile.heroes.length > 0) {
-        setHero(userProfile.heroes[0]);
-      } else {
-        setSuccess('¡Bienvenido! Ve a "Personalización de Héroe" para crear tu primer héroe.');
-        setShowWelcomeGuide(true);
-      }
-      
-      const mascotas = await getMascotas(loginData.token);
-      if (mascotas.length > 0) {
-        setMascota(mascotas[0]);
-        setEstado(mascotas[0].status || 'normal');
-      } else {
-        // Si no tiene mascotas, mostrar mensaje informativo
-        setSuccess(prev => prev ? prev + ' Luego ve a "Mascotas" para adoptar tu primera mascota.' : '¡Bienvenido! Ve a "Mascotas" para adoptar tu primera mascota.');
-        setShowWelcomeGuide(true);
-      }
+      setLoading(true);
+      setError('');
+      const response = await apiLogin(username, password);
+      login(response.token, response.user);
     } catch (err) {
-      setError('Error al registrar. ¿Usuario o email ya existen?');
+      setError(err.response?.data?.error || 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRegister = async (username, email, password) => {
+    try {
+      setLoading(true);
+      setError('');
+      const response = await register(username, email, password);
+      login(response.token, response.user);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Error al registrarse');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
   };
 
   const alimentar = async () => {
-    if (!mascota || !mascota._id) {
-      setError('No tienes mascotas. Ve a la sección "Mascotas" para adoptar tu primera mascota.');
-      return;
-    }
-    setLoading(true);
-    setError('');
+    if (!user?.pets?.length) return;
     try {
-      const res = await alimentarMascota(mascota._id, token);
-      setMascota({ ...mascota, ...res });
-      setEstado('normal');
-      setAnimacionStat('health');
-      setTimeout(() => setAnimacionStat(''), 800);
-      
-      // Mostrar notificación de logros si se desbloquearon
-      if (res.achievements && res.achievements.unlocked && res.achievements.unlocked.length > 0) {
-        const achievement = res.achievements.unlocked[0];
-        setAchievementNotification({
-          title: `¡Logro Desbloqueado! ${achievement.icon}`,
-          message: `${achievement.name} - +${achievement.coinReward} monedas`,
-          type: 'achievement'
-        });
-        setTimeout(() => setAchievementNotification(null), 5000);
-      }
-      
-      // Mostrar notificación de misiones si se completaron
-      if (res.missions && res.missions.completed && res.missions.completed.length > 0) {
-        const mission = res.missions.completed[0];
-        setMissionNotification({
-          title: `¡Misión Completada! ${mission.icon}`,
-          message: `${mission.title} - +${mission.coinReward} monedas`,
-          type: 'mission'
-        });
-        setTimeout(() => setMissionNotification(null), 5000);
-      }
-      
-      // Mostrar notificación de eventos si se completaron objetivos
-      if (res.events && res.events.completed && res.events.completed.length > 0) {
-        const eventObjective = res.events.completed[0];
-        setEventNotification({
-          title: `¡Objetivo de Evento Completado! 🎉`,
-          message: `${eventObjective.description} - +${eventObjective.reward} monedas`,
-          type: 'event'
-        });
-        setTimeout(() => setEventNotification(null), 5000);
-      }
+      await alimentarMascota(user.pets[0]._id, token);
+      fetchUserData();
     } catch (err) {
-      setError('Error al alimentar la mascota.');
-    } finally {
-      setLoading(false);
+      console.error('Error alimentando mascota:', err);
     }
-  };
-
-  // Función para actualizar mascota y detectar cambios de stat
-  const handlePetUpdate = (nuevaMascota) => {
-    if (!mascota) {
-      setMascota(nuevaMascota);
-      return;
-    }
-    let changed = '';
-    if (nuevaMascota.health !== mascota.health) changed = 'health';
-    else if (nuevaMascota.happiness !== mascota.happiness) changed = 'happiness';
-    else if (nuevaMascota.energy !== mascota.energy) changed = 'energy';
-    setMascota(nuevaMascota);
-    setAnimacionStat(changed);
-    setTimeout(() => setAnimacionStat(''), 800);
-  };
-
-  // Al comprar objeto, actualizar monedas y animar barra
-  const handleCompra = (nuevasMonedas) => {
-    setCoins(nuevasMonedas);
-    setMonedasAnim(true);
-    if (audioCompraRef.current) {
-      audioCompraRef.current.currentTime = 0;
-      audioCompraRef.current.play();
-    }
-    setTimeout(() => setMonedasAnim(false), 800);
-  };
-  // Al usar objeto, animar mascota y reproducir sonido
-  const handleUsarObjeto = () => {
-    setAnimarMascota(true);
-    if (audioUsarRef.current) {
-      audioUsarRef.current.currentTime = 0;
-      audioUsarRef.current.play();
-    }
-    setTimeout(() => setAnimarMascota(false), 900);
-  };
-
-  const handleUnequip = async (itemId) => {
-    if (!mascota || !mascota._id) return;
-    await unequipAccessory(token, mascota._id, itemId);
-    // Refrescar mascota activa
-    // (puedes recargar desde la API o actualizar el estado local)
-    // Aquí solo simulo refresco local quitando el accesorio
-    setMascota({ ...mascota, accessories: (mascota.accessories || []).filter(id => id !== itemId) });
   };
 
   const dormir = async () => {
-    if (!mascota || !mascota._id) {
-      setError('No tienes mascotas. Ve a la sección "Mascotas" para adoptar tu primera mascota.');
-      return;
-    }
-    setLoading(true);
-    setError('');
+    if (!user?.pets?.length) return;
     try {
-      const res = await sleepPetApi(mascota._id, token);
-      setMascota({ ...mascota, ...res });
-      setEstado('normal');
-      setAnimacionStat('energy');
-      setTimeout(() => setAnimacionStat(''), 800);
-      
-      // Mostrar notificación de logros si se desbloquearon
-      if (res.achievements && res.achievements.unlocked && res.achievements.unlocked.length > 0) {
-        const achievement = res.achievements.unlocked[0];
-        setAchievementNotification({
-          title: `¡Logro Desbloqueado! ${achievement.icon}`,
-          message: `${achievement.name} - +${achievement.coinReward} monedas`,
-          type: 'achievement'
-        });
-        setTimeout(() => setAchievementNotification(null), 5000);
-      }
-      
-      // Mostrar notificación de misiones si se completaron
-      if (res.missions && res.missions.completed && res.missions.completed.length > 0) {
-        const mission = res.missions.completed[0];
-        setMissionNotification({
-          title: `¡Misión Completada! ${mission.icon}`,
-          message: `${mission.title} - +${mission.coinReward} monedas`,
-          type: 'mission'
-        });
-        setTimeout(() => setMissionNotification(null), 5000);
-      }
-      
-      // Mostrar notificación de eventos si se completaron objetivos
-      if (res.events && res.events.completed && res.events.completed.length > 0) {
-        const eventObjective = res.events.completed[0];
-        setEventNotification({
-          title: `¡Objetivo de Evento Completado! 🎉`,
-          message: `${eventObjective.description} - +${eventObjective.reward} monedas`,
-          type: 'event'
-        });
-        setTimeout(() => setEventNotification(null), 5000);
-      }
+      // Implementar función de dormir
+      console.log('Mascota durmiendo...');
     } catch (err) {
-      setError('Error al dormir la mascota.');
-    } finally {
-      setLoading(false);
+      console.error('Error durmiendo mascota:', err);
     }
   };
 
   const limpiar = async () => {
-    if (!mascota || !mascota._id) {
-      setError('No tienes mascotas. Ve a la sección "Mascotas" para adoptar tu primera mascota.');
-      return;
-    }
-    setLoading(true);
-    setError('');
+    if (!user?.pets?.length) return;
     try {
-      const res = await bathPetApi(mascota._id, token);
-      setMascota({ ...mascota, ...res });
-      setEstado('normal');
-      setAnimacionStat('happiness');
-      setTimeout(() => setAnimacionStat(''), 800);
-      
-      // Mostrar notificación de logros si se desbloquearon
-      if (res.achievements && res.achievements.unlocked && res.achievements.unlocked.length > 0) {
-        const achievement = res.achievements.unlocked[0];
-        setAchievementNotification({
-          title: `¡Logro Desbloqueado! ${achievement.icon}`,
-          message: `${achievement.name} - +${achievement.coinReward} monedas`,
-          type: 'achievement'
-        });
-        setTimeout(() => setAchievementNotification(null), 5000);
-      }
-      
-      // Mostrar notificación de misiones si se completaron
-      if (res.missions && res.missions.completed && res.missions.completed.length > 0) {
-        const mission = res.missions.completed[0];
-        setMissionNotification({
-          title: `¡Misión Completada! ${mission.icon}`,
-          message: `${mission.title} - +${mission.coinReward} monedas`,
-          type: 'mission'
-        });
-        setTimeout(() => setMissionNotification(null), 5000);
-      }
-      
-      // Mostrar notificación de eventos si se completaron objetivos
-      if (res.events && res.events.completed && res.events.completed.length > 0) {
-        const eventObjective = res.events.completed[0];
-        setEventNotification({
-          title: `¡Objetivo de Evento Completado! 🎉`,
-          message: `${eventObjective.description} - +${eventObjective.reward} monedas`,
-          type: 'event'
-        });
-        setTimeout(() => setEventNotification(null), 5000);
-      }
+      // Implementar función de limpiar
+      console.log('Limpiando mascota...');
     } catch (err) {
-      setError('Error al limpiar la mascota.');
-    } finally {
-      setLoading(false);
+      console.error('Error limpiando mascota:', err);
     }
   };
 
   const jugar = async () => {
-    if (!mascota || !mascota._id) {
-      setError('No tienes mascotas. Ve a la sección "Mascotas" para adoptar tu primera mascota.');
-      return;
-    }
-    setLoading(true);
-    setError('');
+    if (!user?.pets?.length) return;
     try {
-      const res = await playWithPetApi(mascota._id, token);
-      setMascota({ ...mascota, ...res });
-      setEstado('normal');
-      setAnimacionStat('happiness');
-      setTimeout(() => setAnimacionStat(''), 800);
-      
-      // Mostrar notificación de logros si se desbloquearon
-      if (res.achievements && res.achievements.unlocked && res.achievements.unlocked.length > 0) {
-        const achievement = res.achievements.unlocked[0];
-        setAchievementNotification({
-          title: `¡Logro Desbloqueado! ${achievement.icon}`,
-          message: `${achievement.name} - +${achievement.coinReward} monedas`,
-          type: 'achievement'
-        });
-        setTimeout(() => setAchievementNotification(null), 5000);
-      }
-      
-      // Mostrar notificación de misiones si se completaron
-      if (res.missions && res.missions.completed && res.missions.completed.length > 0) {
-        const mission = res.missions.completed[0];
-        setMissionNotification({
-          title: `¡Misión Completada! ${mission.icon}`,
-          message: `${mission.title} - +${mission.coinReward} monedas`,
-          type: 'mission'
-        });
-        setTimeout(() => setMissionNotification(null), 5000);
-      }
-      
-      // Mostrar notificación de eventos si se completaron objetivos
-      if (res.events && res.events.completed && res.events.completed.length > 0) {
-        const eventObjective = res.events.completed[0];
-        setEventNotification({
-          title: `¡Objetivo de Evento Completado! 🎉`,
-          message: `${eventObjective.description} - +${eventObjective.reward} monedas`,
-          type: 'event'
-        });
-        setTimeout(() => setEventNotification(null), 5000);
-      }
+      // Implementar función de jugar
+      console.log('Jugando con mascota...');
     } catch (err) {
-      setError('Error al jugar con la mascota.');
-    } finally {
-      setLoading(false);
+      console.error('Error jugando con mascota:', err);
     }
   };
 
-  // Cuando se selecciona una mascota activa, actualizar el estado global y refrescar la mascota principal
-  const handleActivePetChange = (petId) => {
-    setActivePetId(petId);
-    // Aquí podrías recargar la mascota activa desde la API si lo deseas
-    // O actualizar el estado de la mascota principal
-  };
-
-  const handleUserUpdate = (updatedUser) => {
-    setUser(updatedUser);
-    if (updatedUser.background) {
-      setUserBackground(updatedUser.background);
-    }
-  };
-
-  if (!token) {
-    return (
-      <div className="login-container">
-        <div className="login-card">
-          <h1>{showRegister ? 'Registro' : 'Login'}</h1>
-          <form className="login-form" onSubmit={showRegister ? handleRegister : handleLogin}>
+  // Componente de login/registro estilo Pou
+  const LoginRegister = () => (
+    <div className="login-container">
+      <div className="login-card">
+        <h1>Mascota Hero</h1>
+        <form className="login-form" onSubmit={(e) => {
+          e.preventDefault();
+          const formData = new FormData(e.target);
+          const username = formData.get('username');
+          const email = formData.get('email');
+          const password = formData.get('password');
+          
+          if (isLogin) {
+            handleLogin(username, password);
+          } else {
+            handleRegister(username, email, password);
+          }
+        }}>
+          <div className="form-group">
+            <input
+              type="text"
+              name="username"
+              placeholder="Usuario"
+              required
+            />
+          </div>
+          {!isLogin && (
             <div className="form-group">
               <input
-                type="text"
-                placeholder="Usuario"
-                value={username}
-                onChange={e => setUsername(e.target.value)}
+                type="email"
+                name="email"
+                placeholder="Email"
                 required
               />
             </div>
-            {showRegister && (
-              <div className="form-group">
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={e => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            )}
-            <div className="form-group">
-              <input
-                type="password"
-                placeholder="Contraseña"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <button type="submit" className="login-btn" disabled={loading}>
-              {loading ? <span className="loading"></span> : (showRegister ? 'Registrarse' : 'Entrar')}
-            </button>
-          </form>
-          <button 
-            className="toggle-btn"
-            onClick={() => { setShowRegister(!showRegister); setError(''); setSuccess(''); }}
-          >
-            {showRegister ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate'}
+          )}
+          <div className="form-group">
+            <input
+              type="password"
+              name="password"
+              placeholder="Contraseña"
+              required
+            />
+          </div>
+          <button type="submit" className="login-btn" disabled={loading}>
+            {loading ? <span className="loading"></span> : (isLogin ? 'Iniciar Sesión' : 'Registrarse')}
           </button>
-          {error && <div className="message error">{error}</div>}
-          {success && <div className="message success">{success}</div>}
+        </form>
+        
+        <button className="toggle-btn" onClick={() => setIsLogin(!isLogin)}>
+          {isLogin ? '¿No tienes cuenta? Regístrate' : '¿Ya tienes cuenta? Inicia sesión'}
+        </button>
+        
+        {error && <div className="message error">{error}</div>}
+        {/* {success && <div className="message success">{success}</div>} */}
+      </div>
+    </div>
+  );
+
+  // Componente principal con interfaz estilo Pou
+  const MainInterface = () => (
+    <div className="App">
+      {showTutorial && (
+        <Tutorial
+          isVisible={showTutorial}
+          onComplete={handleTutorialComplete}
+          onSkip={handleTutorialSkip}
+        />
+      )}
+      
+      {/* Audio Manager */}
+      <AudioManager />
+
+      {/* Barra superior estilo Pou */}
+      <div className="top-bar">
+        <div className="coins-display">
+          <div className="coin-icon">💰</div>
+          <span>{coins}</span>
+        </div>
+        
+        <div className="action-icons">
+          <div className="action-icon yellow">🍗</div>
+          <div className="action-icon green">+</div>
+          <div className="action-icon black">👁️</div>
+          <div className="action-icon black">⚡</div>
+          <div className="action-icon white">2</div>
         </div>
       </div>
-    );
-  }
 
-  if (mascota) {
-    mascota.imagen = imagenesMascotas[mascota.type]?.[estado] || imagenesMascotas['perro'][estado];
-  }
+      {/* Barra de navegación estilo Pou */}
+      <div className="nav-bar">
+        <div className="nav-icon">📷</div>
+        <div className="nav-icon">◀</div>
+        <div className="nav-title">Mascota Hero</div>
+        <div className="nav-icon">▶</div>
+        <div className="nav-icon">❓</div>
+      </div>
+
+      {/* Navegación principal */}
+      <Navbar onLogout={handleLogout} />
+
+      {/* Contenido principal */}
+      <div className="main-container">
+        <Routes>
+          <Route path="/" element={
+            <Home 
+              hero={user?.heroes?.[0] || null} 
+              mascota={user?.pets?.[0] || null} 
+              estado={user?.pets?.[0]?.status || 'normal'}
+              alimentar={alimentar}
+              limpiar={limpiar}
+              jugar={jugar}
+              loading={loading}
+              animacionStat={false}
+              animar={false}
+              dormir={dormir}
+            />
+          } />
+          <Route path="/minigames" element={<Minigames />} />
+          <Route path="/achievements" element={<Achievements />} />
+          <Route path="/shop" element={<Shop />} />
+          <Route path="/statistics" element={<Statistics />} />
+          <Route path="/missions" element={<Missions />} />
+          <Route path="/events" element={<Events />} />
+          <Route path="/friends" element={<Friends />} />
+          <Route path="/chat" element={<Chat />} />
+          <Route path="/tournaments" element={<Tournaments />} />
+          <Route path="/ranking" element={<Ranking />} />
+          <Route path="/inventory" element={<Inventory />} />
+          <Route path="/pet-collection" element={<PetCollection />} />
+          <Route path="/pet-customization" element={<PetCustomization />} />
+          <Route path="/hero-customization" element={<HeroCustomization />} />
+          <Route path="/customization" element={<Customization />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/secret-achievements" element={<SecretAchievements />} />
+        </Routes>
+      </div>
+
+      {/* Barra inferior estilo Pou */}
+      <div className="bottom-bar">
+        <div className="bottom-item">
+          <div className="bottom-icon">🎮</div>
+          <div className="bottom-text">Juegos</div>
+        </div>
+        <div className="bottom-item">
+          <div className="bottom-icon">⚽</div>
+          <div className="bottom-text">Pelota</div>
+        </div>
+        <div className="bottom-item">
+          <div className="bottom-icon">🏪</div>
+          <div className="bottom-text">Tienda</div>
+        </div>
+      </div>
+
+      {/* Guía de bienvenida */}
+      {showWelcomeGuide && (
+        <WelcomeGuide 
+          onClose={() => setShowWelcomeGuide(false)}
+          onComplete={fetchUserData}
+        />
+      )}
+
+      {/* Efectos de partículas */}
+      <ParticleEffect />
+    </div>
+  );
 
   return (
     <Router>
-      <div className="App" style={userBackground ? { background: `url(${userBackground}) center/cover no-repeat fixed` } : {}}>
-        <div className={`monedas-bar${monedasAnim ? ' monedas-bar-anim' : ''}`}>🪙 {coins}</div>
-        <audio ref={audioCompraRef} src="/assets/coin.mp3" preload="auto" />
-        <audio ref={audioUsarRef} src="/assets/use.mp3" preload="auto" />
-        <Navbar token={token} />
-        <Routes>
-          <Route path="/home" element={<Home hero={hero} mascota={mascota} estado={estado} alimentar={alimentar} limpiar={limpiar} jugar={jugar} loading={loading} animacionStat={animacionStat} animar={animarMascota} dormir={dormir} />} />
-          <Route path="/shop" element={<Shop token={token} onPurchase={handleCompra} />} />
-          <Route path="/inventory" element={<Inventory token={token} onUse={handleUsarObjeto} mascotas={mascota ? [mascota] : []} onPetUpdate={handlePetUpdate} key={inventoryRefresh} />} />
-          <Route path="/profile" element={<Profile token={token} />} />
-          <Route path="/minigames" element={<Minigames token={token} />} />
-          <Route path="/achievements" element={<Achievements token={token} onClaim={user => setCoins(user.coins)} />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/pets" element={<PetCollection token={token} activePetId={activePetId} onActiveChange={handleActivePetChange} />} />
-          <Route path="/hero-customization" element={<HeroCustomization token={token} hero={hero} />} />
-          <Route path="/events" element={<Events token={token} onReward={coins => setCoins(coins)} />} />
-          <Route path="/missions" element={<Missions token={token} onClaim={coins => setCoins(coins)} />} />
-          <Route path="/ranking" element={<Ranking token={token} />} />
-          <Route path="/secret-achievements" element={<SecretAchievements token={token} />} />
-          <Route path="/tournaments" element={<Tournaments token={token} />} />
-          <Route path="/customization" element={<Customization token={token} user={user} onUpdate={handleUserUpdate} />} />
-          <Route path="/statistics" element={<Statistics token={token} />} />
-          <Route path="*" element={<Navigate to="/home" />} />
-        </Routes>
-        
-        {/* Notificación de logros */}
-        {achievementNotification && (
-          <div 
-            style={{
-              position: 'fixed',
-              top: 80,
-              right: 20,
-              background: 'linear-gradient(135deg, #2ecc40, #27ae60)',
-              color: 'white',
-              padding: '15px 20px',
-              borderRadius: '10px',
-              boxShadow: '0 4px 20px rgba(46, 204, 64, 0.3)',
-              zIndex: 1000,
-              maxWidth: '300px',
-              animation: 'slideInRight 0.5s ease-out'
-            }}
-          >
-            <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{achievementNotification.title}</div>
-            <div style={{ fontSize: '0.9em' }}>{achievementNotification.message}</div>
-          </div>
-        )}
-        
-        {/* Notificación de misiones */}
-        {missionNotification && (
-          <div 
-            style={{
-              position: 'fixed',
-              top: missionNotification ? 160 : 80,
-              right: 20,
-              background: 'linear-gradient(135deg, #3498db, #2980b9)',
-              color: 'white',
-              padding: '15px 20px',
-              borderRadius: '10px',
-              boxShadow: '0 4px 20px rgba(52, 152, 219, 0.3)',
-              zIndex: 1000,
-              maxWidth: '300px',
-              animation: 'slideInRight 0.5s ease-out'
-            }}
-          >
-            <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{missionNotification.title}</div>
-            <div style={{ fontSize: '0.9em' }}>{missionNotification.message}</div>
-          </div>
-        )}
-        
-        {/* Notificación de eventos */}
-        {eventNotification && (
-          <div 
-            style={{
-              position: 'fixed',
-              top: eventNotification ? 240 : 160,
-              right: 20,
-              background: 'linear-gradient(135deg, #ff6b6b, #ee5a52)',
-              color: 'white',
-              padding: '15px 20px',
-              borderRadius: '10px',
-              boxShadow: '0 4px 20px rgba(255, 107, 107, 0.3)',
-              zIndex: 1000,
-              maxWidth: '300px',
-              animation: 'slideInRight 0.5s ease-out'
-            }}
-          >
-            <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{eventNotification.title}</div>
-            <div style={{ fontSize: '0.9em' }}>{eventNotification.message}</div>
-          </div>
-        )}
-        
-        {/* Guía de bienvenida */}
-        {showWelcomeGuide && (
-          <WelcomeGuide 
-            onClose={() => setShowWelcomeGuide(false)}
-            hasHero={hero && hero._id}
-            hasPet={mascota && mascota._id}
-          />
-        )}
-      </div>
+      {!token ? <LoginRegister /> : userLoading ? <div className="loading-container">Cargando...</div> : <MainInterface />}
     </Router>
+  );
+}
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <UserProvider>
+        <AppContent />
+      </UserProvider>
+    </ErrorBoundary>
   );
 }
 

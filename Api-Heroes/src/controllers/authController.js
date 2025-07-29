@@ -4,10 +4,13 @@ import User from '../models/userModel.js';
 import Hero from '../models/heroModel.js';
 import Pet from '../models/petModel.js';
 
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) {
-  throw new Error('JWT_SECRET environment variable is required');
-}
+const getJWTSecret = () => {
+  const JWT_SECRET = process.env.JWT_SECRET;
+  if (!JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+  return JWT_SECRET;
+};
 
 /**
  * Registrar un nuevo usuario
@@ -48,7 +51,7 @@ export const login = async (req, res) => {
     if (!valid) {
       return res.status(401).json({ error: 'Usuario o contraseña incorrectos.' });
     }
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ userId: user._id }, getJWTSecret(), { expiresIn: '24h' });
     res.json({ token, user: { id: user._id, username: user.username, email: user.email } });
   } catch (err) {
     res.status(400).json({ error: err.message });

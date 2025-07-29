@@ -1,275 +1,250 @@
+/* Home page - Estilo Pou */
 .home-container {
-  max-width: 1200px;
-  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
   padding: 20px;
-  min-height: calc(100vh - 100px);
-}
-
-.home-header {
   text-align: center;
-  margin-bottom: 40px;
-  padding: 30px;
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
-.home-header h1 {
-  font-size: 2.5em;
-  margin-bottom: 10px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.home-header p {
-  font-size: 1.2em;
-  color: #666;
-  margin: 0;
-}
-
-.home-main {
+/* Contenedor de personajes */
+.characters-container {
   display: flex;
   gap: 30px;
+  margin-bottom: 30px;
   justify-content: center;
-  align-items: flex-start;
   flex-wrap: wrap;
 }
 
-.home-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  border-radius: 20px;
-  padding: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-  min-width: 300px;
-  max-width: 400px;
-}
-
-.home-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-}
-
-.home-card h2 {
+.character-section {
   text-align: center;
-  margin-bottom: 25px;
-  font-size: 1.8em;
-  color: #333;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  min-width: 200px;
 }
 
-.mascota-card {
-  text-align: center;
+.character {
+  width: 200px;
+  height: 200px;
+  margin: 0 auto 20px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.mascota-img {
-  width: 150px;
-  height: 150px;
+.character-img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  margin-bottom: 20px;
-  transition: all 0.3s ease;
-  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+  transition: transform 0.3s ease;
 }
 
-.mascota-img:hover {
+.character-img:hover {
   transform: scale(1.05);
 }
 
-.mascota-anim {
-  animation: bounce 0.6s ease-in-out;
+/* Placeholder para cuando no hay mascota */
+.character-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: #FFB6C1;
+  border: 4px solid #000;
+  border-radius: 15px;
+  box-shadow: 6px 6px 0px #000;
+}
+
+.character-blob {
+  font-size: 80px;
+  margin-bottom: 10px;
+}
+
+.character-placeholder p {
+  font-size: 18px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+}
+
+/* Información del personaje */
+.character-info {
+  background: #FFB6C1;
+  border: 4px solid #000;
+  border-radius: 15px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 6px 6px 0px #000;
+  max-width: 400px;
+  width: 100%;
+}
+
+/* Contenedor de estadísticas */
+.stats-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: bold;
+  color: #000;
+  text-shadow: 1px 1px 0px #fff;
+}
+
+.stat-label {
+  min-width: 80px;
+  text-align: left;
+  font-size: 16px;
+}
+
+.stat-bar {
+  flex: 1;
+  height: 20px;
+  background: #fff;
+  border: 2px solid #000;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+}
+
+.stat-fill {
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.3s ease;
+}
+
+.stat-fill.health {
+  background: #FF6B6B;
+}
+
+.stat-fill.happiness {
+  background: #FFD700;
+}
+
+.stat-fill.energy {
+  background: #90EE90;
+}
+
+.stat-value {
+  min-width: 40px;
+  text-align: right;
+  font-size: 14px;
+}
+
+/* Mensaje de bienvenida */
+.welcome-message {
+  background: #FFB6C1;
+  border: 4px solid #000;
+  border-radius: 15px;
+  padding: 30px;
+  margin: 20px 0;
+  box-shadow: 6px 6px 0px #000;
+  max-width: 500px;
+  width: 100%;
+}
+
+/* Animaciones para el personaje */
+.character-anim {
+  animation: bounce 1s ease-in-out infinite;
 }
 
 @keyframes bounce {
-  0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
-  40% { transform: translateY(-10px); }
-  60% { transform: translateY(-5px); }
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-.mascota-stats {
-  margin: 20px 0;
-  text-align: left;
-}
-
-.mascota-stats > div {
-  margin-bottom: 10px;
-  font-size: 1em;
-}
-
-.mascota-actions {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 10px;
-  margin-top: 20px;
-}
-
-.btn-main {
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  color: white;
-  border: none;
-  padding: 12px 20px;
-  border-radius: 12px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-size: 0.9em;
-}
-
-.btn-main:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
-}
-
-.btn-main:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-.hero-card {
-  text-align: center;
-  background: linear-gradient(135deg, #667eea, #764ba2) !important;
-  color: white !important;
-}
-
-.hero-img {
-  width: 100px;
-  height: 100px;
-  border-radius: 50%;
-  object-fit: cover;
-  margin-bottom: 15px;
-  border: 4px solid rgba(255, 255, 255, 0.3);
-  transition: all 0.3s ease;
-}
-
-.hero-img:hover {
-  transform: scale(1.05);
-  border-color: rgba(255, 255, 255, 0.6);
-}
-
-.hero-stats {
-  margin: 20px 0;
-  text-align: left;
-}
-
-.hero-stats > div {
-  margin-bottom: 8px;
-  font-size: 1em;
-}
-
-.mascota-empty, .hero-empty {
-  text-align: center;
-  padding: 40px 20px;
-  color: #999;
-  font-style: italic;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 12px;
-  border: 2px dashed #ddd;
-}
-
-/* Estados de mascota */
 .mascota-feliz {
-  filter: brightness(1.1) saturate(1.2);
+  animation: happy 2s ease-in-out infinite;
+}
+
+@keyframes happy {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
 }
 
 .mascota-triste {
-  filter: grayscale(0.3) brightness(0.8);
+  animation: sad 3s ease-in-out infinite;
+}
+
+@keyframes sad {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-5px) rotate(-2deg);
+  }
+  75% {
+    transform: translateY(-5px) rotate(2deg);
+  }
 }
 
 .mascota-enferma {
-  filter: sepia(0.3) brightness(0.9);
+  animation: sick 2s ease-in-out infinite;
+}
+
+@keyframes sick {
+  0%, 100% {
+    transform: scale(1);
+    filter: brightness(1);
+  }
+  50% {
+    transform: scale(0.95);
+    filter: brightness(0.8);
+  }
 }
 
 .mascota-muerta {
-  filter: grayscale(1) brightness(0.6);
+  animation: dead 4s ease-in-out infinite;
 }
 
-/* Estados de héroe */
-.hero-feliz {
-  filter: brightness(1.1) saturate(1.1);
-}
-
-.hero-triste {
-  filter: grayscale(0.2) brightness(0.9);
-}
-
-.hero-enfermo {
-  filter: sepia(0.2) brightness(0.95);
+@keyframes dead {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: grayscale(0.5);
+  }
+  50% {
+    transform: scale(0.9) rotate(5deg);
+    filter: grayscale(1);
+  }
 }
 
 /* Responsive */
 @media (max-width: 768px) {
-  .home-main {
+  .character {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .character-info {
+    padding: 15px;
+  }
+  
+  .stat-item {
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
+    gap: 5px;
   }
   
-  .home-card {
-    min-width: 280px;
-    max-width: 100%;
+  .stat-bar {
+    width: 100%;
   }
   
-  .mascota-actions {
-    grid-template-columns: 1fr;
+  .welcome-message {
+    padding: 20px;
   }
-  
-  .home-header h1 {
-    font-size: 2em;
-  }
-  
-  .home-header p {
-    font-size: 1em;
-  }
-}
-
-/* Animaciones adicionales */
-.fade-in {
-  animation: fadeIn 0.5s ease-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-/* Mejoras para las barras de progreso */
-.progress-bar {
-  background: #eee;
-  border-radius: 8px;
-  height: 16px;
-  width: 120px;
-  display: inline-block;
-  vertical-align: middle;
-  margin-left: 4px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  border-radius: 8px;
-  transition: width 0.3s ease;
-  position: relative;
-}
-
-.progress-fill::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-  animation: shimmer 2s infinite;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
 } 

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import MathGame from '../components/games/MathGame';
 import './Minigames.css';
 
-const Minigames = ({ token, onCoinsUpdate }) => {
+const Minigames = () => {
   const [showMathGame, setShowMathGame] = useState(false);
   const [showMemoryGame, setShowMemoryGame] = useState(false);
   const [showSpeedGame, setShowSpeedGame] = useState(false);
@@ -10,9 +10,8 @@ const Minigames = ({ token, onCoinsUpdate }) => {
   const [showPuzzleGame, setShowPuzzleGame] = useState(false);
 
   const handleGameEnd = (coinsEarned) => {
-    if (onCoinsUpdate) {
-      onCoinsUpdate(coinsEarned);
-    }
+    // Aquí podrías actualizar las monedas del usuario
+    console.log('Monedas ganadas:', coinsEarned);
     setShowMathGame(false);
   };
 

@@ -19,8 +19,8 @@ export default function PetCustomization({ pet, token, onClose, onUpdated }) {
 
   // Simulación visual: solo cambia el color y la forma de la imagen
   const getPetImg = () => {
-    let src = '/assets/dog_normal.png';
-    if (pet.type === 'Gato') src = '/assets/cat_normal.png';
+    let src = '/assets/dog_normal.svg';
+    if (pet.type === 'Gato') src = '/assets/cat_normal.svg';
     // Aquí podrías cambiar la imagen según la forma seleccionada si tienes recursos
     return src;
   };

@@ -36,7 +36,7 @@ function HeroProfileModal({ hero, onClose }) {
               <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
                 {perfil.mascotas && perfil.mascotas.length > 0 ? perfil.mascotas.map(m => (
                   <div key={m._id} style={{ background: '#f8f8f8', borderRadius: 8, padding: 8, minWidth: 60, textAlign: 'center' }}>
-                    <img src={m.type === 'Gato' ? '/assets/cat_normal.png' : '/assets/dog_normal.png'} alt={m.type} style={{ width: 36, height: 36 }} />
+                    <img src={m.type === 'Gato' ? '/assets/cat_normal.svg' : '/assets/dog_normal.svg'} alt={m.type} style={{ width: 36, height: 36 }} />
                     <div style={{ fontSize: 13 }}>{m.name}</div>
                   </div>
                 )) : <span style={{ color: '#aaa' }}>Sin mascotas</span>}

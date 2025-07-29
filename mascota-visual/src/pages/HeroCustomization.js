@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { getUserProfile, updateHero } from '../api';
+import { getUserProfile, updateHero, createHero } from '../api';
 import './HeroCustomization.css';
 
-const avatars = [
-  '/assets/hero.png',
+const heroAvatars = [
+  '/assets/hero.svg',
   'https://api.dicebear.com/7.x/adventurer/svg?seed=hero1',
   'https://api.dicebear.com/7.x/adventurer/svg?seed=hero2',
   'https://api.dicebear.com/7.x/adventurer/svg?seed=hero3'
@@ -15,7 +15,7 @@ export default function HeroCustomization({ hero: heroProp, token }) {
   const [hero, setHero] = useState(heroProp || null);
   const [name, setName] = useState(heroProp?.name || '');
   const [team, setTeam] = useState(heroProp?.team || '');
-  const [avatar, setAvatar] = useState(heroProp?.avatar || avatars[0]);
+  const [avatar, setAvatar] = useState(heroProp?.avatar || heroAvatars[0]);
   const [color, setColor] = useState(heroProp?.color || colores[0]);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
@@ -29,11 +29,12 @@ export default function HeroCustomization({ hero: heroProp, token }) {
         try {
           const user = await getUserProfile(token);
           if (user.heroes && user.heroes.length > 0) {
-            setHero(user.heroes[0]);
-            setName(user.heroes[0].name);
-            setTeam(user.heroes[0].team || '');
-            setAvatar(user.heroes[0].avatar || avatars[0]);
-            setColor(user.heroes[0].color || colores[0]);
+            const userHero = user.heroes[0];
+            setHero(userHero);
+            setName(userHero.name || '');
+            setTeam(userHero.team || '');
+            setAvatar(userHero.avatar || heroAvatars[0]);
+            setColor(userHero.color || colores[0]);
           }
         } catch (err) {
           setError('Error al cargar héroe.');
@@ -50,15 +51,27 @@ export default function HeroCustomization({ hero: heroProp, token }) {
     setSuccess('');
     setError('');
     setLoading(true);
+    
     try {
-      if (!hero) throw new Error('No hay héroe para actualizar');
-      await updateHero(token, hero._id, { name, team, avatar, color });
-      setSuccess('¡Héroe actualizado!');
+      if (!name.trim()) {
+        throw new Error('El nombre del héroe es requerido');
+      }
+
+      if (hero && hero._id) {
+        // Actualizar héroe existente
+        await updateHero(token, hero._id, { name, team, avatar, color });
+        setSuccess('¡Héroe actualizado!');
+      } else {
+        // Crear nuevo héroe
+        const newHero = await createHero(token, { name, team, avatar, color });
+        setHero(newHero);
+        setSuccess('¡Héroe creado exitosamente!');
+      }
     } catch (err) {
       setError(err.response?.data?.error || err.message || 'Error al guardar.');
     } finally {
       setLoading(false);
-      setTimeout(() => setSuccess(''), 2000);
+      setTimeout(() => setSuccess(''), 3000);
     }
   };
 
@@ -69,7 +82,7 @@ export default function HeroCustomization({ hero: heroProp, token }) {
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <form className="hero-custom-form" onSubmit={handleSave}>
         <div className="avatar-select" style={{ background: color, borderRadius: 12, padding: 12, marginBottom: 12 }}>
-          {avatars.map((av, i) => (
+          {heroAvatars.map((av, i) => (
             <img
               key={i}
               src={av}
@@ -89,7 +102,9 @@ export default function HeroCustomization({ hero: heroProp, token }) {
         <input value={name} onChange={e => setName(e.target.value)} required />
         <label>Equipo</label>
         <input value={team} onChange={e => setTeam(e.target.value)} />
-        <button className="btn-main" type="submit" disabled={loading}>Guardar</button>
+        <button className="btn-main" type="submit" disabled={loading}>
+          {loading ? 'Guardando...' : (hero && hero._id ? 'Actualizar' : 'Crear')}
+        </button>
         {success && <div className="success-msg">{success}</div>}
       </form>
     </div>

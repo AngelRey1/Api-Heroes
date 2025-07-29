@@ -5,6 +5,8 @@ import achievementService from '../services/achievementService.js';
  */
 export const getAllAchievements = async (req, res) => {
   try {
+    // Inicializar logros si no existen
+    await achievementService.initializeAchievements();
     const achievements = await achievementService.getAllAchievements();
     res.json(achievements);
   } catch (error) {
@@ -70,7 +72,7 @@ export const deleteAchievement = async (req, res) => {
 };
 
 /**
- * Reclama un logro (para compatibilidad con rutas existentes)
+ * Reclama un logro
  */
 export const claimAchievement = async (req, res) => {
   try {
@@ -106,12 +108,13 @@ export const initializeAchievements = async (req, res) => {
 };
 
 /**
- * Obtiene logros secretos del usuario
+ * Obtiene logros secretos desbloqueados
  */
 export const getSecretAchievements = async (req, res) => {
   try {
-    const achievements = await achievementService.getUserSecretAchievements(req.user._id);
-    res.json(achievements);
+    const achievements = await achievementService.getUserAchievements(req.user._id);
+    const secretAchievements = achievements.all.filter(a => a.isSecret);
+    res.json(secretAchievements);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
