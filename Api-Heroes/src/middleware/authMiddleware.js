@@ -2,10 +2,10 @@ import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js';
 
 const getJWTSecret = () => {
-  const JWT_SECRET = process.env.JWT_SECRET;
-  if (!JWT_SECRET) {
-    throw new Error('JWT_SECRET environment variable is required');
-  }
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is required');
+}
   return JWT_SECRET;
 };
 

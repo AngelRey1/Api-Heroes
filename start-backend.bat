@@ -1,0 +1,9 @@
+@echo off
+echo 🚀 Iniciando el backend...
+cd Api-Heroes
+echo 📁 Directorio actual: %CD%
+echo 📦 Instalando dependencias...
+npm install
+echo 🎯 Iniciando servidor...
+npm start
+pause 
