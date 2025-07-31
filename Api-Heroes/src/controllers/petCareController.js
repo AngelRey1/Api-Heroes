@@ -1,132 +1,94 @@
-import petCareService from "../services/petCareService.js";
-import achievementService from '../services/achievementService.js';
-import missionService from '../services/missionService.js';
-import eventService from '../services/eventService.js';
+import PetCareService from '../services/petCareService.js';
 
-/**
- * Alimentar a una mascota
- */
+const petCareService = new PetCareService();
+
 export const feedPet = async (req, res) => {
     try {
-        const result = await petCareService.feedPet(req.params.petId, req.user._id);
-        // Verificar logros de alimentación
-        const achievementResult = await achievementService.checkFeedingAchievements(req.user._id);
-        // Verificar progreso de misiones de alimentación
-        const missionResult = await missionService.checkAndUpdateMissionProgress(req.user._id, 'feeding', 1);
-        // Verificar progreso de eventos
-        const eventResult = await eventService.checkAndUpdateEventProgress(req.user._id, 'feeding', 1);
-        res.json({ ...result, achievements: achievementResult, missions: missionResult, events: eventResult });
-    } catch (error) {
-        if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(400).json({ error: error.message });
-    }
-};
-
-/**
- * Pasear a una mascota
- */
-export const walkPet = async (req, res) => {
-    try {
-        const result = await petCareService.walkPet(req.params.petId, req.user._id);
+        console.log('feedPet - PetId:', req.params.id);
+        console.log('feedPet - UserId:', req.user._id);
+        console.log('feedPet - User:', req.user.username);
+        
+        const result = await petCareService.feedPet(req.params.id, req.user._id);
         res.json(result);
     } catch (error) {
+        console.error('feedPet - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
         res.status(400).json({ error: error.message });
     }
 };
 
-/**
- * Customizar una mascota
- */
-export const customizePet = async (req, res) => {
-    try {
-        const { name, color, forma } = req.body;
-        const result = await petCareService.customizePet(req.params.petId, req.user._id, { name, color, forma });
-        res.json(result);
-    } catch (error) {
-        if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(400).json({ error: error.message });
-    }
-};
-
-/**
- * Jugar con una mascota
- */
 export const playWithPet = async (req, res) => {
     try {
-        const result = await petCareService.playWithPet(req.params.petId, req.user._id);
-        // Verificar logros de juego
-        const achievementResult = await achievementService.checkPlayingAchievements(req.user._id);
-        // Verificar progreso de misiones de juego
-        const missionResult = await missionService.checkAndUpdateMissionProgress(req.user._id, 'playing', 1);
-        // Verificar progreso de eventos
-        const eventResult = await eventService.checkAndUpdateEventProgress(req.user._id, 'playing', 1);
-        res.json({ ...result, achievements: achievementResult, missions: missionResult, events: eventResult });
+        const result = await petCareService.playWithPet(req.params.id, req.user._id);
+        res.json(result);
     } catch (error) {
+        console.error('playWithPet - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
         res.status(400).json({ error: error.message });
     }
 };
 
-/**
- * Bañar a una mascota
- */
 export const bathPet = async (req, res) => {
     try {
-        const result = await petCareService.bathPet(req.params.petId, req.user._id);
-        // Verificar logros de limpieza
-        const achievementResult = await achievementService.checkCleaningAchievements(req.user._id);
-        // Verificar progreso de misiones de limpieza
-        const missionResult = await missionService.checkAndUpdateMissionProgress(req.user._id, 'cleaning', 1);
-        // Verificar progreso de eventos
-        const eventResult = await eventService.checkAndUpdateEventProgress(req.user._id, 'cleaning', 1);
-        res.json({ ...result, achievements: achievementResult, missions: missionResult, events: eventResult });
+        const result = await petCareService.bathPet(req.params.id, req.user._id);
+        res.json(result);
     } catch (error) {
+        console.error('bathPet - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
         res.status(400).json({ error: error.message });
     }
 };
 
-/**
- * Hacer dormir a una mascota
- */
 export const sleepPet = async (req, res) => {
     try {
-        const result = await petCareService.sleepPet(req.params.petId, req.user._id);
-        // Verificar logros de descanso
-        const achievementResult = await achievementService.checkSleepingAchievements(req.user._id);
-        // Verificar progreso de misiones de descanso
-        const missionResult = await missionService.checkAndUpdateMissionProgress(req.user._id, 'sleeping', 1);
-        // Verificar progreso de eventos
-        const eventResult = await eventService.checkAndUpdateEventProgress(req.user._id, 'sleeping', 1);
-        res.json({ ...result, achievements: achievementResult, missions: missionResult, events: eventResult });
+        const result = await petCareService.sleepPet(req.params.id, req.user._id);
+        res.json(result);
     } catch (error) {
+        console.error('sleepPet - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
         res.status(400).json({ error: error.message });
     }
 };
 
-/**
- * Obtener estado de una mascota
- */
+export const healPet = async (req, res) => {
+    try {
+        const result = await petCareService.healPet(req.params.id, req.user._id);
+        res.json(result);
+    } catch (error) {
+        console.error('healPet - Error:', error);
+        if (error.status === 403) return res.status(403).json({ error: error.message });
+        res.status(400).json({ error: error.message });
+    }
+};
+
 export const getPetStatus = async (req, res) => {
     try {
-        const status = await petCareService.getPetStatus(req.params.petId, req.user._id);
-        res.json(status);
+        const result = await petCareService.getPetStatus(req.params.id, req.user._id);
+        res.json(result);
     } catch (error) {
+        console.error('getPetStatus - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
         res.status(400).json({ error: error.message });
     }
 };
 
-/**
- * Obtener estadísticas de cuidado
- */
+export const checkAbandonment = async (req, res) => {
+    try {
+        const result = await petCareService.checkAbandonment(req.params.id, req.user._id);
+        res.json(result);
+    } catch (error) {
+        console.error('checkAbandonment - Error:', error);
+        if (error.status === 403) return res.status(403).json({ error: error.message });
+        res.status(400).json({ error: error.message });
+    }
+};
+
 export const getCareStats = async (req, res) => {
     try {
-        const stats = await petCareService.getCareStats(req.user._id);
-        res.json(stats);
+        const result = await petCareService.getCareStats(req.user._id);
+        res.json(result);
     } catch (error) {
+        console.error('getCareStats - Error:', error);
         res.status(500).json({ error: error.message });
     }
 }; 

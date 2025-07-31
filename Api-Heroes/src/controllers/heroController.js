@@ -28,8 +28,19 @@ export const addHero = async (req, res) => {
         return res.status(400).json({ error : errors.array() });
     }
     try {
-        const { name, alias, city, team } = req.body;
-        const addedHero = await heroService.addHero({ name, alias, city, team, owner: req.user._id });
+        const { name, alias, city, team, type, color, personality, accessories, avatar } = req.body;
+        const addedHero = await heroService.addHero({ 
+            name, 
+            alias, 
+            city, 
+            team, 
+            type, 
+            color, 
+            personality, 
+            accessories, 
+            avatar,
+            owner: req.user._id 
+        });
         res.status(201).json(addedHero);
     } catch (error) {
         res.status(500).json({ error: error.message });

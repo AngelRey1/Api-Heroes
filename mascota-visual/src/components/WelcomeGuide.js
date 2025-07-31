@@ -1,55 +1,93 @@
-import React from 'react';
+import React, { useState } from 'react';
+import CreationModal from './CreationModal';
+import CreationSelectionModal from './CreationSelectionModal';
 import './WelcomeGuide.css';
 
 const WelcomeGuide = ({ onClose, hasHero, hasPet }) => {
+  const [showSelectionModal, setShowSelectionModal] = useState(false);
+  const [showCreationModal, setShowCreationModal] = useState(false);
+  const [creationType, setCreationType] = useState('pet');
+
+  const handleCreateHero = () => {
+    setCreationType('hero');
+    setShowCreationModal(true);
+  };
+
+  const handleCreatePet = () => {
+    setCreationType('pet');
+    setShowCreationModal(true);
+  };
+
+  const handleCloseSelectionModal = () => {
+    setShowSelectionModal(false);
+  };
+
+  const handleSelectType = (type) => {
+    setCreationType(type);
+    setShowCreationModal(true);
+  };
+
+  const handleCloseCreationModal = () => {
+    setShowCreationModal(false);
+    onClose(); // Cerrar también el WelcomeGuide
+  };
+
   return (
-    <div className="welcome-overlay">
-      <div className="welcome-modal">
-        <h2>¡Bienvenido a Mascota Hero! 🎉</h2>
-        
-        <div className="welcome-content">
-          <div className="welcome-step">
-            <h3>1. Crea tu Héroe ⚡</h3>
-            <p>Ve a "Personalización de Héroe" para crear tu primer superhéroe personalizado.</p>
-            {!hasHero && (
-              <button 
-                className="welcome-btn hero-btn"
-                onClick={() => window.location.href = '/hero-customization'}
-              >
-                Crear Héroe
-              </button>
-            )}
+    <>
+      <div className="welcome-overlay">
+        <div className="welcome-modal">
+          <h2>¡Bienvenido! 🎉</h2>
+          
+          <div className="welcome-content">
+            <div className="welcome-step">
+              <h3>⚡ Crea tu Héroe</h3>
+              {!hasHero ? (
+                <button 
+                  className="welcome-btn hero-btn"
+                  onClick={handleCreateHero}
+                >
+                  Crear Héroe
+                </button>
+              ) : (
+                <p className="welcome-completed">✅ Héroe creado</p>
+              )}
+            </div>
+            
+            <div className="welcome-step">
+              <h3>🐾 Adopta tu Mascota</h3>
+              {!hasPet ? (
+                <button 
+                  className="welcome-btn pet-btn"
+                  onClick={handleCreatePet}
+                >
+                  Adoptar Mascota
+                </button>
+              ) : (
+                <p className="welcome-completed">✅ Mascota adoptada</p>
+              )}
+            </div>
           </div>
           
-          <div className="welcome-step">
-            <h3>2. Adopta tu Mascota 🐾</h3>
-            <p>Ve a "Mascotas" para adoptar tu primera mascota y comenzar a cuidarla.</p>
-            {!hasPet && (
-              <button 
-                className="welcome-btn pet-btn"
-                onClick={() => window.location.href = '/pets'}
-              >
-                Adoptar Mascota
-              </button>
-            )}
-          </div>
-          
-          <div className="welcome-step">
-            <h3>3. Explora el Mundo 🌍</h3>
-            <ul>
-              <li>🎮 <strong>Minijuegos:</strong> Juega y gana monedas</li>
-              <li>🏆 <strong>Logros:</strong> Completa objetivos y desbloquea recompensas</li>
-              <li>🛒 <strong>Tienda:</strong> Compra items para tu mascota y héroe</li>
-              <li>📊 <strong>Ranking:</strong> Compite con otros jugadores</li>
-            </ul>
-          </div>
+          <button className="welcome-close" onClick={onClose}>
+            Continuar
+          </button>
         </div>
-        
-        <button className="welcome-close" onClick={onClose}>
-          ¡Entendido!
-        </button>
       </div>
-    </div>
+
+      {/* Modal de selección */}
+      <CreationSelectionModal 
+        isOpen={showSelectionModal}
+        onClose={handleCloseSelectionModal}
+        onSelectType={handleSelectType}
+      />
+
+      {/* Modal de creación */}
+      <CreationModal 
+        isOpen={showCreationModal}
+        onClose={handleCloseCreationModal}
+        type={creationType}
+      />
+    </>
   );
 };
 

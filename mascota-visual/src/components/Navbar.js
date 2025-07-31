@@ -1,55 +1,59 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useUser } from '../context/UserContext';
+import CreationModal from './CreationModal';
 import './Navbar.css';
+import { useNavigate } from 'react-router-dom';
+import { NavLink } from 'react-router-dom';
 
-function Navbar({ onLogout }) {
-  const location = useLocation();
+const Navbar = () => {
+  const { user, logout } = useUser();
+  const navigate = useNavigate();
 
-  const navItems = [
-    { path: '/', label: '🏠 Inicio', icon: '🏠' },
-    { path: '/minigames', label: '🎮 Juegos', icon: '🎮' },
-    { path: '/achievements', label: '🏆 Logros', icon: '🏆' },
-    { path: '/shop', label: '🛒 Tienda', icon: '🛒' },
-    { path: '/statistics', label: '📊 Estadísticas', icon: '📊' },
-    { path: '/missions', label: '📋 Misiones', icon: '📋' },
-    { path: '/events', label: '🎉 Eventos', icon: '🎉' },
-    { path: '/friends', label: '👥 Amigos', icon: '👥' },
-    { path: '/chat', label: '💬 Chat', icon: '💬' },
-    { path: '/tournaments', label: '🏆 Torneos', icon: '🏆' },
-    { path: '/ranking', label: '🏅 Ranking', icon: '🏅' },
-    { path: '/inventory', label: '🎒 Inventario', icon: '🎒' },
-    { path: '/pet-collection', label: '🐾 Mascotas', icon: '🐾' },
-    { path: '/customization', label: '🎨 Personalizar', icon: '🎨' },
-    { path: '/settings', label: '⚙️ Ajustes', icon: '⚙️' }
-  ];
+  const handleCharactersClick = () => {
+    navigate('/customization');
+  };
+
+  const handleLogout = () => {
+    console.log('Cerrando sesión...');
+    logout();
+  };
 
   return (
     <nav className="navbar">
-      <div className="nav-container">
-        <Link to="/" className="nav-logo">
-          🎮 Mascota Hero
-        </Link>
-        
-        <div className="nav-links">
-          {navItems.map((item) => (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`nav-link ${location.pathname === item.path ? 'active' : ''}`}
-            >
-              <span className="nav-icon">{item.icon}</span>
-              <span className="nav-label">{item.label.split(' ')[1]}</span>
-            </Link>
-          ))}
-          
-          <button onClick={onLogout} className="nav-link logout-btn">
-            <span className="nav-icon">🚪</span>
-            <span className="nav-label">Salir</span>
-          </button>
+      <div className="nav-left">
+        <div className="nav-brand">
+          <span className="brand-icon">🐾</span>
+          <span className="brand-text">Mascotas Virtuales</span>
         </div>
+      </div>
+
+      <div className="nav-items">
+        <NavLink to="/" className="nav-item">
+          <span className="nav-icon">🏠</span>
+          <span className="nav-label">Inicio</span>
+        </NavLink>
+        <NavLink to="/minigames" className="nav-item">
+          <span className="nav-icon">🎮</span>
+          <span className="nav-label">Juegos</span>
+        </NavLink>
+        <NavLink to="/customization" className="nav-item">
+          <span className="nav-icon">🎨</span>
+          <span className="nav-label">Personalizar</span>
+        </NavLink>
+      </div>
+
+      <div className="nav-right">
+        <button className="nav-btn characters-btn" onClick={handleCharactersClick}>
+          <span className="btn-icon">👥</span>
+          <span className="btn-label">Mis Personajes</span>
+        </button>
+        <button className="nav-btn logout-btn" onClick={handleLogout}>
+          <span className="btn-icon">🚪</span>
+          <span className="btn-label">Salir</span>
+        </button>
       </div>
     </nav>
   );
-}
+};
 
 export default Navbar; 

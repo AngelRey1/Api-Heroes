@@ -130,4 +130,14 @@ ehthumbs.db
 Thumbs.db
 
 # Optional: Ignore data files if contienen información sensible
-# *.json (descomenta si no quieres subir archivos JSON de datos) 
+# *.json (descomenta si no quieres subir archivos JSON de datos)
+
+# Archivos temporales de desarrollo
+resetLastCare.js
+fixLastCare.js
+testPetCare.js
+initializePetStats.js
+checkPets.js
+test_mongodb_connection.js
+cleanup_database.js
+updatePetsCustomization.js 

@@ -1,366 +1,579 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
-import { 
-  getPetCustomizations, 
-  getHeroCustomizations,
-  applyPetCustomization,
-  applyHeroCustomization,
-  buyCustomization
-} from '../api';
 import { useSoundEffects } from '../components/SoundEffects';
 import NotificationToast from '../components/NotificationToast';
+import { createHero, createPet, updateHero, updatePet } from '../api';
 import './Customization.css';
 
 const Customization = () => {
-  const { token, updateCoins, user } = useUser();
-  const { playClick, playCoin, playCelebrate } = useSoundEffects();
-  const [petCustomizations, setPetCustomizations] = useState([]);
-  const [heroCustomizations, setHeroCustomizations] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
+  const { token, user, heroes, mascotas, fetchUserData } = useUser();
+  const { playClick, playCoin } = useSoundEffects();
+  const [activeTab, setActiveTab] = useState('heroes');
+  const [selectedHero, setSelectedHero] = useState(null);
+  const [selectedPet, setSelectedPet] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createType, setCreateType] = useState('hero');
   const [notification, setNotification] = useState({ message: '', type: 'info' });
-  const [activeTab, setActiveTab] = useState('pets');
-  const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Estados para edición de héroe
+  const [heroForm, setHeroForm] = useState({
+    name: '',
+    alias: '',
+    city: '',
+    team: '',
+    superPower: '',
+    color: '#FFD700'
+  });
+
+  // Estados para edición de mascota
+  const [petForm, setPetForm] = useState({
+    name: '',
+    type: 'dog',
+    superPower: '',
+    color: '#FFD700'
+  });
+
+  // Estados para creación
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    color: '#3498db',
+    alias: '',
+    city: '',
+    team: '',
+    petType: 'dog',
+    superPower: ''
+  });
 
   useEffect(() => {
-    fetchCustomizations();
-  }, [token]);
+    if (token) {
+      loadCharacters();
+    }
+  }, [token, heroes, mascotas]);
 
-  const fetchCustomizations = async () => {
+  const loadCharacters = async () => {
     try {
-      setLoading(true);
-      
-      const [petData, heroData] = await Promise.all([
-        getPetCustomizations(token),
-        getHeroCustomizations(token)
-      ]);
-      
-      setPetCustomizations(petData);
-      setHeroCustomizations(heroData);
-    } catch (err) {
-      console.error('Error fetching customizations:', err);
-      setNotification({ message: 'Error al cargar personalizaciones', type: 'error' });
-    } finally {
-      setLoading(false);
+      console.log('Customization - Loading characters...');
+      console.log('Customization - User:', user);
+      console.log('Customization - Heroes from context:', heroes);
+      console.log('Customization - Pets from context:', mascotas);
+    } catch (error) {
+      console.error('Error cargando personajes:', error);
     }
   };
 
-  const handleApplyPetCustomization = async (customizationId) => {
-    try {
-      setActionLoading(true);
-      playClick();
-      
-      await applyPetCustomization(customizationId, token);
-      
-      setNotification({ 
-        message: '¡Personalización aplicada a tu mascota!', 
-        type: 'success' 
-      });
-      
-      playCelebrate();
-      
-      // Recargar datos
-      await fetchCustomizations();
-    } catch (err) {
-      console.error('Error applying pet customization:', err);
-      setNotification({ message: 'Error al aplicar personalización', type: 'error' });
-    } finally {
-      setActionLoading(false);
-    }
+  const handleCreateHero = () => {
+    setCreateType('hero');
+    setCreateForm({
+      name: '',
+      color: '#3498db',
+      alias: '',
+      city: '',
+      team: '',
+      petType: 'dog',
+      superPower: ''
+    });
+    setShowCreateModal(true);
+    playClick();
   };
 
-  const handleApplyHeroCustomization = async (customizationId) => {
-    try {
-      setActionLoading(true);
-      playClick();
-      
-      await applyHeroCustomization(customizationId, token);
-      
-      setNotification({ 
-        message: '¡Personalización aplicada a tu héroe!', 
-        type: 'success' 
-      });
-      
-      playCelebrate();
-      
-      // Recargar datos
-      await fetchCustomizations();
-    } catch (err) {
-      console.error('Error applying hero customization:', err);
-      setNotification({ message: 'Error al aplicar personalización', type: 'error' });
-    } finally {
-      setActionLoading(false);
-    }
+  const handleCreatePet = () => {
+    setCreateType('pet');
+    setCreateForm({
+      name: '',
+      color: '#3498db',
+      alias: '',
+      city: '',
+      team: '',
+      petType: 'dog',
+      superPower: ''
+    });
+    setShowCreateModal(true);
+    playClick();
   };
 
-  const handleBuyCustomization = async (customizationId, price) => {
-    try {
-      setActionLoading(true);
-      playClick();
-      
-      const result = await buyCustomization(customizationId, token);
-      updateCoins(-price);
-      
-      setNotification({ 
-        message: `¡Personalización comprada por ${price} monedas!`, 
-        type: 'success' 
+  const handleCreate = async () => {
+    if (!createForm.name.trim()) {
+      setNotification({
+        message: 'Por favor ingresa un nombre',
+        type: 'error'
       });
-      
+      return;
+    }
+
+    try {
+      if (createType === 'hero') {
+        const heroData = {
+          name: createForm.name,
+          alias: createForm.alias || createForm.name,
+          city: createForm.city || 'Ciudad Desconocida',
+          team: createForm.team || 'Sin Equipo',
+          superPower: createForm.superPower || 'Sin poder',
+          color: createForm.color
+        };
+
+        await createHero(token, heroData);
+        setNotification({
+          message: '¡Héroe creado exitosamente!',
+          type: 'success'
+        });
+      } else {
+        const petData = {
+          name: createForm.name,
+          type: createForm.petType,
+          superPower: createForm.superPower || 'Amor incondicional',
+          color: createForm.color
+        };
+
+        await createPet(token, petData);
+        setNotification({
+          message: '¡Mascota creada exitosamente!',
+          type: 'success'
+        });
+      }
+
       playCoin();
-      
-      // Recargar datos
-      await fetchCustomizations();
-    } catch (err) {
-      console.error('Error buying customization:', err);
-      setNotification({ message: 'Error al comprar personalización', type: 'error' });
-    } finally {
-      setActionLoading(false);
+      await fetchUserData();
+      setShowCreateModal(false);
+    } catch (error) {
+      console.error('Error creando personaje:', error);
+      setNotification({
+        message: 'Error al crear el personaje',
+        type: 'error'
+      });
     }
   };
 
-  const categories = [
-    { id: 'all', name: 'Todos', icon: '🎨' },
-    { id: 'hats', name: 'Sombreros', icon: '🎩' },
-    { id: 'accessories', name: 'Accesorios', icon: '👓' },
-    { id: 'clothes', name: 'Ropa', icon: '👕' },
-    { id: 'backgrounds', name: 'Fondos', icon: '🖼️' },
-    { id: 'effects', name: 'Efectos', icon: '✨' },
-    { id: 'special', name: 'Especiales', icon: '⭐' }
+  const handleEditHero = (hero) => {
+    setSelectedHero(hero);
+    setHeroForm({
+      name: hero.name || '',
+      alias: hero.alias || '',
+      city: hero.city || '',
+      team: hero.team || '',
+      superPower: hero.superPower || '',
+      color: hero.color || '#FFD700'
+    });
+    setShowEditModal(true);
+    playClick();
+  };
+
+  const handleEditPet = (pet) => {
+    setSelectedPet(pet);
+    setPetForm({
+      name: pet.name || '',
+      type: pet.type || 'dog',
+      superPower: pet.superPower || '',
+      color: pet.color || '#FFD700'
+    });
+    setShowEditModal(true);
+    playClick();
+  };
+
+  const handleSaveHero = async () => {
+    try {
+      const heroData = {
+        name: heroForm.name,
+        alias: heroForm.alias,
+        city: heroForm.city,
+        team: heroForm.team,
+        superPower: heroForm.superPower,
+        color: heroForm.color
+      };
+
+      await updateHero(token, selectedHero._id, heroData);
+      setNotification({ message: 'Héroe actualizado correctamente!', type: 'success' });
+      setShowEditModal(false);
+      await fetchUserData();
+      playCoin();
+    } catch (error) {
+      setNotification({ message: 'Error al actualizar héroe', type: 'error' });
+    }
+  };
+
+  const handleSavePet = async () => {
+    try {
+      const petData = {
+        name: petForm.name,
+        type: petForm.type,
+        superPower: petForm.superPower,
+        color: petForm.color
+      };
+
+      await updatePet(token, selectedPet._id, petData);
+      setNotification({ message: 'Mascota actualizada correctamente!', type: 'success' });
+      setShowEditModal(false);
+      await fetchUserData();
+      playCoin();
+    } catch (error) {
+      setNotification({ message: 'Error al actualizar mascota', type: 'error' });
+    }
+  };
+
+  const handleInputChange = (field, value) => {
+    setCreateForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleHeroFormChange = (field, value) => {
+    setHeroForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handlePetFormChange = (field, value) => {
+    setPetForm(prev => ({ ...prev, [field]: value }));
+  };
+
+  const petTypes = [
+    { id: 'dog', name: 'Perro', emoji: '🐕' },
+    { id: 'cat', name: 'Gato', emoji: '🐱' },
+    { id: 'rabbit', name: 'Conejo', emoji: '🐰' },
+    { id: 'bird', name: 'Pájaro', emoji: '🐦' },
+    { id: 'hamster', name: 'Hamster', emoji: '🐹' },
+    { id: 'turtle', name: 'Tortuga', emoji: '🐢' }
   ];
-
-  const currentCustomizations = activeTab === 'pets' ? petCustomizations : heroCustomizations;
-  
-  const filteredCustomizations = selectedCategory === 'all' 
-    ? currentCustomizations
-    : currentCustomizations.filter(item => item.category === selectedCategory);
-
-  const getCustomizationIcon = (category) => {
-    switch (category) {
-      case 'hats': return '🎩';
-      case 'accessories': return '👓';
-      case 'clothes': return '👕';
-      case 'backgrounds': return '🖼️';
-      case 'effects': return '✨';
-      case 'special': return '⭐';
-      default: return '🎨';
-    }
-  };
-
-  const getCustomizationColor = (rarity) => {
-    switch (rarity) {
-      case 'common': return '#C0C0C0';
-      case 'rare': return '#87CEEB';
-      case 'epic': return '#DDA0DD';
-      case 'legendary': return '#FFD700';
-      default: return '#FFE4E1';
-    }
-  };
-
-  if (loading) {
-    return (
-      <div className="customization-container">
-        <div className="loading-message">
-          <div className="loading-spinner">🎨</div>
-          <p>Cargando personalizaciones...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="customization-container">
-      <NotificationToast 
-        message={notification.message} 
-        type={notification.type} 
-        onClose={() => setNotification({ message: '', type: 'info' })} 
-      />
-
-      {/* Header */}
       <div className="customization-header">
         <h1>🎨 Personalización</h1>
-        <div className="customization-stats">
-          <div className="stat-item">
-            <span className="stat-icon">🐾</span>
-            <span className="stat-label">Mascotas:</span>
-            <span className="stat-value">
-              {petCustomizations.filter(c => c.owned).length}
-            </span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-icon">🦸‍♂️</span>
-            <span className="stat-label">Héroes:</span>
-            <span className="stat-value">
-              {heroCustomizations.filter(c => c.owned).length}
-            </span>
-          </div>
-        </div>
+        <p>Edita tus héroes y mascotas</p>
       </div>
 
-      {/* Tabs */}
-      <div className="tabs-container">
-        <button
-          className={`tab-btn ${activeTab === 'pets' ? 'active' : ''}`}
-          onClick={() => {
-            setActiveTab('pets');
-            playClick();
-          }}
-        >
-          🐾 Mascotas
-        </button>
+      <div className="customization-tabs">
         <button
           className={`tab-btn ${activeTab === 'heroes' ? 'active' : ''}`}
-          onClick={() => {
-            setActiveTab('heroes');
-            playClick();
-          }}
+          onClick={() => setActiveTab('heroes')}
         >
-          🦸‍♂️ Héroes
+          👤 Héroes ({heroes.length})
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'pets' ? 'active' : ''}`}
+          onClick={() => setActiveTab('pets')}
+        >
+          🐾 Mascotas ({mascotas.length})
         </button>
       </div>
 
-      {/* Categorías */}
-      <div className="categories-container">
-        {categories.map(category => (
-          <button
-            key={category.id}
-            className={`category-btn ${selectedCategory === category.id ? 'active' : ''}`}
-            onClick={() => {
-              setSelectedCategory(category.id);
-              playClick();
-            }}
-          >
-            <span className="category-icon">{category.icon}</span>
-            <span className="category-name">{category.name}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Grid de personalizaciones */}
-      <div className="customizations-grid">
-        {filteredCustomizations.length === 0 ? (
-          <div className="no-customizations">
-            <div className="no-customizations-icon">🎨</div>
-            <h3>No hay personalizaciones en esta categoría</h3>
-            <p>¡Compra personalizaciones para personalizar tu {activeTab === 'pets' ? 'mascota' : 'héroe'}!</p>
-          </div>
-        ) : (
-          filteredCustomizations.map(customization => (
-            <div 
-              key={customization._id} 
-              className={`customization-card ${customization.owned ? 'owned' : 'locked'}`}
-              style={{ backgroundColor: getCustomizationColor(customization.rarity) }}
-            >
-              <div className="customization-preview">
-                <div className="preview-image">
-                  {customization.image ? (
-                    <img 
-                      src={customization.image} 
-                      alt={customization.name}
-                      className="customization-img"
-                    />
-                  ) : (
-                    <div className="preview-placeholder">
-                      {getCustomizationIcon(customization.category)}
-                    </div>
-                  )}
-                </div>
-                
-                {customization.applied && (
-                  <div className="applied-badge">✅ Aplicado</div>
-                )}
-              </div>
-
-              <div className="customization-info">
-                <h3 className="customization-name">{customization.name}</h3>
-                <p className="customization-description">{customization.description}</p>
-                
-                <div className="customization-meta">
-                  <span className="customization-category">{customization.category}</span>
-                  <span className={`rarity-badge ${customization.rarity}`}>
-                    {customization.rarity === 'common' && 'Común'}
-                    {customization.rarity === 'rare' && 'Raro'}
-                    {customization.rarity === 'epic' && 'Épico'}
-                    {customization.rarity === 'legendary' && 'Legendario'}
-                  </span>
-                </div>
-              </div>
-
-              <div className="customization-actions">
-                {customization.owned ? (
-                  <button
-                    className="apply-btn"
-                    onClick={() => activeTab === 'pets' 
-                      ? handleApplyPetCustomization(customization._id)
-                      : handleApplyHeroCustomization(customization._id)
-                    }
-                    disabled={actionLoading || customization.applied}
-                  >
-                    {customization.applied ? 'Aplicado' : 'Aplicar'}
-                  </button>
-                ) : (
-                  <div className="purchase-info">
-                    <div className="price-info">
-                      <span className="price-icon">💰</span>
-                      <span className="price-amount">{customization.price} monedas</span>
-                    </div>
-                    
-                    {user?.coins >= customization.price ? (
-                      <button
-                        className="buy-btn"
-                        onClick={() => handleBuyCustomization(customization._id, customization.price)}
-                        disabled={actionLoading}
-                      >
-                        Comprar
-                      </button>
-                    ) : (
-                      <span className="insufficient-funds">Monedas insuficientes</span>
-                    )}
-                  </div>
-                )}
-              </div>
+      <div className="characters-grid">
+        {activeTab === 'heroes' ? (
+          <>
+            {/* Botón de crear héroe */}
+            <div className="character-card create-card" onClick={handleCreateHero}>
+              <div className="create-icon">➕</div>
+              <h3>Crear Héroe</h3>
+              <p>Agrega un nuevo héroe</p>
             </div>
-          ))
+
+            {/* Lista de héroes */}
+            {heroes.map((hero, index) => (
+              <div key={hero._id || index} className="character-card">
+                <div className="hero-avatar" style={{ backgroundColor: hero.color || '#FFD700' }}>
+                  {hero.name?.charAt(0).toUpperCase() || 'H'}
+                </div>
+                <h3>{hero.name}</h3>
+                <p>Alias: {hero.alias}</p>
+                <p>Ciudad: {hero.city}</p>
+                <p>Equipo: {hero.team}</p>
+                <p>Poder: {hero.superPower}</p>
+                <button className="edit-btn" onClick={() => handleEditHero(hero)}>
+                  ✏️ Editar
+                </button>
+              </div>
+            ))}
+
+            {heroes.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">🦸‍♂️</div>
+                <h3>No tienes héroes creados</h3>
+                <p>¡Crea tu primer héroe para comenzar!</p>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {/* Botón de crear mascota */}
+            <div className="character-card create-card" onClick={handleCreatePet}>
+              <div className="create-icon">➕</div>
+              <h3>Crear Mascota</h3>
+              <p>Adopta una nueva mascota</p>
+            </div>
+
+            {/* Lista de mascotas */}
+            {mascotas.map((pet, index) => (
+              <div key={pet._id || index} className="character-card">
+                <div className="pet-avatar" style={{ backgroundColor: pet.color || '#FFD700' }}>
+                  {pet.type === 'dog' ? '🐕' : 
+                   pet.type === 'cat' ? '🐱' : 
+                   pet.type === 'rabbit' ? '🐰' : 
+                   pet.type === 'bird' ? '🐦' : 
+                   pet.type === 'hamster' ? '🐹' : 
+                   pet.type === 'turtle' ? '🐢' : '🐾'}
+                </div>
+                <h3>{pet.name}</h3>
+                <p>Tipo: {pet.type}</p>
+                <p>Poder: {pet.superPower}</p>
+                <button className="edit-btn" onClick={() => handleEditPet(pet)}>
+                  ✏️ Editar
+                </button>
+              </div>
+            ))}
+
+            {mascotas.length === 0 && (
+              <div className="empty-state">
+                <div className="empty-icon">🐾</div>
+                <h3>No tienes mascotas</h3>
+                <p>¡Adopta tu primera mascota!</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      {/* Información adicional */}
-      <div className="customization-info">
-        <div className="info-card">
-          <h3>💡 Tipos de Personalización</h3>
-          <div className="customization-types">
-            <div className="type-item">
-              <span className="type-icon">🎩</span>
-              <span className="type-name">Sombreros</span>
-              <span className="type-desc">Sombreros y gorras</span>
+      {/* Modal de creación */}
+      {showCreateModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Crear {createType === 'hero' ? 'Héroe' : 'Mascota'}</h2>
+              <button className="close-btn" onClick={() => setShowCreateModal(false)}>✕</button>
             </div>
-            <div className="type-item">
-              <span className="type-icon">👓</span>
-              <span className="type-name">Accesorios</span>
-              <span className="type-desc">Gafas, collares, etc.</span>
+
+            <div className="modal-body">
+              <div className="form-group">
+                <label>Nombre *</label>
+                <input
+                  type="text"
+                  value={createForm.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder={`Nombre del ${createType === 'hero' ? 'héroe' : 'mascota'}`}
+                />
+              </div>
+
+              {createType === 'hero' ? (
+                <>
+                  <div className="form-group">
+                    <label>Alias</label>
+                    <input
+                      type="text"
+                      value={createForm.alias}
+                      onChange={(e) => handleInputChange('alias', e.target.value)}
+                      placeholder="Ej: Spiderman, Batman..."
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Ciudad</label>
+                    <input
+                      type="text"
+                      value={createForm.city}
+                      onChange={(e) => handleInputChange('city', e.target.value)}
+                      placeholder="Ej: Nueva York, Gotham..."
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Equipo</label>
+                    <input
+                      type="text"
+                      value={createForm.team}
+                      onChange={(e) => handleInputChange('team', e.target.value)}
+                      placeholder="Ej: Los Vengadores, Liga de la Justicia..."
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Super Poder</label>
+                    <input
+                      type="text"
+                      value={createForm.superPower}
+                      onChange={(e) => handleInputChange('superPower', e.target.value)}
+                      placeholder="Ej: Volar, Super fuerza..."
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="form-group">
+                    <label>Tipo de Mascota</label>
+                    <select
+                      value={createForm.petType}
+                      onChange={(e) => handleInputChange('petType', e.target.value)}
+                    >
+                      {petTypes.map(pet => (
+                        <option key={pet.id} value={pet.id}>
+                          {pet.emoji} {pet.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Super Poder</label>
+                    <input
+                      type="text"
+                      value={createForm.superPower}
+                      onChange={(e) => handleInputChange('superPower', e.target.value)}
+                      placeholder="Ej: Volar, Super fuerza..."
+                    />
+                  </div>
+                </>
+              )}
+
+              <div className="form-group">
+                <label>Color</label>
+                <input
+                  type="color"
+                  value={createForm.color}
+                  onChange={(e) => handleInputChange('color', e.target.value)}
+                />
+              </div>
             </div>
-            <div className="type-item">
-              <span className="type-icon">👕</span>
-              <span className="type-name">Ropa</span>
-              <span className="type-desc">Camisetas, vestidos</span>
-            </div>
-            <div className="type-item">
-              <span className="type-icon">🖼️</span>
-              <span className="type-name">Fondos</span>
-              <span className="type-desc">Fondos personalizados</span>
-            </div>
-            <div className="type-item">
-              <span className="type-icon">✨</span>
-              <span className="type-name">Efectos</span>
-              <span className="type-desc">Efectos especiales</span>
-            </div>
-            <div className="type-item">
-              <span className="type-icon">⭐</span>
-              <span className="type-name">Especiales</span>
-              <span className="type-desc">Items únicos</span>
+
+            <div className="modal-footer">
+              <button className="cancel-btn" onClick={() => setShowCreateModal(false)}>
+                Cancelar
+              </button>
+              <button 
+                className="create-btn" 
+                onClick={handleCreate}
+                disabled={!createForm.name.trim()}
+              >
+                Crear {createType === 'hero' ? 'Héroe' : 'Mascota'}
+              </button>
             </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Modal de edición */}
+      {showEditModal && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h2>Editar {selectedHero ? 'Héroe' : 'Mascota'}</h2>
+              <button className="close-btn" onClick={() => setShowEditModal(false)}>✕</button>
+            </div>
+
+            <div className="modal-body">
+              {selectedHero ? (
+                <>
+                  <div className="form-group">
+                    <label>Nombre *</label>
+                    <input
+                      type="text"
+                      value={heroForm.name}
+                      onChange={(e) => handleHeroFormChange('name', e.target.value)}
+                      placeholder="Nombre del héroe"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Alias</label>
+                    <input
+                      type="text"
+                      value={heroForm.alias}
+                      onChange={(e) => handleHeroFormChange('alias', e.target.value)}
+                      placeholder="Alias del héroe"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Ciudad</label>
+                    <input
+                      type="text"
+                      value={heroForm.city}
+                      onChange={(e) => handleHeroFormChange('city', e.target.value)}
+                      placeholder="Ciudad del héroe"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Equipo</label>
+                    <input
+                      type="text"
+                      value={heroForm.team}
+                      onChange={(e) => handleHeroFormChange('team', e.target.value)}
+                      placeholder="Equipo del héroe"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Super Poder</label>
+                    <input
+                      type="text"
+                      value={heroForm.superPower}
+                      onChange={(e) => handleHeroFormChange('superPower', e.target.value)}
+                      placeholder="Super poder del héroe"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Color</label>
+                    <input
+                      type="color"
+                      value={heroForm.color}
+                      onChange={(e) => handleHeroFormChange('color', e.target.value)}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="form-group">
+                    <label>Nombre *</label>
+                    <input
+                      type="text"
+                      value={petForm.name}
+                      onChange={(e) => handlePetFormChange('name', e.target.value)}
+                      placeholder="Nombre de la mascota"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tipo de Mascota</label>
+                    <select
+                      value={petForm.type}
+                      onChange={(e) => handlePetFormChange('type', e.target.value)}
+                    >
+                      {petTypes.map(pet => (
+                        <option key={pet.id} value={pet.id}>
+                          {pet.emoji} {pet.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>Super Poder</label>
+                    <input
+                      type="text"
+                      value={petForm.superPower}
+                      onChange={(e) => handlePetFormChange('superPower', e.target.value)}
+                      placeholder="Super poder de la mascota"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Color</label>
+                    <input
+                      type="color"
+                      value={petForm.color}
+                      onChange={(e) => handlePetFormChange('color', e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div className="modal-footer">
+              <button className="cancel-btn" onClick={() => setShowEditModal(false)}>
+                Cancelar
+              </button>
+              <button 
+                className="save-btn" 
+                onClick={selectedHero ? handleSaveHero : handleSavePet}
+                disabled={selectedHero ? !heroForm.name.trim() : !petForm.name.trim()}
+              >
+                Guardar Cambios
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {notification.message && (
+        <NotificationToast
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification({ message: '', type: 'info' })}
+        />
+      )}
     </div>
   );
 };

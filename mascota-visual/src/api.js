@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Cambia la URL base de la API para desarrollo local
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+// URL de la API en Render
+const API_URL = process.env.REACT_APP_API_URL || 'https://api-heroes-gh4i.onrender.com/api';
 
 export const login = async (username, password) => {
   const res = await axios.post(`${API_URL}/auth/login`, { username, password });
@@ -185,8 +185,22 @@ export const updateHero = async (token, heroId, data) => {
   return res.data;
 };
 
+export const updatePet = async (token, petId, data) => {
+  const res = await axios.put(`${API_URL}/pets/${petId}`, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
 export const createHero = async (token, data) => {
   const res = await axios.post(`${API_URL}/heroes`, data, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const getAllHeroes = async (token) => {
+  const res = await axios.get(`${API_URL}/heroes`, {
     headers: { Authorization: `Bearer ${token}` }
   });
   return res.data;
@@ -274,12 +288,7 @@ export const bathPet = async (petId, token) => {
   return res.data;
 };
 
-export const playWithPet = async (petId, token) => {
-  const res = await axios.post(`${API_URL}/pet-care/${petId}/play`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
+
 
 export const customizePet = async (petId, token, { item, type, color, forma }) => {
   const res = await axios.post(`${API_URL}/pet-care/${petId}/customize`, { item, type, color, forma }, {
@@ -500,358 +509,102 @@ export const deleteConversation = async (conversationId, token) => {
   return res.data;
 };
 
-// Funciones de torneos
-export const getActiveTournaments = async (token) => {
-  const res = await axios.get(`${API_URL}/tournaments`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const getUserTournaments = async (token) => {
-  const res = await axios.get(`${API_URL}/tournaments/user`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const registerForTournament = async (tournamentId, token) => {
-  const res = await axios.post(`${API_URL}/tournaments/${tournamentId}/register`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const updateTournamentScore = async (tournamentId, score, time, token) => {
-  const res = await axios.post(`${API_URL}/tournaments/${tournamentId}/score`, { score, time }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const createWeeklyTournament = async (token) => {
-  const res = await axios.post(`${API_URL}/tournaments/create-weekly`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const createMonthlyTournament = async (token) => {
-  const res = await axios.post(`${API_URL}/tournaments/create-monthly`, {}, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const createSpecialTournament = async (type, token) => {
-  const res = await axios.post(`${API_URL}/tournaments/create-special`, { type }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-// Funciones de ligas
-export const getUserLeague = async (token) => {
-  const res = await axios.get(`${API_URL}/tournaments/leagues/user`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const getLeagueRanking = async (leagueName, season) => {
-  const res = await axios.get(`${API_URL}/tournaments/leagues/${leagueName}/${season}/ranking`);
-  return res.data;
-};
-
-export const updateLeagueScore = async (leagueId, gameResult, score, token) => {
-  const res = await axios.post(`${API_URL}/tournaments/leagues/${leagueId}/score`, { gameResult, score }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const createLeagueSeason = async (leagueName, season, token) => {
-  const res = await axios.post(`${API_URL}/tournaments/leagues/create-season`, { leagueName, season }, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-// Funciones de estadísticas
-export const getUserStatistics = async (token) => {
-  const res = await axios.get(`${API_URL}/statistics/user`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const getComparativeStatistics = async (token) => {
-  const res = await axios.get(`${API_URL}/statistics/comparative`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const getGlobalStatistics = async (token) => {
-  const res = await axios.get(`${API_URL}/statistics/global`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const getUserActivityHistory = async (days, token) => {
-  const res = await axios.get(`${API_URL}/statistics/activity-history?days=${days}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-export const getUserRecommendations = async (token) => {
-  const res = await axios.get(`${API_URL}/statistics/recommendations`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  return res.data;
-};
-
-// Funciones de perfil
-export const updateUserProfile = async (profileData, token) => {
-  try {
-    const response = await axios.put(`${API_URL}/users/profile`, profileData, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const changePassword = async (passwordData, token) => {
-  try {
-    const response = await axios.put(`${API_URL}/users/change-password`, passwordData, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const deleteAccount = async (token) => {
-  try {
-    const response = await axios.delete(`${API_URL}/users/account`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const exportUserData = async (token) => {
-  try {
-    const response = await axios.get(`${API_URL}/users/export-data`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getProfileStatistics = async (token) => {
-  try {
-    const response = await axios.get(`${API_URL}/users/profile-statistics`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-// Funciones de chat
-export const getMessages = async (conversationId, token) => {
-  try {
-    const response = await axios.get(`${API_URL}/chat/conversations/${conversationId}/messages`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const markAsRead = async (conversationId, token) => {
-  try {
-    const response = await axios.post(`${API_URL}/chat/conversations/${conversationId}/read`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
-};
-
-export const getUnreadCount = async (token) => {
-  try {
-    const response = await axios.get(`${API_URL}/chat/unread-count`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data.unreadCount || 0;
-  } catch (error) {
-    throw error;
-  }
-};
-
 // Funciones de logros
 export const claimAchievementReward = async (achievementId, token) => {
-  try {
-    const response = await axios.post(`${API_URL}/achievements/${achievementId}/claim-reward`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const res = await axios.post(`${API_URL}/achievements/${achievementId}/claim-reward`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
 // Funciones de personalización
 export const getPetCustomizations = async (token) => {
-  try {
-    const response = await axios.get(`${API_URL}/customization/pets`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const res = await axios.get(`${API_URL}/customization/pets`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
 export const getHeroCustomizations = async (token) => {
-  try {
-    const response = await axios.get(`${API_URL}/customization/heroes`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const res = await axios.get(`${API_URL}/customization/heroes`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
-export const applyPetCustomization = async (petId, customizationId, token) => {
-  try {
-    const response = await axios.post(`${API_URL}/customization/pets/${petId}/apply`, {
-      customizationId
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const applyPetCustomization = async (customizationId, token) => {
+  const res = await axios.post(`${API_URL}/customization/pets/${customizationId}/apply`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
-export const applyHeroCustomization = async (heroId, customizationId, token) => {
-  try {
-    const response = await axios.post(`${API_URL}/customization/heroes/${heroId}/apply`, {
-      customizationId
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const applyHeroCustomization = async (customizationId, token) => {
+  const res = await axios.post(`${API_URL}/customization/heroes/${customizationId}/apply`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
 export const buyCustomization = async (customizationId, token) => {
-  try {
-    const response = await axios.post(`${API_URL}/customization/buy`, {
-      customizationId
-    }, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+  const res = await axios.post(`${API_URL}/customization/${customizationId}/buy`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
-// Funciones de eventos
-export const joinEvent = async (eventId, token) => {
-  try {
-    const response = await axios.post(`${API_URL}/events/${eventId}/join`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const deleteHero = async (token, heroId) => {
+  const res = await axios.delete(`${API_URL}/heroes/${heroId}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
-export const leaveEvent = async (eventId, token) => {
-  try {
-    const response = await axios.post(`${API_URL}/events/${eventId}/leave`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const adoptPet = async (token, petId, heroId) => {
+  const res = await axios.post(`${API_URL}/pets/${petId}/adopt`, { heroId }, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
-export const getEventParticipants = async (eventId, token) => {
-  try {
-    const response = await axios.get(`${API_URL}/events/${eventId}/participants`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const feedPet = async (token, petId) => {
+  const res = await axios.post(`${API_URL}/pet-care/${petId}/feed`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
-export const claimEventReward = async (eventId, token) => {
-  try {
-    const response = await axios.post(`${API_URL}/events/${eventId}/claim-reward`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const walkPet = async (token, petId) => {
+  const res = await axios.post(`${API_URL}/pet-care/${petId}/walk`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
-// Funciones de amigos
-export const acceptFriendRequest = async (requestId, token) => {
-  try {
-    const response = await axios.post(`${API_URL}/friends/requests/${requestId}/accept`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const playWithPet = async (token, petId) => {
+  const res = await axios.post(`${API_URL}/pet-care/${petId}/play`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
-export const rejectFriendRequest = async (requestId, token) => {
-  try {
-    const response = await axios.post(`${API_URL}/friends/requests/${requestId}/reject`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const bathePet = async (token, petId) => {
+  const res = await axios.post(`${API_URL}/pet-care/${petId}/bath`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };
 
-export const visitFriend = async (friendId, token) => {
-  try {
-    const response = await axios.post(`${API_URL}/friends/${friendId}/visit`, {}, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    return response.data;
-  } catch (error) {
-    throw error;
-  }
+export const healPet = async (token, petId) => {
+  const res = await axios.post(`${API_URL}/pet-care/${petId}/heal`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const getPetStatus = async (token, petId) => {
+  const res = await axios.get(`${API_URL}/pets/${petId}/status`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
 };

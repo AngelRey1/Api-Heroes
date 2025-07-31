@@ -23,18 +23,28 @@ export const getPets = async (req, res) => {
  * Agrega una nueva mascota
  */
 export const createPet = async (req, res) => {
-    const errors = validationResult(req);
-    if(!errors.isEmpty()){
-        return res.status(400).json({ error : errors.array() });
-    }
     try {
         console.log('Body recibido:', req.body); // Log para depuración
-        const { name, type, superPower } = req.body;
-        const newPet = await petService.createPet({ name, type, superPower }, req.user._id);
+        const { name, type, petType, superPower, color, personality, accessories } = req.body;
+        
+        // Validación básica
+        if (!name || name.trim().length === 0) {
+            return res.status(400).json({ error: 'El nombre es requerido' });
+        }
+        
+        const newPet = await petService.createPet({ 
+            name, 
+            type, 
+            petType, 
+            superPower, 
+            color, 
+            personality, 
+            accessories 
+        }, req.user._id);
         res.status(201).json(newPet.toJSON ? newPet.toJSON() : newPet);
     } catch (error) {
-        const status = mapErrorToStatus(error);
-        res.status(status).json({ error: error.message });
+        console.error('Error creando mascota:', error);
+        res.status(400).json({ error: error.message });
     }
 };
 
@@ -43,7 +53,7 @@ export const createPet = async (req, res) => {
  */
 export const getPetById = async (req, res) => {
     try {
-        const pet = await petService.getPetById(req.params.petId, req.user._id);
+        const pet = await petService.getPetById(req.params.id, req.user._id);
         res.json(pet);
     } catch (error) {
         const status = mapErrorToStatus(error);
@@ -57,7 +67,7 @@ export const getPetById = async (req, res) => {
 export const updatePet = async (req, res) => {
     try {
         const { name, type, superPower } = req.body;
-        const updatedPet = await petService.updatePet(req.params.petId, { name, type, superPower }, req.user._id);
+        const updatedPet = await petService.updatePet(req.params.id, { name, type, superPower }, req.user._id);
         res.json(updatedPet);
     } catch (error) {
         const status = mapErrorToStatus(error);
@@ -70,7 +80,7 @@ export const updatePet = async (req, res) => {
  */
 export const deletePet = async (req, res) => {
     try {
-        await petService.deletePet(req.params.petId, req.user._id);
+        await petService.deletePet(req.params.id, req.user._id);
         res.json({ message: 'Mascota eliminada exitosamente' });
     } catch (error) {
         const status = mapErrorToStatus(error);
@@ -88,7 +98,7 @@ export const renamePet = async (req, res) => {
             return res.status(400).json({ error: 'El nombre es requerido' });
         }
         
-        const pet = await petService.renamePet(req.params.petId, name, req.user._id);
+        const pet = await petService.renamePet(req.params.id, name, req.user._id);
         res.json(pet);
     } catch (error) {
         const status = mapErrorToStatus(error);
@@ -101,7 +111,7 @@ export const renamePet = async (req, res) => {
  */
 export const setActivePet = async (req, res) => {
     try {
-        const result = await petService.setActivePet(req.params.petId, req.user._id);
+        const result = await petService.setActivePet(req.params.id, req.user._id);
         res.json(result);
     } catch (error) {
         const status = mapErrorToStatus(error);

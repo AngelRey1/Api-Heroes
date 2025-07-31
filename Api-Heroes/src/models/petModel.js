@@ -3,7 +3,10 @@ import mongoose from 'mongoose';
 const petSchema = new mongoose.Schema({
     name: { type: String, required: true, description: 'Nombre de la mascota' },
     type: { type: String, required: true, description: 'Tipo de mascota (perro, gato, etc.)' },
+    petType: { type: String, description: 'Tipo específico de mascota (Golden Retriever, Persa, etc.)' },
     superPower: { type: String, description: 'Superpoder especial de la mascota' },
+    personality: { type: String, description: 'Personalidad de la mascota' },
+    accessories: [{ type: String, description: 'Accesorios de la mascota' }],
     adoptedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'Hero', default: null, description: 'ID del héroe que adoptó la mascota' },
     adoptionHistory: [{
         hero: { type: mongoose.Schema.Types.ObjectId, ref: 'Hero', description: 'ID del héroe que adoptó' },
@@ -14,6 +17,7 @@ const petSchema = new mongoose.Schema({
     status: { type: String, default: 'available', description: 'Estado de la mascota (available, adopted, returned, dead)' },
     health: { type: Number, default: 100, description: 'Nivel de salud (0-100)' },
     happiness: { type: Number, default: 100, description: 'Nivel de felicidad (0-100)' },
+    energy: { type: Number, default: 100, description: 'Nivel de energía (0-100)' },
     personality: { type: String, default: 'neutral', description: 'Personalidad de la mascota' },
     activityHistory: [{
         action: { type: String, description: 'Acción realizada (feed, walk, play, bath, heal, sick, customize)' },
@@ -32,7 +36,12 @@ const petSchema = new mongoose.Schema({
         },
         default: { free: [], paid: [] }
     },
-    diseases: [{ type: String, description: 'Enfermedades activas' }],
+    diseases: [{
+        type: { type: String, required: true, description: 'Tipo de enfermedad' },
+        severity: { type: String, enum: ['mild', 'moderate', 'severe'], default: 'mild', description: 'Severidad de la enfermedad' },
+        startTime: { type: Date, default: Date.now, description: 'Fecha de inicio de la enfermedad' },
+        duration: { type: Number, description: 'Duración en milisegundos' }
+    }],
     lastCare: { type: Date, default: null, description: 'Fecha del último cuidado' },
     deathDate: { type: Date, default: null, description: 'Fecha de muerte' },
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, description: 'Propietario de la mascota (jugador)' },

@@ -1,214 +1,179 @@
 import React, { useState, useEffect } from 'react';
-import { useUser } from '../../context/UserContext';
-import { saveMinigameScore } from '../../api';
-import { useSoundEffects } from '../SoundEffects';
 import './MathGame.css';
 
-const MathGame = ({ onGameEnd, onClose }) => {
-  const { token, updateCoins } = useUser();
-  const { playClick, playCoin, playCelebrate } = useSoundEffects();
-  const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(60);
+const MathGame = ({ onGameEnd }) => {
   const [currentQuestion, setCurrentQuestion] = useState(null);
   const [userAnswer, setUserAnswer] = useState('');
-  const [feedback, setFeedback] = useState('');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [level, setLevel] = useState(1);
-
-  useEffect(() => {
-    if (isPlaying && timeLeft > 0) {
-      const timer = setTimeout(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-      return () => clearTimeout(timer);
-    } else if (timeLeft === 0) {
-      endGame();
-    }
-  }, [timeLeft, isPlaying]);
-
-  useEffect(() => {
-    if (isPlaying) {
-      generateQuestion();
-    }
-  }, [isPlaying, level]);
+  const [score, setScore] = useState(0);
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [gameState, setGameState] = useState('waiting'); // waiting, playing, finished
+  const [questionsAnswered, setQuestionsAnswered] = useState(0);
+  const [correctAnswers, setCorrectAnswers] = useState(0);
 
   const generateQuestion = () => {
-    let num1, num2, operation, answer;
-    
-    switch (level) {
-      case 1:
-        num1 = Math.floor(Math.random() * 10) + 1;
-        num2 = Math.floor(Math.random() * 10) + 1;
-        operation = '+';
+    const operations = ['+', '-', '*'];
+    const operation = operations[Math.floor(Math.random() * operations.length)];
+    let num1, num2, answer;
+
+    switch (operation) {
+      case '+':
+        num1 = Math.floor(Math.random() * 50) + 1;
+        num2 = Math.floor(Math.random() * 50) + 1;
         answer = num1 + num2;
         break;
-      case 2:
-        num1 = Math.floor(Math.random() * 20) + 1;
-        num2 = Math.floor(Math.random() * 20) + 1;
-        operation = Math.random() < 0.5 ? '+' : '-';
-        answer = operation === '+' ? num1 + num2 : num1 - num2;
+      case '-':
+        num1 = Math.floor(Math.random() * 50) + 25;
+        num2 = Math.floor(Math.random() * num1);
+        answer = num1 - num2;
         break;
-      case 3:
+      case '*':
         num1 = Math.floor(Math.random() * 12) + 1;
         num2 = Math.floor(Math.random() * 12) + 1;
-        operation = Math.random() < 0.3 ? '+' : Math.random() < 0.5 ? '-' : '×';
-        answer = operation === '+' ? num1 + num2 : 
-                operation === '-' ? num1 - num2 : num1 * num2;
+        answer = num1 * num2;
         break;
       default:
-        num1 = Math.floor(Math.random() * 15) + 1;
-        num2 = Math.floor(Math.random() * 15) + 1;
-        operation = Math.random() < 0.25 ? '+' : Math.random() < 0.5 ? '-' : 
-                   Math.random() < 0.75 ? '×' : '÷';
-        if (operation === '÷') {
-          answer = num1;
-          num1 = num1 * num2;
-        } else {
-          answer = operation === '+' ? num1 + num2 : 
-                  operation === '-' ? num1 - num2 : num1 * num2;
-        }
+        num1 = 1;
+        num2 = 1;
+        answer = 2;
     }
 
-    setCurrentQuestion({ num1, num2, operation, answer });
-    setUserAnswer('');
-    setFeedback('');
-  };
-
-  const handleAnswer = () => {
-    if (!userAnswer.trim()) return;
-
-    const isCorrect = parseInt(userAnswer) === currentQuestion.answer;
-    
-    if (isCorrect) {
-      playClick();
-      setScore(score + (level * 10));
-      setFeedback('¡Correcto! 🎉');
-      setTimeout(() => {
-        if (score + (level * 10) >= level * 50) {
-          setLevel(level + 1);
-        }
-        generateQuestion();
-      }, 1000);
-    } else {
-      setFeedback(`Incorrecto. La respuesta era ${currentQuestion.answer}`);
-      setTimeout(() => {
-        generateQuestion();
-      }, 2000);
-    }
+    return {
+      question: `${num1} ${operation} ${num2} = ?`,
+      answer: answer,
+      num1,
+      num2,
+      operation
+    };
   };
 
   const startGame = () => {
-    setIsPlaying(true);
-    setTimeLeft(60);
+    setGameState('playing');
     setScore(0);
-    setLevel(1);
+    setTimeLeft(60);
+    setQuestionsAnswered(0);
+    setCorrectAnswers(0);
+    setCurrentQuestion(generateQuestion());
   };
 
-  const endGame = async () => {
-    setIsPlaying(false);
-    const coinsEarned = Math.floor(score / 10);
+  const handleAnswerSubmit = (e) => {
+    e.preventDefault();
+    if (!currentQuestion) return;
+
+    const answer = parseInt(userAnswer);
+    const isCorrect = answer === currentQuestion.answer;
+
+    if (isCorrect) {
+      const timeBonus = Math.max(0, 30 - timeLeft) * 2;
+      const basePoints = 50;
+      const points = basePoints + timeBonus;
+      setScore(prev => prev + points);
+      setCorrectAnswers(prev => prev + 1);
+    }
+
+    setQuestionsAnswered(prev => prev + 1);
+    setUserAnswer('');
+    setCurrentQuestion(generateQuestion());
+  };
+
+  const endGame = () => {
+    setGameState('finished');
+    const accuracy = questionsAnswered > 0 ? (correctAnswers / questionsAnswered) * 100 : 0;
+    const finalScore = Math.floor(score * (accuracy / 100));
+    const coinsEarned = Math.floor(finalScore / 10);
     
-    try {
-      // Guardar puntuación en el servidor
-      if (token) {
-        await saveMinigameScore('math', score, token);
-      }
-      
-      // Actualizar monedas
-      updateCoins(coinsEarned);
-      
-      // Reproducir sonidos
-      playCoin();
-      if (coinsEarned > 20) {
-        playCelebrate();
-      }
-      
-      onGameEnd(coinsEarned);
-    } catch (err) {
-      console.error('Error saving score:', err);
+    if (onGameEnd) {
       onGameEnd(coinsEarned);
     }
   };
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter') {
-      handleAnswer();
-    }
+  const restartGame = () => {
+    setGameState('waiting');
+    setScore(0);
+    setTimeLeft(60);
+    setQuestionsAnswered(0);
+    setCorrectAnswers(0);
+    setUserAnswer('');
+    setCurrentQuestion(null);
   };
 
-  if (!isPlaying) {
-    return (
-      <div className="math-game-overlay">
-        <div className="math-game-modal">
-          <h2>🎮 Juego de Matemáticas</h2>
-          <div className="game-instructions">
-            <p>Resuelve problemas matemáticos para ganar monedas!</p>
-            <ul>
-              <li>✅ Respuestas correctas: +{level * 10} puntos</li>
-              <li>⏰ Tiempo: 60 segundos</li>
-              <li>📈 Nivel: {level}</li>
-            </ul>
-          </div>
-          <div className="game-buttons">
-            <button className="start-btn" onClick={startGame}>
-              ¡Comenzar!
-            </button>
-            <button className="close-btn" onClick={onClose}>
-              Cerrar
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Timer effect
+  useEffect(() => {
+    let timer;
+    if (gameState === 'playing' && timeLeft > 0) {
+      timer = setTimeout(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            endGame();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [gameState, timeLeft]);
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
 
   return (
-    <div className="math-game-overlay">
-      <div className="math-game-modal">
-        <div className="game-header">
-          <h2>🧮 Matemáticas</h2>
-          <div className="game-stats">
-            <span>⏰ {timeLeft}s</span>
-            <span>📊 {score} pts</span>
-            <span>📈 Nivel {level}</span>
-          </div>
+    <div className="math-game">
+      <div className="game-header">
+        <h2>🧮 Juego de Matemáticas</h2>
+        <div className="game-info">
+          <span>Tiempo: {formatTime(timeLeft)}</span>
+          <span>Puntuación: {score}</span>
+          <span>Correctas: {correctAnswers}/{questionsAnswered}</span>
         </div>
+      </div>
 
-        <div className="question-container">
-          {currentQuestion && (
-            <div className="question">
-              <span className="number">{currentQuestion.num1}</span>
-              <span className="operation">{currentQuestion.operation}</span>
-              <span className="number">{currentQuestion.num2}</span>
-              <span className="equals">=</span>
+      {gameState === 'waiting' && (
+        <div className="game-start">
+          <h3>¡Resuelve problemas matemáticos!</h3>
+          <p>Tienes 60 segundos para resolver el mayor número de problemas</p>
+          <button className="start-btn" onClick={startGame}>
+            ¡Comenzar!
+          </button>
+        </div>
+      )}
+
+      {gameState === 'playing' && currentQuestion && (
+        <div className="game-playing">
+          <div className="question-area">
+            <h3 className="question">{currentQuestion.question}</h3>
+            <form onSubmit={handleAnswerSubmit} className="answer-form">
               <input
                 type="number"
                 value={userAnswer}
                 onChange={(e) => setUserAnswer(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="?"
+                placeholder="Tu respuesta"
                 className="answer-input"
                 autoFocus
               />
-            </div>
-          )}
-        </div>
-
-        {feedback && (
-          <div className={`feedback ${feedback.includes('Correcto') ? 'correct' : 'incorrect'}`}>
-            {feedback}
+              <button type="submit" className="submit-btn">
+                Responder
+              </button>
+            </form>
           </div>
-        )}
+        </div>
+      )}
 
-        <div className="game-controls">
-          <button className="answer-btn" onClick={handleAnswer}>
-            Responder
-          </button>
-          <button className="close-btn" onClick={endGame}>
-            Terminar
+      {gameState === 'finished' && (
+        <div className="game-end">
+          <h3>🎉 ¡Juego Terminado!</h3>
+          <div className="final-stats">
+            <p>Puntuación final: {score}</p>
+            <p>Problemas resueltos: {correctAnswers}/{questionsAnswered}</p>
+            <p>Precisión: {questionsAnswered > 0 ? Math.round((correctAnswers / questionsAnswered) * 100) : 0}%</p>
+          </div>
+          <button className="restart-btn" onClick={restartGame}>
+            Jugar de nuevo
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 };

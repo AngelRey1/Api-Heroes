@@ -1,0 +1,482 @@
+.animated-pet-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.animated-pet {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.pet-body {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+/* Cara */
+.pet-face {
+  position: relative;
+  width: 80px;
+  height: 60px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ojos */
+.pet-eyes {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 8px;
+}
+
+.eye {
+  width: 12px;
+  height: 12px;
+  background: #000;
+  border-radius: 50%;
+  position: relative;
+}
+
+.eye::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+}
+
+/* Animaciones de ojos */
+.eye.blink {
+  animation: blink 0.3s ease-in-out;
+}
+
+.eye.look {
+  animation: look 2s ease-in-out infinite;
+}
+
+@keyframes blink {
+  0%, 100% { transform: scaleY(1); }
+  50% { transform: scaleY(0.1); }
+}
+
+@keyframes look {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+/* Boca */
+.pet-mouth {
+  width: 20px;
+  height: 8px;
+  border: 2px solid #000;
+  border-top: none;
+  border-radius: 0 0 20px 20px;
+  transition: all 0.3s ease;
+}
+
+.pet-mouth.happy {
+  border-radius: 20px;
+  height: 12px;
+  background: #000;
+}
+
+.pet-mouth.sad {
+  border-radius: 20px 20px 0 0;
+  border-top: 2px solid #000;
+  border-bottom: none;
+  transform: rotate(180deg);
+}
+
+.pet-mouth.sick {
+  border-color: #ff6b6b;
+}
+
+.pet-mouth.feed {
+  animation: eat 0.5s ease-in-out;
+}
+
+.pet-mouth.play {
+  animation: smile 0.5s ease-in-out;
+}
+
+@keyframes eat {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.2); }
+}
+
+@keyframes smile {
+  0%, 100% { border-radius: 0 0 20px 20px; }
+  50% { border-radius: 20px; height: 12px; }
+}
+
+/* Nariz */
+.pet-nose {
+  width: 6px;
+  height: 4px;
+  background: #000;
+  border-radius: 50%;
+  margin-top: 5px;
+}
+
+/* Orejas */
+.pet-ears {
+  position: absolute;
+  top: -10px;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+}
+
+.ear {
+  width: 20px;
+  height: 25px;
+  background: inherit;
+  border-radius: 50% 50% 0 0;
+  position: relative;
+}
+
+.ear.left {
+  transform: rotate(-30deg);
+}
+
+.ear.right {
+  transform: rotate(30deg);
+}
+
+/* Accesorios */
+.pet-accessory {
+  position: absolute;
+  font-size: 20px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.pet-accessory.hat {
+  top: -25px;
+  animation: hatBounce 2s ease-in-out infinite;
+}
+
+.pet-accessory.collar {
+  bottom: -5px;
+  animation: collarWiggle 1s ease-in-out infinite;
+}
+
+.pet-accessory.glasses {
+  top: 5px;
+  animation: glassesShine 3s ease-in-out infinite;
+}
+
+@keyframes hatBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes collarWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(5deg); }
+}
+
+@keyframes glassesShine {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Efectos de estado */
+.sick-effect, .dead-effect, .happy-effect, .sad-effect {
+  position: absolute;
+  font-size: 24px;
+  animation: float 2s ease-in-out infinite;
+}
+
+.sick-effect {
+  top: -30px;
+  animation: sickFloat 1.5s ease-in-out infinite;
+}
+
+.dead-effect {
+  top: -30px;
+  animation: deadFloat 2s ease-in-out infinite;
+}
+
+.happy-effect {
+  top: -30px;
+  animation: happyFloat 1s ease-in-out infinite;
+}
+
+.sad-effect {
+  top: -30px;
+  animation: sadFloat 1.5s ease-in-out infinite;
+}
+
+@keyframes sickFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(10deg); }
+}
+
+@keyframes deadFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-15px) scale(1.2); }
+}
+
+@keyframes happyFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-8px) scale(1.1); }
+}
+
+@keyframes sadFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+/* Animaciones principales */
+.animated-pet.idle {
+  animation: idle 3s ease-in-out infinite;
+}
+
+.animated-pet.blink {
+  animation: blink 0.3s ease-in-out;
+}
+
+.animated-pet.wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+.animated-pet.feed {
+  animation: feed 1s ease-in-out;
+}
+
+.animated-pet.clean {
+  animation: clean 1s ease-in-out;
+}
+
+.animated-pet.play {
+  animation: play 1s ease-in-out;
+}
+
+.animated-pet.sleep {
+  animation: sleep 1s ease-in-out;
+}
+
+@keyframes idle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+@keyframes feed {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes clean {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-10deg); }
+  75% { transform: rotate(10deg); }
+}
+
+@keyframes play {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  25% { transform: scale(1.1) rotate(-5deg); }
+  75% { transform: scale(1.1) rotate(5deg); }
+}
+
+@keyframes sleep {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.9); }
+}
+
+/* Estados de ánimo */
+.animated-pet.happy .pet-body {
+  animation: happyGlow 2s ease-in-out infinite;
+}
+
+.animated-pet.sad .pet-body {
+  filter: brightness(0.8) saturate(0.7);
+  animation: sadShake 2s ease-in-out infinite;
+}
+
+.animated-pet.sick .pet-body {
+  filter: hue-rotate(30deg) brightness(0.9);
+  animation: sickPulse 1.5s ease-in-out infinite;
+}
+
+.animated-pet.dead .pet-body {
+  filter: grayscale(100%) brightness(0.5);
+  animation: deathShake 0.5s ease-in-out;
+}
+
+@keyframes happyGlow {
+  0%, 100% { box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); }
+  50% { box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4); }
+}
+
+@keyframes sadShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-2px); }
+  75% { transform: translateX(2px); }
+}
+
+@keyframes sickPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+@keyframes deathShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Botones de acción */
+.pet-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.action-btn {
+  width: 50px;
+  height: 50px;
+  border: none;
+  border-radius: 50%;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn:hover:not(:disabled) {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.feed-btn:hover { background: linear-gradient(135deg, #ff6b6b, #ee5a52); }
+.clean-btn:hover { background: linear-gradient(135deg, #4ecdc4, #44a08d); }
+.play-btn:hover { background: linear-gradient(135deg, #feca57, #ff9ff3); }
+.sleep-btn:hover { background: linear-gradient(135deg, #a55eea, #8b5cf6); }
+
+/* Información de mascota */
+.pet-info {
+  text-align: center;
+  color: white;
+}
+
+.pet-info h3 {
+  margin: 0 0 10px 0;
+  font-size: 18px;
+  font-weight: 600;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.pet-stats {
+  display: flex;
+  gap: 15px;
+  justify-content: center;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.stat-icon {
+  font-size: 16px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
+}
+
+.stat-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Placeholder */
+.pet-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: white;
+  opacity: 0.7;
+}
+
+.pet-blob {
+  font-size: 60px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.pet-placeholder p {
+  margin: 0;
+  font-size: 14px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .animated-pet {
+    width: 150px;
+    height: 150px;
+  }
+  
+  .pet-body {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .pet-actions {
+    gap: 8px;
+  }
+  
+  .action-btn {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+  
+  .pet-stats {
+    gap: 10px;
+  }
+} 

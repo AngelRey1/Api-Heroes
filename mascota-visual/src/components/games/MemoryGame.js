@@ -1,23 +1,21 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { saveMinigameScore } from '../../api';
 import './MemoryGame.css';
 
-const MemoryGame = ({ game, token, onClose, onScoreUpdate }) => {
+const MemoryGame = ({ onGameEnd }) => {
   const [cards, setCards] = useState([]);
   const [flippedCards, setFlippedCards] = useState([]);
   const [matchedPairs, setMatchedPairs] = useState([]);
   const [score, setScore] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(game.settings?.timeLimit || 60);
+  const [timeLeft, setTimeLeft] = useState(60);
   const [gameState, setGameState] = useState('waiting'); // waiting, playing, finished
   const [moves, setMoves] = useState(0);
-  const [bestScore, setBestScore] = useState(0);
 
   // Emojis para las cartas
   const emojis = ['🐶', '🐱', '🐰', '🐹', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸'];
 
   // Inicializar el juego
   const initializeGame = useCallback(() => {
-    const gridSize = game.settings?.gridSize || 4;
+    const gridSize = 4;
     const totalPairs = (gridSize * gridSize) / 2;
     const selectedEmojis = emojis.slice(0, totalPairs);
     
@@ -39,9 +37,9 @@ const MemoryGame = ({ game, token, onClose, onScoreUpdate }) => {
     setMatchedPairs([]);
     setScore(0);
     setMoves(0);
-    setTimeLeft(game.settings?.timeLimit || 60);
+    setTimeLeft(60);
     setGameState('waiting');
-  }, [game.settings]);
+  }, []);
 
   // Iniciar el juego
   const startGame = () => {
@@ -99,50 +97,17 @@ const MemoryGame = ({ game, token, onClose, onScoreUpdate }) => {
     }
   };
 
-  // Verificar si el juego terminó
-  useEffect(() => {
-    if (matchedPairs.length === (cards.length / 2) && cards.length > 0) {
-      endGame();
-    }
-  }, [matchedPairs, cards.length]);
-
-  // Timer del juego
-  useEffect(() => {
-    if (gameState === 'playing' && timeLeft > 0) {
-      const timer = setTimeout(() => {
-        setTimeLeft(prev => {
-          if (prev <= 1) {
-            endGame();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [gameState, timeLeft]);
-
-  // Terminar el juego
-  const endGame = async () => {
+  // Finalizar el juego
+  const endGame = () => {
     setGameState('finished');
-    
-    // Calcular puntuación final
-    const finalScore = score + (timeLeft * 10) + (matchedPairs.length * 50);
-    setBestScore(finalScore);
-
-    // Guardar puntuación en el servidor
-    if (token) {
-      try {
-        await saveMinigameScore(game._id, finalScore, token);
-        if (onScoreUpdate) onScoreUpdate();
-      } catch (error) {
-        console.error('Error al guardar puntuación:', error);
-      }
+    const finalScore = Math.max(0, score - (moves * 5));
+    const coinsEarned = Math.floor(finalScore / 10);
+    if (onGameEnd) {
+      onGameEnd(coinsEarned);
     }
   };
 
-  // Reiniciar juego
+  // Reiniciar el juego
   const restartGame = () => {
     initializeGame();
   };
@@ -154,38 +119,70 @@ const MemoryGame = ({ game, token, onClose, onScoreUpdate }) => {
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Efecto para el temporizador
+  useEffect(() => {
+    let timer;
+    if (gameState === 'playing' && timeLeft > 0) {
+      timer = setTimeout(() => {
+        setTimeLeft(prev => {
+          if (prev <= 1) {
+            endGame();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearTimeout(timer);
+  }, [gameState, timeLeft]);
+
+  // Verificar si el juego está completo
+  useEffect(() => {
+    if (matchedPairs.length === 8 && gameState === 'playing') {
+      setTimeout(() => {
+        endGame();
+      }, 500);
+    }
+  }, [matchedPairs, gameState]);
+
+  // Inicializar el juego al montar el componente
+  useEffect(() => {
+    initializeGame();
+  }, [initializeGame]);
+
   return (
     <div className="memory-game">
-      {gameState === 'waiting' && (
-        <div className="game-start-screen">
-          <h2>🎴 Juego de Memoria</h2>
-          <p>Encuentra todos los pares de cartas antes de que se acabe el tiempo.</p>
-          <div className="game-info">
-            <p><strong>Tiempo:</strong> {formatTime(timeLeft)}</p>
-            <p><strong>Pares:</strong> {(cards.length / 2)}</p>
-            <p><strong>Mejor puntuación:</strong> {bestScore}</p>
+      <div className="game-header">
+        <div className="game-info">
+          <div className="info-item">
+            <span className="info-label">Tiempo:</span>
+            <span className="info-value">{formatTime(timeLeft)}</span>
           </div>
-          <button className="start-button" onClick={startGame}>
-            🚀 Comenzar Juego
+          <div className="info-item">
+            <span className="info-label">Puntuación:</span>
+            <span className="info-value">{score}</span>
+          </div>
+          <div className="info-item">
+            <span className="info-label">Movimientos:</span>
+            <span className="info-value">{moves}</span>
+          </div>
+        </div>
+      </div>
+
+      {gameState === 'waiting' && (
+        <div className="game-start">
+          <h2>🎮 Juego de Memoria</h2>
+          <p>Encuentra todas las parejas antes de que se acabe el tiempo</p>
+          <button className="start-btn" onClick={startGame}>
+            ¡Comenzar!
           </button>
         </div>
       )}
 
       {gameState === 'playing' && (
-        <div className="game-playing">
-          <div className="game-header">
-            <div className="game-stats">
-              <span>⏱️ Tiempo: {formatTime(timeLeft)}</span>
-              <span>🎯 Puntuación: {score}</span>
-              <span>🔄 Movimientos: {moves}</span>
-              <span>✅ Pares: {matchedPairs.length}/{cards.length / 2}</span>
-            </div>
-          </div>
-
-          <div className="cards-grid" style={{ 
-            gridTemplateColumns: `repeat(${Math.sqrt(cards.length)}, 1fr)` 
-          }}>
-            {cards.map(card => (
+        <div className="game-board">
+          <div className="cards-grid">
+            {cards.map((card) => (
               <div
                 key={card.id}
                 className={`card ${card.isFlipped ? 'flipped' : ''} ${card.isMatched ? 'matched' : ''}`}
@@ -202,23 +199,16 @@ const MemoryGame = ({ game, token, onClose, onScoreUpdate }) => {
       )}
 
       {gameState === 'finished' && (
-        <div className="game-finished">
+        <div className="game-end">
           <h2>🎉 ¡Juego Terminado!</h2>
           <div className="final-stats">
-            <p><strong>Puntuación Final:</strong> {bestScore}</p>
-            <p><strong>Pares Encontrados:</strong> {matchedPairs.length}/{cards.length / 2}</p>
-            <p><strong>Movimientos:</strong> {moves}</p>
-            <p><strong>Tiempo Restante:</strong> {formatTime(timeLeft)}</p>
+            <p>Puntuación final: {score}</p>
+            <p>Movimientos: {moves}</p>
+            <p>Parejas encontradas: {matchedPairs.length}/8</p>
           </div>
-          
-          <div className="game-actions">
-            <button className="restart-button" onClick={restartGame}>
-              🔄 Jugar de Nuevo
-            </button>
-            <button className="close-button" onClick={onClose}>
-              ✕ Cerrar
-            </button>
-          </div>
+          <button className="restart-btn" onClick={restartGame}>
+            Jugar de nuevo
+          </button>
         </div>
       )}
     </div>

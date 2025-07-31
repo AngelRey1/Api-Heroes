@@ -6,29 +6,63 @@ class MissionService {
    * Verificar y actualizar progreso de misiones
    */
   async checkAndUpdateMissionProgress(userId, actionType, amount = 1) {
-    const user = await User.findById(userId);
-    if (!user) return { completed: [] };
-
-    const currentProgress = user.missionProgress.get(actionType) || 0;
-    const newProgress = currentProgress + amount;
-    user.missionProgress.set(actionType, newProgress);
-
-    const completed = [];
-    const userMissions = await Mission.find({ userId: user._id });
-
-    for (const mission of userMissions) {
-      if (!mission.completed && mission.progress + amount >= mission.goal) {
-        mission.completed = true;
-        mission.progress = mission.goal;
-        completed.push(mission);
-      } else if (!mission.completed) {
-        mission.progress += amount;
+    try {
+      console.log(`MissionService - Actualizando progreso: ${actionType} +${amount} para usuario ${userId}`);
+      
+      const user = await User.findById(userId);
+      if (!user) {
+        console.log('MissionService - Usuario no encontrado');
+        return { completed: [] };
       }
-      await mission.save();
-    }
 
-    await user.save();
-    return { completed };
+      // Obtener misiones del usuario
+      const userMissions = await Mission.find({ userId: user._id });
+      console.log(`MissionService - Misiones encontradas: ${userMissions.length}`);
+
+      const completed = [];
+
+      for (const mission of userMissions) {
+        // Verificar si la misión corresponde a la acción
+        if (this.matchesAction(mission, actionType)) {
+          console.log(`MissionService - Actualizando misión: ${mission.title} (${mission.progress}/${mission.goal})`);
+          
+          const newProgress = mission.progress + amount;
+          mission.progress = newProgress;
+          
+          if (!mission.completed && newProgress >= mission.goal) {
+            mission.completed = true;
+            mission.progress = mission.goal;
+            completed.push(mission);
+            console.log(`MissionService - Misión completada: ${mission.title}`);
+          }
+          
+          await mission.save();
+        }
+      }
+
+      console.log(`MissionService - Misiones completadas: ${completed.length}`);
+      return { completed };
+    } catch (error) {
+      console.error('MissionService - Error actualizando misiones:', error);
+      return { completed: [] };
+    }
+  }
+
+  /**
+   * Verificar si una misión corresponde a una acción
+   */
+  matchesAction(mission, actionType) {
+    const actionMap = {
+      'feeding': ['alimentar', 'feed', 'comida'],
+      'playing': ['jugar', 'play', 'diversión'],
+      'cleaning': ['limpiar', 'clean', 'baño'],
+      'sleeping': ['dormir', 'sleep', 'descanso']
+    };
+
+    const keywords = actionMap[actionType] || [];
+    const missionText = `${mission.title} ${mission.description}`.toLowerCase();
+    
+    return keywords.some(keyword => missionText.includes(keyword));
   }
 
   /**

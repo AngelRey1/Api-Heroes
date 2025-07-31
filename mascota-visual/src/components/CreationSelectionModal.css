@@ -1,0 +1,327 @@
+/* Modal de selección de creación */
+.selection-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.selection-modal-content {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 25px;
+  padding: 0;
+  max-width: 600px;
+  width: 90%;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  animation: slideInUp 0.4s ease-out;
+  position: relative;
+}
+
+.selection-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 25px 30px;
+  border-bottom: 1px solid rgba(102, 126, 234, 0.2);
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+  border-radius: 25px 25px 0 0;
+}
+
+.selection-modal-header h2 {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.selection-close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  color: #666;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.selection-close-btn:hover {
+  background: rgba(255, 107, 107, 0.1);
+  color: #ff6b6b;
+  transform: scale(1.1);
+}
+
+/* Opciones de selección */
+.selection-options {
+  display: flex;
+  gap: 20px;
+  padding: 30px;
+  flex-wrap: wrap;
+}
+
+.selection-option {
+  flex: 1;
+  min-width: 250px;
+  background: rgba(255, 255, 255, 0.8);
+  border: 2px solid rgba(102, 126, 234, 0.2);
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.selection-option::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.selection-option:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 40px rgba(102, 126, 234, 0.2);
+  border-color: rgba(102, 126, 234, 0.4);
+}
+
+.selection-option:hover::before {
+  opacity: 1;
+}
+
+.selection-option:active {
+  transform: translateY(-2px);
+}
+
+/* Opción de mascota */
+.pet-option {
+  border-color: rgba(46, 204, 113, 0.3);
+}
+
+.pet-option:hover {
+  border-color: rgba(46, 204, 113, 0.6);
+  box-shadow: 0 15px 40px rgba(46, 204, 113, 0.2);
+}
+
+.pet-option::before {
+  background: linear-gradient(135deg, rgba(46, 204, 113, 0.05), rgba(39, 174, 96, 0.05));
+}
+
+/* Opción de héroe */
+.hero-option {
+  border-color: rgba(231, 76, 60, 0.3);
+}
+
+.hero-option:hover {
+  border-color: rgba(231, 76, 60, 0.6);
+  box-shadow: 0 15px 40px rgba(231, 76, 60, 0.2);
+}
+
+.hero-option::before {
+  background: linear-gradient(135deg, rgba(231, 76, 60, 0.05), rgba(192, 57, 43, 0.05));
+}
+
+/* Icono de la opción */
+.option-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  display: block;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.1));
+  transition: all 0.3s ease;
+}
+
+.selection-option:hover .option-icon {
+  transform: scale(1.1);
+  filter: drop-shadow(4px 4px 8px rgba(0, 0, 0, 0.2));
+}
+
+/* Título de la opción */
+.selection-option h3 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin: 0 0 10px 0;
+  position: relative;
+  z-index: 2;
+}
+
+/* Descripción de la opción */
+.selection-option p {
+  font-size: 16px;
+  color: #666;
+  margin: 0 0 20px 0;
+  position: relative;
+  z-index: 2;
+}
+
+/* Características de la opción */
+.option-features {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  z-index: 2;
+}
+
+.option-features span {
+  font-size: 14px;
+  color: #555;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  transition: all 0.3s ease;
+}
+
+.selection-option:hover .option-features span {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(102, 126, 234, 0.2);
+  transform: translateX(5px);
+}
+
+/* Footer del modal */
+.selection-footer {
+  padding: 20px 30px;
+  border-top: 1px solid rgba(102, 126, 234, 0.2);
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 0 0 25px 25px;
+  text-align: center;
+}
+
+.selection-footer p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+  font-style: italic;
+}
+
+/* Efectos especiales */
+.selection-option::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(45deg, #667eea, #764ba2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.selection-option:hover::after {
+  opacity: 1;
+}
+
+.pet-option::after {
+  background: linear-gradient(45deg, #2ecc71, #27ae60);
+}
+
+.hero-option::after {
+  background: linear-gradient(45deg, #e74c3c, #c0392b);
+}
+
+/* Animaciones */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(50px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Efecto de pulso para las opciones */
+.selection-option {
+  animation: optionPulse 2s ease-in-out infinite;
+}
+
+@keyframes optionPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+.selection-option:hover {
+  animation: none;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .selection-modal-content {
+    width: 95%;
+    margin: 20px;
+  }
+  
+  .selection-options {
+    flex-direction: column;
+    gap: 15px;
+    padding: 20px;
+  }
+  
+  .selection-option {
+    min-width: auto;
+    padding: 25px;
+  }
+  
+  .option-icon {
+    font-size: 48px;
+  }
+  
+  .selection-option h3 {
+    font-size: 20px;
+  }
+  
+  .selection-option p {
+    font-size: 14px;
+  }
+  
+  .option-features {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .option-features span {
+    font-size: 12px;
+    padding: 4px 8px;
+  }
+} 

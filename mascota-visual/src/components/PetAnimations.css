@@ -1,0 +1,447 @@
+/* Contenedor de animaciones de mascota */
+.pet-animations-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+  overflow: hidden;
+}
+
+/* Elementos de animación base */
+.animation-element {
+  position: absolute;
+  font-size: 20px;
+  pointer-events: none;
+  z-index: 100;
+  filter: drop-shadow(2px 2px 4px rgba(0, 0, 0, 0.3));
+  animation: floatUp 3s ease-out forwards;
+}
+
+/* Animación base de flotación hacia arriba */
+@keyframes floatUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-50px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px) scale(0.8);
+  }
+}
+
+/* Animaciones específicas por tipo */
+
+/* Corazones felices */
+.animation-element.heart {
+  color: #ff6b6b;
+  animation: heartFloat 2.5s ease-out forwards;
+}
+
+@keyframes heartFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.5) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-30px) scale(1.2) rotate(10deg);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-60px) scale(1.1) rotate(-5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px) scale(0.8) rotate(0deg);
+  }
+}
+
+/* Estrellas brillantes */
+.animation-element.star {
+  color: #ffd700;
+  animation: starTwinkle 2s ease-out forwards;
+}
+
+@keyframes starTwinkle {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.5) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  40% {
+    opacity: 0.8;
+    transform: translateY(-20px) scale(1.3) rotate(180deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-40px) scale(1.1) rotate(360deg);
+  }
+  80% {
+    opacity: 0.8;
+    transform: translateY(-60px) scale(1.2) rotate(540deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-100px) scale(0.8) rotate(720deg);
+  }
+}
+
+/* Lágrimas tristes */
+.animation-element.tear {
+  color: #3498db;
+  animation: tearDrop 3s ease-out forwards;
+}
+
+@keyframes tearDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(30px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(80px) scale(0.8);
+  }
+}
+
+/* Nubes grises */
+.animation-element.cloud {
+  color: #95a5a6;
+  font-size: 24px;
+  animation: cloudFloat 4s ease-out forwards;
+}
+
+@keyframes cloudFloat {
+  0% {
+    opacity: 0;
+    transform: translateX(-50px) scale(0.8);
+  }
+  20% {
+    opacity: 0.8;
+    transform: translateX(0) scale(1);
+  }
+  80% {
+    opacity: 0.8;
+    transform: translateX(50px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100px) scale(0.8);
+  }
+}
+
+/* Moscas (para mascotas muertas o enfermas) */
+.animation-element.fly {
+  color: #2c3e50;
+  font-size: 16px;
+  animation: flyAround 2s ease-in-out infinite;
+}
+
+@keyframes flyAround {
+  0%, 100% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateX(10px) translateY(-5px) rotate(5deg);
+  }
+  50% {
+    transform: translateX(-5px) translateY(-10px) rotate(-5deg);
+  }
+  75% {
+    transform: translateX(-10px) translateY(-5px) rotate(10deg);
+  }
+}
+
+/* Medicina para mascotas enfermas */
+.animation-element.medicine {
+  color: #e74c3c;
+  animation: medicineDrop 2.5s ease-out forwards;
+}
+
+@keyframes medicineDrop {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.5) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(20px) scale(1.2) rotate(180deg);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(40px) scale(1.1) rotate(360deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(80px) scale(0.8) rotate(540deg);
+  }
+}
+
+/* Z's de sueño */
+.animation-element.sleep {
+  color: #9b59b6;
+  animation: sleepFloat 2.5s ease-out forwards;
+}
+
+@keyframes sleepFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-30px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.8);
+  }
+}
+
+/* Calavera para mascotas muertas */
+.animation-element.skull {
+  color: #7f8c8d;
+  font-size: 32px;
+  animation: skullFloat 3s ease-out forwards;
+}
+
+@keyframes skullFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.5) rotate(0deg);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-20px) scale(1.1) rotate(180deg);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(-40px) scale(1.2) rotate(360deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-80px) scale(0.8) rotate(540deg);
+  }
+}
+
+/* Burbujas para estado normal */
+.animation-element.bubble {
+  color: #3498db;
+  animation: bubbleFloat 2s ease-out forwards;
+}
+
+@keyframes bubbleFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-30px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60px) scale(0.8);
+  }
+}
+
+/* Efectos especiales para diferentes estados */
+
+/* Efecto de brillo para corazones */
+.animation-element.heart::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: radial-gradient(circle, rgba(255, 107, 107, 0.3) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: heartGlow 2.5s ease-out forwards;
+}
+
+@keyframes heartGlow {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+/* Efecto de parpadeo para estrellas */
+.animation-element.star {
+  animation: starTwinkle 2s ease-out forwards, starBlink 0.5s ease-in-out infinite;
+}
+
+@keyframes starBlink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Efecto de vibración para moscas */
+.animation-element.fly {
+  animation: flyAround 2s ease-in-out infinite, flyVibrate 0.1s ease-in-out infinite;
+}
+
+@keyframes flyVibrate {
+  0%, 100% {
+    transform: translateX(0) translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateX(1px) translateY(1px) rotate(1deg);
+  }
+}
+
+/* Efecto de pulso para medicina */
+.animation-element.medicine {
+  animation: medicineDrop 2.5s ease-out forwards, medicinePulse 0.8s ease-in-out infinite;
+}
+
+@keyframes medicinePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* Efecto de desvanecimiento para Z's */
+.animation-element.sleep {
+  animation: sleepFloat 2.5s ease-out forwards, sleepFade 1s ease-in-out infinite;
+}
+
+@keyframes sleepFade {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .animation-element {
+    font-size: 16px;
+  }
+  
+  .animation-element.skull {
+    font-size: 24px;
+  }
+  
+  .animation-element.cloud {
+    font-size: 20px;
+  }
+}
+
+/* Efectos de partículas adicionales */
+.pet-animations-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Efecto de brillo ambiental para mascotas felices */
+.pet-animations-container.happy::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 5;
+  animation: happyGlow 3s ease-in-out infinite;
+}
+
+@keyframes happyGlow {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+/* Efecto de sombra para mascotas tristes */
+.pet-animations-container.sad::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(52, 73, 94, 0.1) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 5;
+  animation: sadShadow 4s ease-in-out infinite;
+}
+
+@keyframes sadShadow {
+  0%, 100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.4;
+  }
+} 

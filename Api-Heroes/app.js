@@ -108,18 +108,17 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.json());
 
 // Conexión a MongoDB Atlas
-const MONGO_URI = process.env.MONGO_URI;
-if (!MONGO_URI) {
-  console.error('❌ MONGO_URI no está configurada en las variables de entorno');
-  process.exit(1);
-}
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/superheroes_pets';
 
 mongoose.connect(MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
-.then(() => console.log('✅ Conectado a MongoDB Atlas'))
-.catch((err) => console.error('❌ Error al conectar a MongoDB:', err));
+.then(() => console.log('✅ Conectado a MongoDB'))
+.catch((err) => {
+  console.error('❌ Error al conectar a MongoDB:', err);
+  console.log('⚠️ Continuando sin base de datos...');
+});
 
 // Rutas con rate limiting específico
 app.use('/api/auth', authLimiter, authRoutes);

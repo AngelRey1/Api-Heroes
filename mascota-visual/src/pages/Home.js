@@ -1,325 +1,277 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
-import ActionButtons from '../components/ActionButtons';
+import { useSoundEffects } from '../components/SoundEffects';
 import NotificationToast from '../components/NotificationToast';
 import './Home.css';
 
-function Toast({ message, color = '#e74c3c', onClose }) {
-  if (!message) return null;
-  return (
-    <div style={{ 
-      position: 'fixed', 
-      top: 150, 
-      right: 24, 
-      background: color, 
-      color: '#fff', 
-      padding: '16px 32px', 
-      borderRadius: 12, 
-      fontWeight: 'bold', 
-      zIndex: 9999, 
-      boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
-      border: '3px solid #000'
-    }} onClick={onClose}>
-      {message}
-    </div>
-  );
-}
+const Home = () => {
+  const { token, user, activePet, fetchUserData } = useUser();
+  const { playClick, playFeed, playClean, playPlay, playSleep } = useSoundEffects();
+  const [notification, setNotification] = useState({ message: '', type: 'info' });
+  const [lastAction, setLastAction] = useState(null);
 
-export default function Home({ mascota, hero, alimentar, limpiar, jugar, dormir, loading: loadingProp, animacionStat, animar }) {
-  const { token, fetchUserData, updateCoins } = useUser();
-
-  // Determinar imagen dinámica según estado
-  let mascotaImg = '/assets/dog_normal.svg';
-  if (mascota) {
-    if (mascota.status === 'dead' || mascota.health === 0) {
-      mascotaImg = mascota.type === 'Gato' ? '/assets/cat_dead.svg' : '/assets/dog_dead.svg';
-    } else if ((mascota.happiness ?? 100) > 80 && (mascota.health ?? 100) > 80) {
-      mascotaImg = mascota.type === 'Gato' ? '/assets/cat_happy.svg' : '/assets/dog_happy.svg';
-    } else {
-      mascotaImg = mascota.type === 'Gato' ? '/assets/cat_normal.svg' : '/assets/dog_normal.svg';
+  useEffect(() => {
+    if (activePet) {
+      console.log('Home - Pet Stats Debug:');
+      console.log('  Health:', activePet.health, typeof activePet.health);
+      console.log('  Happiness:', activePet.happiness, typeof activePet.happiness);
+      console.log('  Energy:', activePet.energy, typeof activePet.energy);
+      console.log('  Raw pet object:', activePet);
     }
+  }, [activePet]);
+
+  useEffect(() => {
+    if (activePet) {
+      checkAbandonment();
+      checkPetStatus();
+    }
+  }, [activePet]);
+
+  const checkAbandonment = () => {
+    if (!activePet || !activePet.lastCare) return;
+    
+    const lastCare = new Date(activePet.lastCare);
+    const now = new Date();
+    const hoursSinceLastCare = (now - lastCare) / (1000 * 60 * 60);
+    
+    if (hoursSinceLastCare > 24) {
+      setNotification({
+        message: '⚠️ Tu mascota necesita atención urgente!',
+        type: 'warning'
+      });
+    }
+  };
+
+  const checkPetStatus = () => {
+    if (!activePet) return;
+    
+    const { health, happiness, energy } = activePet;
+    
+    if (health < 30 || happiness < 30 || energy < 30) {
+      setNotification({
+        message: '😢 Tu mascota está triste y necesita cuidados',
+        type: 'warning'
+      });
+    }
+  };
+
+  const handlePetAction = async (action, actionName) => {
+    if (!activePet || !token) return;
+    
+    try {
+      console.log(`${actionName} mascota:`, activePet._id);
+      
+      const response = await fetch(`http://localhost:3001/api/pet-care/${activePet._id}/${action}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Error al ${actionName.toLowerCase()}`);
+      }
+      
+      const result = await response.json();
+      console.log(`Resultado ${actionName}:`, result);
+      
+      // Mostrar notificación con consecuencias
+      let notificationMessage = result.message;
+      let notificationType = 'success';
+      
+      // Agregar información de consecuencias
+      if (result.consequences) {
+        const { healthChange, happinessChange, energyChange, diseasesCured } = result.consequences;
+        
+        let consequencesText = '';
+        if (healthChange !== 0) {
+          consequencesText += `Salud: ${healthChange > 0 ? '+' : ''}${healthChange} `;
+        }
+        if (happinessChange !== 0) {
+          consequencesText += `Felicidad: ${happinessChange > 0 ? '+' : ''}${happinessChange} `;
+        }
+        if (energyChange !== 0) {
+          consequencesText += `Energía: ${energyChange > 0 ? '+' : ''}${energyChange}`;
+        }
+        
+        if (consequencesText) {
+          notificationMessage += ` (${consequencesText})`;
+        }
+        
+        // Si hay enfermedades curadas, mostrar en verde
+        if (diseasesCured && diseasesCured.length > 0) {
+          notificationMessage += ` 🏥 Enfermedades curadas: ${diseasesCured.join(', ')}`;
+        }
+        
+        // Si hay consecuencias negativas, cambiar tipo de notificación
+        if (healthChange < 0 || happinessChange < 0 || energyChange < 0) {
+          notificationType = 'warning';
+        }
+      }
+      
+      setNotification({
+        message: notificationMessage,
+        type: notificationType
+      });
+      
+      // Actualizar datos de la mascota
+      if (result.pet) {
+        await fetchUserData(); // Recargar datos del usuario y mascotas
+      }
+      
+      // Reproducir sonido específico
+      switch (action) {
+        case 'feed':
+          playFeed();
+          break;
+        case 'bath':
+          playClean();
+          break;
+        case 'play':
+          playPlay();
+          break;
+        case 'sleep':
+          playSleep();
+          break;
+        case 'heal':
+          playFeed(); // Usar sonido de feed para curación
+          break;
+        default:
+          playClick();
+      }
+      
+    } catch (error) {
+      console.error(`Error ${actionName.toLowerCase()}:`, error);
+      setNotification({
+        message: `Error ${actionName.toLowerCase()}: ${error.message}`,
+        type: 'error'
+      });
+    }
+  };
+
+  const handleAlimentar = () => handlePetAction('feed', 'Alimentar');
+  const handleJugar = () => handlePetAction('play', 'Jugar');
+  const handleLimpiar = () => handlePetAction('bath', 'Limpiar');
+  const handleDormir = () => handlePetAction('sleep', 'Dormir');
+  const handleCurar = () => handlePetAction('heal', 'Curar');
+
+  if (!user) {
+    return (
+      <div className="home-container">
+        <div className="welcome-message">
+          <h1>¡Bienvenido a tu Aventura Virtual!</h1>
+          <p>Inicia sesión para comenzar a cuidar de tus mascotas</p>
+        </div>
+      </div>
+    );
   }
-
-  // Notificaciones visuales
-  const [notification, setNotification] = React.useState({ message: '', type: 'info' });
-  const [loading, setLoading] = React.useState(false);
-
-  React.useEffect(() => {
-    if (!mascota) return;
-    if (mascota.status === 'dead' || mascota.health === 0) {
-      setNotification({ message: '¡Tu mascota ha muerto!', type: 'error' });
-    } else if ((mascota.health ?? 100) < 30) {
-      setNotification({ message: '¡Tu mascota está muy enferma!', type: 'warning' });
-    } else if ((mascota.happiness ?? 100) < 30) {
-      setNotification({ message: '¡Tu mascota está triste!', type: 'warning' });
-    } else if ((mascota.energy ?? 50) < 30) {
-      setNotification({ message: '¡Tu mascota está cansada!', type: 'warning' });
-    } else if (mascota.diseases && mascota.diseases.length > 0) {
-      setNotification({ message: `Enfermedades: ${mascota.diseases.join(', ')}`, type: 'error' });
-    } else {
-      setNotification({ message: '', type: 'info' });
-    }
-  }, [mascota]);
-
-  // Imagen y color del héroe
-  const heroImg = hero?.avatar || '/assets/hero.svg';
-  const heroColor = hero?.color || '#3498db';
-
-  // Determinar clase de animación para la mascota
-  let mascotaAnimClass = '';
-  if (mascota) {
-    if (mascota.status === 'dead' || mascota.health === 0) mascotaAnimClass = 'mascota-muerta';
-    else if ((mascota.happiness ?? 100) > 80 && (mascota.health ?? 100) > 80) mascotaAnimClass = 'mascota-feliz';
-    else if ((mascota.happiness ?? 100) < 30) mascotaAnimClass = 'mascota-triste';
-    else if ((mascota.health ?? 100) < 30 || (mascota.diseases && mascota.diseases.length > 0)) mascotaAnimClass = 'mascota-enferma';
-  }
-
-  // Funciones de mascota mejoradas con feedback visual
-  const handleAlimentar = async () => {
-    if (!mascota) return;
-    setLoading(true);
-    try {
-      await alimentar();
-      setNotification({ message: '¡Mascota alimentada! +5 felicidad', type: 'success' });
-      // Dar monedas por alimentar
-      updateCoins(prev => prev + 2);
-    } catch (error) {
-      setNotification({ message: 'Error al alimentar mascota', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLimpiar = async () => {
-    if (!mascota) return;
-    setLoading(true);
-    try {
-      await limpiar();
-      setNotification({ message: '¡Mascota limpiada! +10 salud', type: 'success' });
-      // Dar monedas por limpiar
-      updateCoins(prev => prev + 3);
-    } catch (error) {
-      setNotification({ message: 'Error al limpiar mascota', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleJugar = async () => {
-    if (!mascota) return;
-    setLoading(true);
-    try {
-      await jugar();
-      setNotification({ message: '¡Jugando con mascota! +15 felicidad', type: 'success' });
-      // Dar monedas por jugar
-      updateCoins(prev => prev + 5);
-    } catch (error) {
-      setNotification({ message: 'Error al jugar con mascota', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDormir = async () => {
-    if (!mascota) return;
-    setLoading(true);
-    try {
-      await dormir();
-      setNotification({ message: '¡Mascota durmiendo! +20 energía', type: 'success' });
-      // Dar monedas por dormir
-      updateCoins(prev => prev + 1);
-    } catch (error) {
-      setNotification({ message: 'Error al dormir mascota', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="home-container">
-      <NotificationToast 
-        message={notification.message} 
-        type={notification.type} 
-        onClose={() => setNotification({ message: '', type: 'info' })} 
-      />
-      
-      {/* Personajes principales estilo Pou */}
-      <div className="characters-container">
-        {/* Mascota */}
-        <div className="character-section">
-          <h3 style={{ 
-            fontSize: '20px', 
-            fontWeight: 'bold', 
-            color: '#000', 
-            textShadow: '2px 2px 0px #fff',
-            marginBottom: '15px'
-          }}>
-            Mascota
-          </h3>
-          <div className="character">
-            {mascota ? (
-              <>
-                <img
-                  src={mascotaImg}
-                  alt="Mascota"
-                  className={`character-img ${mascotaAnimClass}`}
-                />
-                {/* Accesorio visual: sombrero */}
-                {mascota && mascota.accessories && mascota.accessories.includes('sombrero') && (
-                  <img 
-                    src="/assets/sombrero.svg" 
-                    alt="Sombrero" 
-                    style={{ 
-                      position: 'absolute', 
-                      top: 0, 
-                      left: 20, 
-                      width: 60, 
-                      pointerEvents: 'none' 
-                    }} 
-                  />
-                )}
-              </>
-            ) : (
-              <div className="character-placeholder">
-                <div className="character-blob">🐾</div>
-                <p>¡Crea tu mascota!</p>
-              </div>
-            )}
+      <div className="home-content">
+        {/* Información del usuario */}
+        <div className="user-details">
+          <div className="user-info">
+            <h2>👤 {user.username}</h2>
           </div>
         </div>
 
-        {/* Héroe */}
-        <div className="character-section">
-          <h3 style={{ 
-            fontSize: '20px', 
-            fontWeight: 'bold', 
-            color: '#000', 
-            textShadow: '2px 2px 0px #fff',
-            marginBottom: '15px'
-          }}>
-            Héroe
-          </h3>
-          <div className="character">
-            {hero ? (
-              <>
-                <img
-                  src={hero?.avatar || '/assets/hero.png'}
-                  alt="Héroe"
-                  className="character-img"
-                  style={{ 
-                    borderRadius: '50%', 
-                    background: hero?.color || '#3498db',
-                    border: '3px solid #000'
-                  }}
-                />
-                {/* Accesorio visual: sombrero */}
-                {hero && hero.accessories && hero.accessories.includes('sombrero') && (
-                  <img 
-                    src="/assets/sombrero.svg" 
-                    alt="Sombrero" 
-                    style={{ 
-                      position: 'absolute', 
-                      top: 0, 
-                      left: 20, 
-                      width: 60, 
-                      pointerEvents: 'none' 
-                    }} 
-                  />
-                )}
-              </>
-            ) : (
-              <div className="character-placeholder">
-                <div className="character-blob">🦸‍♂️</div>
-                <p>¡Crea tu héroe!</p>
+        {/* Panel principal de la mascota */}
+        <div className="pet-main-panel">
+          {/* Mascota central */}
+          <div className="pet-display">
+            <div className="pet-avatar">
+              {activePet?.type === 'dog' ? '🐕' : 
+               activePet?.type === 'cat' ? '🐱' : 
+               activePet?.type === 'rabbit' ? '🐰' : 
+               activePet?.type === 'bird' ? '🐦' : 
+               activePet?.type === 'hamster' ? '🐹' : 
+               activePet?.type === 'turtle' ? '🐢' : '🐾'}
+            </div>
+            <h3 className="pet-name">{activePet?.name || 'Sin mascota'}</h3>
+            <p className="pet-type">Tipo: {activePet?.type || 'N/A'}</p>
+            <p className="pet-power">Poder: {activePet?.superPower || 'N/A'}</p>
+            <div className="pet-status">
+              <span className="status-dot"></span>
+              <span className="status-text">Viva</span>
+            </div>
+          </div>
+
+          {/* Estadísticas de la mascota */}
+          <div className="pet-stats-panel">
+            <div className="stat-bar">
+              <span className="stat-icon">❤️</span>
+              <span className="stat-label">Salud:</span>
+              <div className="stat-progress">
+                <div className="stat-fill health-fill" style={{ width: `${activePet?.health || 0}%` }}></div>
               </div>
-            )}
+              <span className="stat-value">{activePet?.health || 0}%</span>
+            </div>
+            
+            <div className="stat-bar">
+              <span className="stat-icon">😊</span>
+              <span className="stat-label">Felicidad:</span>
+              <div className="stat-progress">
+                <div className="stat-fill happiness-fill" style={{ width: `${activePet?.happiness || 0}%` }}></div>
+              </div>
+              <span className="stat-value">{activePet?.happiness || 0}%</span>
+            </div>
+            
+            <div className="stat-bar">
+              <span className="stat-icon">⚡</span>
+              <span className="stat-label">Energía:</span>
+              <div className="stat-progress">
+                <div className="stat-fill energy-fill" style={{ width: `${activePet?.energy || 0}%` }}></div>
+              </div>
+              <span className="stat-value">{activePet?.energy || 0}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Botones de cuidado */}
+        <div className="care-actions">
+          <div className="care-row">
+            <button className="care-btn" onClick={handleDormir}>
+              <span className="care-icon">😴</span>
+              <span className="care-text">Dormir</span>
+            </button>
+            <button className="care-btn" onClick={handleJugar}>
+              <span className="care-icon">✨</span>
+              <span className="care-text">Jugar</span>
+            </button>
+            <button className="care-btn" onClick={handleAlimentar}>
+              <span className="care-icon">🍎</span>
+              <span className="care-text">Alimentar</span>
+            </button>
+          </div>
+          <div className="care-row">
+            <button className="care-btn" onClick={handleLimpiar}>
+              <span className="care-icon">🛁</span>
+              <span className="care-text">Bañar</span>
+            </button>
+            <button className="care-btn" onClick={handleCurar}>
+              <span className="care-icon">🏥</span>
+              <span className="care-text">Curar</span>
+            </button>
+            <button className="care-btn">
+              <span className="care-icon">🤚</span>
+              <span className="care-text">Acariciar</span>
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Información del personaje estilo Pou */}
-      {mascota && (
-        <div className="character-info">
-          <h2 style={{ 
-            fontSize: '24px', 
-            fontWeight: 'bold', 
-            color: '#000', 
-            textShadow: '2px 2px 0px #fff',
-            marginBottom: '15px'
-          }}>
-            {mascota.name || 'Mi Mascota'}
-          </h2>
-          
-          {/* Estadísticas simples */}
-          <div className="stats-container">
-            <div className="stat-item">
-              <span className="stat-label">Salud:</span>
-              <div className="stat-bar">
-                <div 
-                  className="stat-fill health" 
-                  style={{ width: `${mascota.health || 100}%` }}
-                ></div>
-              </div>
-              <span className="stat-value">{mascota.health || 100}%</span>
-            </div>
-            
-            <div className="stat-item">
-              <span className="stat-label">Felicidad:</span>
-              <div className="stat-bar">
-                <div 
-                  className="stat-fill happiness" 
-                  style={{ width: `${mascota.happiness || 100}%` }}
-                ></div>
-              </div>
-              <span className="stat-value">{mascota.happiness || 100}%</span>
-            </div>
-            
-            <div className="stat-item">
-              <span className="stat-label">Energía:</span>
-              <div className="stat-bar">
-                <div 
-                  className="stat-fill energy" 
-                  style={{ width: `${mascota.energy || 50}%` }}
-                ></div>
-              </div>
-              <span className="stat-value">{mascota.energy || 50}%</span>
-            </div>
-          </div>
-          
-          {/* Botones de acción */}
-          <ActionButtons 
-            onFeed={handleAlimentar}
-            onClean={handleLimpiar}
-            onPlay={handleJugar}
-            onSleep={handleDormir}
-            loading={loadingProp}
-            mascota={mascota}
-          />
-        </div>
-      )}
-
-      {/* Mensaje de bienvenida si no hay mascota */}
-      {!mascota && (
-        <div className="welcome-message">
-          <h2 style={{ 
-            fontSize: '28px', 
-            fontWeight: 'bold', 
-            color: '#000', 
-            textShadow: '2px 2px 0px #fff',
-            marginBottom: '20px'
-          }}>
-            ¡Bienvenido a Mascota Hero!
-          </h2>
-          <p style={{ 
-            fontSize: '18px', 
-            color: '#000', 
-            textShadow: '1px 1px 0px #fff',
-            textAlign: 'center'
-          }}>
-            Crea tu mascota y comienza tu aventura
-          </p>
-        </div>
+      {notification.message && (
+        <NotificationToast
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification({ message: '', type: 'info' })}
+        />
       )}
     </div>
   );
-} 
+};
+
+export default Home; 

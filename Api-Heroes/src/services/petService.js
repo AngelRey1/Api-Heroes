@@ -3,7 +3,7 @@ import HeroRepository from '../repositories/heroRepository.js';
 import { ValidationError, NotFoundError, AuthorizationError } from '../utils/errors.js';
 import { validateObjectId, validateRequiredFields, validateStringLength } from '../utils/validations.js';
 
-// Función auxiliar para simplificar la mascota (solo datos básicos y customización)
+// Función auxiliar para simplificar la mascota (incluyendo estadísticas)
 function toBasicPet(pet) {
     if (!pet) return null;
     return {
@@ -13,6 +13,11 @@ function toBasicPet(pet) {
         type: pet.type,
         superPower: pet.superPower,
         status: pet.status,
+        // Incluir estadísticas
+        health: pet.health,
+        happiness: pet.happiness,
+        energy: pet.energy,
+        lastCare: pet.lastCare,
         adoptedBy: pet.adoptedBy && typeof pet.adoptedBy === 'object' ? {
             _id: pet.adoptedBy._id || pet.adoptedBy,
             name: pet.adoptedBy.name,
@@ -30,26 +35,36 @@ class PetService {
 
     async createPet(petData, userId) {
         try {
-            // Validar campos requeridos
-            validateRequiredFields(petData, ['name', 'type', 'superPower']);
-            // Validar longitudes de strings
-            validateStringLength(petData.name, 1, 50, 'Nombre');
-            validateStringLength(petData.type, 1, 30, 'Tipo');
-            validateStringLength(petData.superPower, 1, 100, 'Superpoder');
+            // Validar campos requeridos básicos
+            if (!petData.name || petData.name.trim().length === 0) {
+                throw new Error('El nombre es requerido');
+            }
+            if (!petData.type || petData.type.trim().length === 0) {
+                throw new Error('El tipo es requerido');
+            }
 
             // Validar que el usuario existe
-            validateObjectId(userId, 'ID de usuario');
+            if (!userId) {
+                throw new Error('ID de usuario requerido');
+            }
 
             const pet = await this.petRepository.createPet({
-                ...petData,
-                owner: userId
+                name: petData.name,
+                type: petData.type,
+                petType: petData.petType || petData.type,
+                superPower: petData.superPower || 'Amor incondicional',
+                color: petData.color || '#FFD700',
+                personality: petData.personality || 'neutral',
+                accessories: petData.accessories || [],
+                owner: userId,
+                health: 100,
+                happiness: 100,
+                energy: 100,
+                lastCare: new Date()
             });
 
             return pet;
         } catch (error) {
-            if (error instanceof ValidationError) {
-                throw error;
-            }
             throw new Error(`Error al crear mascota: ${error.message}`);
         }
     }

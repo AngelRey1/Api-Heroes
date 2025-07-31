@@ -1,92 +1,95 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
-import { getItems, buyItem } from '../api';
 import { useSoundEffects } from '../components/SoundEffects';
 import NotificationToast from '../components/NotificationToast';
+import { getItems, buyItem } from '../api';
 import './Shop.css';
 
 const Shop = () => {
-  const { token, coins, updateCoins } = useUser();
+  const { token, user, fetchUserData } = useUser();
   const { playClick, playCoin } = useSoundEffects();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [buying, setBuying] = useState(false);
-  const [notification, setNotification] = useState({ message: '', type: 'info' });
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [notification, setNotification] = useState({ message: '', type: 'info' });
+
+  const categories = [
+    { id: 'all', name: 'Todos', icon: '🛍️' },
+    { id: 'food', name: 'Comida', icon: '🍖' },
+    { id: 'toys', name: 'Juguetes', icon: '🎾' },
+    { id: 'accessories', name: 'Accesorios', icon: '👑' },
+    { id: 'medicine', name: 'Medicina', icon: '💊' },
+    { id: 'cosmetics', name: 'Cosméticos', icon: '💄' }
+  ];
 
   useEffect(() => {
-    fetchItems();
+    if (token) {
+      loadItems();
+    }
   }, [token]);
 
-  const fetchItems = async () => {
+  const loadItems = async () => {
     try {
       setLoading(true);
       const itemsData = await getItems(token);
       setItems(itemsData);
-    } catch (err) {
-      console.error('Error fetching items:', err);
-      setNotification({ message: 'Error al cargar items', type: 'error' });
+    } catch (error) {
+      console.error('Error cargando items:', error);
+      setNotification({
+        message: 'Error cargando la tienda',
+        type: 'error'
+      });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleBuyItem = async (itemId, price) => {
-    if (coins < price) {
-      setNotification({ message: '¡No tienes suficientes monedas!', type: 'warning' });
+  const handleBuyItem = async (item) => {
+    if (!user || user.coins < item.price) {
+      setNotification({
+        message: 'No tienes suficientes monedas',
+        type: 'error'
+      });
       return;
     }
 
     try {
-      setBuying(true);
-      playClick();
-      
-      const result = await buyItem(itemId, 1, token);
-      updateCoins(coins - price);
-      
-      setNotification({ 
-        message: `¡${result.item.name} comprado por ${price} monedas!`, 
-        type: 'success' 
-      });
-      
+      await buyItem(item._id, 1, token);
       playCoin();
-    } catch (err) {
-      console.error('Error buying item:', err);
-      setNotification({ message: 'Error al comprar item', type: 'error' });
-    } finally {
-      setBuying(false);
+      setNotification({
+        message: `¡${item.name} comprado exitosamente!`,
+        type: 'success'
+      });
+      await fetchUserData(); // Actualizar monedas del usuario
+    } catch (error) {
+      console.error('Error comprando item:', error);
+      setNotification({
+        message: 'Error al comprar el item',
+        type: 'error'
+      });
     }
   };
-
-  const categories = [
-    { id: 'all', name: 'Todos', icon: '🛍️' },
-    { id: 'food', name: 'Comida', icon: '🍖' },
-    { id: 'toys', name: 'Juguetes', icon: '🎲' },
-    { id: 'accessories', name: 'Accesorios', icon: '👒' },
-    { id: 'medicine', name: 'Medicina', icon: '💊' },
-    { id: 'special', name: 'Especiales', icon: '⭐' }
-  ];
 
   const filteredItems = selectedCategory === 'all' 
     ? items 
     : items.filter(item => item.category === selectedCategory);
 
   const getItemIcon = (category) => {
-    switch (category) {
-      case 'food': return '🍖';
-      case 'toys': return '🎲';
-      case 'accessories': return '👒';
-      case 'medicine': return '💊';
-      case 'special': return '⭐';
-      default: return '📦';
-    }
+    const iconMap = {
+      'food': '🍖',
+      'toys': '🎾',
+      'accessories': '👑',
+      'medicine': '💊',
+      'cosmetics': '💄'
+    };
+    return iconMap[category] || '📦';
   };
 
   if (loading) {
     return (
       <div className="shop-container">
-        <div className="loading-message">
-          <div className="loading-spinner">🛍️</div>
+        <div className="loading-spinner">
+          <div className="spinner"></div>
           <p>Cargando tienda...</p>
         </div>
       </div>
@@ -95,31 +98,21 @@ const Shop = () => {
 
   return (
     <div className="shop-container">
-      <NotificationToast 
-        message={notification.message} 
-        type={notification.type} 
-        onClose={() => setNotification({ message: '', type: 'info' })} 
-      />
-
-      {/* Header de la tienda */}
       <div className="shop-header">
         <h1>🛒 Tienda</h1>
-        <div className="coins-display">
-          <span className="coins-icon">💰</span>
-          <span className="coins-amount">{coins}</span>
+        <p>Compra items para tus mascotas y héroes</p>
+        <div className="user-coins">
+          <span className="coin-icon">💰</span>
+          <span className="coin-amount">{user?.coins || 0}</span>
         </div>
       </div>
 
-      {/* Categorías */}
-      <div className="categories-container">
-        {categories.map(category => (
+      <div className="category-tabs">
+        {categories.map((category) => (
           <button
             key={category.id}
-            className={`category-btn ${selectedCategory === category.id ? 'active' : ''}`}
-            onClick={() => {
-              setSelectedCategory(category.id);
-              playClick();
-            }}
+            className={`category-tab ${selectedCategory === category.id ? 'active' : ''}`}
+            onClick={() => setSelectedCategory(category.id)}
           >
             <span className="category-icon">{category.icon}</span>
             <span className="category-name">{category.name}</span>
@@ -127,15 +120,9 @@ const Shop = () => {
         ))}
       </div>
 
-      {/* Grid de items */}
       <div className="items-grid">
-        {filteredItems.length === 0 ? (
-          <div className="no-items">
-            <div className="no-items-icon">📦</div>
-            <p>No hay items en esta categoría</p>
-          </div>
-        ) : (
-          filteredItems.map(item => (
+        {filteredItems.length > 0 ? (
+          filteredItems.map((item) => (
             <div key={item._id} className="item-card">
               <div className="item-icon">
                 {getItemIcon(item.category)}
@@ -149,8 +136,8 @@ const Shop = () => {
                       {stat === 'health' && '❤️'}
                       {stat === 'happiness' && '😊'}
                       {stat === 'energy' && '⚡'}
-                      {stat === 'cleanliness' && '🧼'}
-                      {value > 0 ? '+' : ''}{value}
+                      {stat === 'cleanliness' && '🛁'}
+                      +{value}
                     </span>
                   ))}
                 </div>
@@ -160,29 +147,30 @@ const Shop = () => {
                 <span className="price-icon">💰</span>
               </div>
               <button
-                className={`buy-btn ${coins < item.price ? 'disabled' : ''}`}
-                onClick={() => handleBuyItem(item._id, item.price)}
-                disabled={coins < item.price || buying}
+                className={`buy-btn ${user?.coins >= item.price ? '' : 'disabled'}`}
+                onClick={() => handleBuyItem(item)}
+                disabled={user?.coins < item.price}
               >
-                {buying ? 'Comprando...' : 'Comprar'}
+                {user?.coins >= item.price ? 'Comprar' : 'Sin monedas'}
               </button>
             </div>
           ))
+        ) : (
+          <div className="empty-shop">
+            <div className="empty-icon">🛍️</div>
+            <h3>No hay items en esta categoría</h3>
+            <p>Intenta con otra categoría</p>
+          </div>
         )}
       </div>
 
-      {/* Información adicional */}
-      <div className="shop-info">
-        <div className="info-card">
-          <h3>💡 Consejos</h3>
-          <ul>
-            <li>Alimenta a tu mascota regularmente</li>
-            <li>Los juguetes aumentan la felicidad</li>
-            <li>La medicina cura enfermedades</li>
-            <li>Los accesorios son solo decorativos</li>
-          </ul>
-        </div>
-      </div>
+      {notification.message && (
+        <NotificationToast
+          message={notification.message}
+          type={notification.type}
+          onClose={() => setNotification({ message: '', type: 'info' })}
+        />
+      )}
     </div>
   );
 };

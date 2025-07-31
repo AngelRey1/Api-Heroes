@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { getUserProfile, getMascotas } from '../api';
+import { getUserProfile, getPets, getAllHeroes } from '../api';
 import { clearAllStorage, isValidToken } from '../utils/clearStorage';
 import { checkBackendStatus, showBackendError } from '../utils/backendStatus';
 
@@ -16,64 +16,99 @@ export const useUser = () => {
 export const UserProvider = ({ children }) => {
   const [token, setToken] = useState(() => {
     const savedToken = localStorage.getItem('token');
-    if (savedToken && isValidToken(savedToken)) {
-      return savedToken;
-    } else if (savedToken) {
-      // Si hay un token pero es inválido, limpiarlo
-      console.log('Token guardado es inválido, limpiando...');
-      clearAllStorage();
-    }
-    return null;
+    return savedToken && isValidToken(savedToken) ? savedToken : null;
   });
   const [user, setUser] = useState(null);
   const [mascotas, setMascotas] = useState([]);
+  const [heroes, setHeroes] = useState([]);
   const [hero, setHero] = useState(null);
+  const [activePet, setActivePet] = useState(null); // Nueva mascota activa
   const [coins, setCoins] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [lastFetchTime, setLastFetchTime] = useState(0);
 
   const logout = useCallback(() => {
     setToken(null);
     setUser(null);
     setMascotas([]);
+    setHeroes([]);
     setHero(null);
+    setActivePet(null);
     setCoins(0);
     clearAllStorage();
   }, []);
 
-  const fetchUserData = useCallback(async () => {
-    if (!token) return;
+  const fetchUserData = useCallback(async (force = false) => {
+    if (!token) {
+      console.log('fetchUserData: No hay token');
+      return;
+    }
     
-    // Verificar si el backend está funcionando
+    console.log('fetchUserData: Iniciando con token:', token.substring(0, 20) + '...');
+    
+    // Prevenir múltiples llamadas en un corto período
+    const now = Date.now();
+    if (!force && now - lastFetchTime < 2000) {
+      console.log('Evitando llamada duplicada a fetchUserData');
+      return;
+    }
+    
     const backendOk = await checkBackendStatus();
     if (!backendOk) {
+      console.log('fetchUserData: Backend no disponible');
       showBackendError();
       return;
     }
     
     try {
       setLoading(true);
+      setLastFetchTime(now);
+      
       const userData = await getUserProfile(token);
       setUser(userData);
       setCoins(userData.coins || 0);
       
       // Obtener mascotas
       try {
-        const mascotasData = await getMascotas(token);
+        console.log('Intentando obtener mascotas...');
+        const mascotasData = await getPets(token);
+        console.log('Respuesta de getPets:', mascotasData);
         setMascotas(mascotasData);
+        console.log('Mascotas cargadas:', mascotasData);
+        console.log('Número de mascotas:', mascotasData?.length || 0);
+        
+        // Establecer la primera mascota como activa si no hay una activa
+        if (mascotasData && mascotasData.length > 0 && !activePet) {
+          setActivePet(mascotasData[0]);
+          console.log('Mascota activa establecida:', mascotasData[0]);
+        }
       } catch (err) {
         console.warn('Error fetching mascotas:', err.message);
+        console.warn('Error completo:', err);
         setMascotas([]);
       }
       
-      // Obtener héroe
+      // Obtener héroes
       try {
-        if (userData.heroes && userData.heroes.length > 0) {
-          setHero(userData.heroes[0]);
+        console.log('Intentando obtener héroes...');
+        const heroesData = await getAllHeroes(token);
+        console.log('Respuesta de getAllHeroes:', heroesData);
+        setHeroes(heroesData);
+        console.log('Héroes cargados:', heroesData);
+        console.log('Número de héroes:', heroesData?.length || 0);
+        
+        // Establecer el primer héroe como activo
+        if (heroesData && heroesData.length > 0) {
+          setHero(heroesData[0]);
+          console.log('Héroe activo establecido:', heroesData[0]);
         } else {
           setHero(null);
+          console.log('No hay héroes disponibles');
         }
       } catch (err) {
-        console.warn('Error fetching hero:', err.message);
+        console.warn('Error fetching heroes:', err.message);
+        console.warn('Error completo:', err);
+        setHeroes([]);
         setHero(null);
       }
     } catch (err) {
@@ -87,7 +122,7 @@ export const UserProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, [token, logout]);
+  }, [token, logout, lastFetchTime, activePet]);
 
   const login = (newToken, userData) => {
     setToken(newToken);
@@ -96,8 +131,29 @@ export const UserProvider = ({ children }) => {
     localStorage.setItem('token', newToken);
   };
 
-  const updateCoins = (newCoins) => {
+  const updateCoins = async (newCoins) => {
     setCoins(newCoins);
+    if (user) {
+      setUser(prev => ({ ...prev, coins: newCoins }));
+      
+      // Actualizar en el backend
+      try {
+        const response = await fetch(`http://localhost:3001/api/users/${user._id}/coins`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ coins: newCoins })
+        });
+        
+        if (!response.ok) {
+          console.error('Error actualizando monedas en el backend');
+        }
+      } catch (error) {
+        console.error('Error actualizando monedas:', error);
+      }
+    }
   };
 
   const updateMascotas = (newMascotas) => {
@@ -108,34 +164,56 @@ export const UserProvider = ({ children }) => {
     setHero(newHero);
   };
 
+  const updateHeroes = (newHeroes) => {
+    setHeroes(newHeroes);
+    if (newHeroes && newHeroes.length > 0) {
+      setHero(newHeroes[0]);
+    }
+  };
+
+  // Función para cambiar la mascota activa
+  const setActivePetById = (petId) => {
+    const pet = mascotas.find(p => p._id === petId);
+    if (pet) {
+      setActivePet(pet);
+      console.log('Mascota activa cambiada a:', pet.name);
+    }
+  };
+
+  // Función para actualizar la mascota activa después de acciones
+  const updateActivePet = (updatedPet) => {
+    if (activePet && activePet._id === updatedPet._id) {
+      setActivePet(updatedPet);
+    }
+    // También actualizar en la lista de mascotas
+    setMascotas(prev => prev.map(p => p._id === updatedPet._id ? updatedPet : p));
+  };
+
+  // Cargar datos cuando cambie el token (solo una vez)
   useEffect(() => {
     if (token) {
-      // Verificar si el token es válido antes de hacer la petición
-      if (!isValidToken(token)) {
-        console.log('Token inválido, expirado o corrupto, cerrando sesión...');
-        logout();
-        return;
-      }
-      
-      fetchUserData();
+      fetchUserData(true); // Forzar la primera carga
     }
-  }, [token, fetchUserData, logout]);
+  }, [token]); // Removido fetchUserData de las dependencias
 
   const value = {
     token,
     user,
     mascotas,
+    heroes,
     hero,
+    activePet,
     coins,
     loading,
-    setToken,
-    setUser,
     login,
     logout,
+    fetchUserData,
     updateCoins,
     updateMascotas,
     updateHero,
-    fetchUserData
+    updateHeroes,
+    setActivePetById,
+    updateActivePet
   };
 
   // Función global para limpiar localStorage desde la consola

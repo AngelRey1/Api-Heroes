@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
-import { getUserMissions, claimMissionReward, generateMissions } from '../api';
 import { useSoundEffects } from '../components/SoundEffects';
 import NotificationToast from '../components/NotificationToast';
 import './Missions.css';
@@ -13,18 +12,113 @@ const Missions = () => {
   const [claiming, setClaiming] = useState(false);
   const [notification, setNotification] = useState({ message: '', type: 'info' });
 
-  useEffect(() => {
-    fetchMissions();
-  }, [token]);
+  // Misiones por defecto que se generan automáticamente
+  const defaultMissions = [
+    {
+      _id: 'daily_1',
+      title: 'Alimentar Mascota',
+      description: 'Alimenta a tu mascota 3 veces hoy',
+      type: 'daily',
+      progress: 0,
+      target: 3,
+      reward: 15,
+      completed: false,
+      claimed: false,
+      deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString() // 24 horas
+    },
+    {
+      _id: 'daily_2',
+      title: 'Jugar con Mascota',
+      description: 'Juega con tu mascota 2 veces hoy',
+      type: 'daily',
+      progress: 0,
+      target: 2,
+      reward: 20,
+      completed: false,
+      claimed: false,
+      deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      _id: 'daily_3',
+      title: 'Limpiar Mascota',
+      description: 'Limpia a tu mascota 1 vez hoy',
+      type: 'daily',
+      progress: 0,
+      target: 1,
+      reward: 25,
+      completed: false,
+      claimed: false,
+      deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      _id: 'daily_4',
+      title: 'Hacer Dormir Mascota',
+      description: 'Haz dormir a tu mascota 1 vez hoy',
+      type: 'daily',
+      progress: 0,
+      target: 1,
+      reward: 30,
+      completed: false,
+      claimed: false,
+      deadline: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+      _id: 'weekly_1',
+      title: 'Completar 5 Misiones',
+      description: 'Completa 5 misiones esta semana',
+      type: 'weekly',
+      progress: 0,
+      target: 5,
+      reward: 100,
+      completed: false,
+      claimed: false,
+      deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() // 7 días
+    }
+  ];
 
-  const fetchMissions = async () => {
+  useEffect(() => {
+    initializeMissions();
+  }, []);
+
+  // Inicializar misiones automáticamente (sin depender del backend)
+  const initializeMissions = async () => {
     try {
       setLoading(true);
-      const missionsData = await getUserMissions(token);
-      setMissions(missionsData);
-    } catch (err) {
-      console.error('Error fetching missions:', err);
-      setNotification({ message: 'Error al cargar misiones', type: 'error' });
+      
+      // Verificar si ya existen misiones en localStorage
+      const savedMissions = localStorage.getItem('userMissions');
+      const lastGenerated = localStorage.getItem('lastMissionsGenerated');
+      const now = new Date().getTime();
+      const oneDay = 24 * 60 * 60 * 1000; // 24 horas en milisegundos
+      
+      if (!savedMissions || !lastGenerated || (now - parseInt(lastGenerated)) > oneDay) {
+        // Generar nuevas misiones automáticamente
+        const newMissions = defaultMissions.map(mission => ({
+          ...mission,
+          _id: `${mission._id}_${Date.now()}`,
+          progress: 0,
+          completed: false,
+          claimed: false
+        }));
+        
+        localStorage.setItem('userMissions', JSON.stringify(newMissions));
+        localStorage.setItem('lastMissionsGenerated', now.toString());
+        setMissions(newMissions);
+        
+        setNotification({ 
+          message: '¡Nuevas misiones generadas automáticamente!', 
+          type: 'success' 
+        });
+      } else {
+        // Cargar misiones existentes
+        const existingMissions = JSON.parse(savedMissions);
+        setMissions(existingMissions);
+      }
+      
+    } catch (error) {
+      console.error('Error initializing missions:', error);
+      // Si hay error, usar misiones por defecto
+      setMissions(defaultMissions);
     } finally {
       setLoading(false);
     }
@@ -35,21 +129,29 @@ const Missions = () => {
       setClaiming(true);
       playClick();
       
-      const result = await claimMissionReward(missionId, token);
-      updateCoins(result.coinsEarned || 0);
-      
-      setNotification({ 
-        message: `¡Recompensa reclamada! +${result.coinsEarned} monedas`, 
-        type: 'success' 
-      });
-      
-      playCoin();
-      if (result.coinsEarned > 50) {
-        playCelebrate();
+      // Simular reclamación de recompensa
+      const mission = missions.find(m => m._id === missionId);
+      if (mission && mission.completed && !mission.claimed) {
+        const coinsEarned = mission.reward;
+        updateCoins(coinsEarned);
+        
+        // Actualizar estado de la misión
+        const updatedMissions = missions.map(m => 
+          m._id === missionId ? { ...m, claimed: true } : m
+        );
+        setMissions(updatedMissions);
+        localStorage.setItem('userMissions', JSON.stringify(updatedMissions));
+        
+        setNotification({ 
+          message: `¡Recompensa reclamada! +${coinsEarned} monedas`, 
+          type: 'success' 
+        });
+        
+        playCoin();
+        if (coinsEarned > 50) {
+          playCelebrate();
+        }
       }
-      
-      // Recargar misiones
-      await fetchMissions();
     } catch (err) {
       console.error('Error claiming reward:', err);
       setNotification({ message: 'Error al reclamar recompensa', type: 'error' });
@@ -58,24 +160,19 @@ const Missions = () => {
     }
   };
 
-  const handleGenerateMissions = async () => {
-    try {
-      setLoading(true);
-      playClick();
-      
-      await generateMissions(token);
-      await fetchMissions();
-      
-      setNotification({ 
-        message: '¡Nuevas misiones generadas!', 
-        type: 'success' 
-      });
-    } catch (err) {
-      console.error('Error generating missions:', err);
-      setNotification({ message: 'Error al generar misiones', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
+  // Función para actualizar progreso de misiones (se llamará desde otras partes del juego)
+  const updateMissionProgress = (missionType, amount = 1) => {
+    const updatedMissions = missions.map(mission => {
+      if (mission.title.toLowerCase().includes(missionType.toLowerCase())) {
+        const newProgress = Math.min(mission.progress + amount, mission.target);
+        const completed = newProgress >= mission.target;
+        return { ...mission, progress: newProgress, completed };
+      }
+      return mission;
+    });
+    
+    setMissions(updatedMissions);
+    localStorage.setItem('userMissions', JSON.stringify(updatedMissions));
   };
 
   const getMissionIcon = (type) => {
@@ -132,14 +229,13 @@ const Missions = () => {
 
       {/* Header */}
       <div className="missions-header">
-        <h1>📋 Misiones</h1>
-        <button 
-          className="generate-btn"
-          onClick={handleGenerateMissions}
-          disabled={loading}
-        >
-          🔄 Generar Nuevas
-        </button>
+        <h1>📋 Misiones Diarias</h1>
+        <div className="header-info">
+          <div className="auto-generated-info">
+            <span className="info-icon">🔄</span>
+            <span className="info-text">Se renuevan automáticamente cada 24 horas</span>
+          </div>
+        </div>
       </div>
 
       {/* Estadísticas rápidas */}
@@ -171,14 +267,7 @@ const Missions = () => {
           <div className="no-missions">
             <div className="no-missions-icon">📋</div>
             <h3>No hay misiones disponibles</h3>
-            <p>¡Genera nuevas misiones para comenzar!</p>
-            <button 
-              className="generate-btn-large"
-              onClick={handleGenerateMissions}
-              disabled={loading}
-            >
-              🔄 Generar Misiones
-            </button>
+            <p>Las misiones se generan automáticamente cada 24 horas</p>
           </div>
         ) : (
           missions.map(mission => (
@@ -253,27 +342,27 @@ const Missions = () => {
       {/* Información adicional */}
       <div className="missions-info">
         <div className="info-card">
-          <h3>💡 Tipos de Misiones</h3>
+          <h3>💡 Cómo Funcionan las Misiones</h3>
           <div className="mission-types">
             <div className="type-item">
               <span className="type-icon">📅</span>
               <span className="type-name">Diarias</span>
-              <span className="type-desc">Se renuevan cada día</span>
+              <span className="type-desc">Se renuevan automáticamente cada día</span>
             </div>
             <div className="type-item">
               <span className="type-icon">📆</span>
               <span className="type-name">Semanales</span>
-              <span className="type-desc">Se renuevan cada semana</span>
+              <span className="type-desc">Se renuevan automáticamente cada semana</span>
             </div>
             <div className="type-item">
-              <span className="type-icon">🏆</span>
-              <span className="type-name">Logros</span>
-              <span className="type-desc">Basadas en logros</span>
+              <span className="type-icon">🎮</span>
+              <span className="type-name">Juego</span>
+              <span className="type-desc">Basadas en acciones del juego</span>
             </div>
             <div className="type-item">
-              <span className="type-icon">👥</span>
-              <span className="type-name">Sociales</span>
-              <span className="type-desc">Interactuar con amigos</span>
+              <span className="type-icon">🐾</span>
+              <span className="type-name">Mascota</span>
+              <span className="type-desc">Cuidar y jugar con tu mascota</span>
             </div>
           </div>
         </div>

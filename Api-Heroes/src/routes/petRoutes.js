@@ -7,21 +7,16 @@ const router = express.Router();
 
 // Rutas de mascotas
 router.get('/', authMiddleware, getPets);
-router.post('/', [
-    authMiddleware,
-    check('name').not().isEmpty().withMessage('El nombre es requerido'),
-    check('type').not().isEmpty().withMessage('El tipo es requerido'),
-    check('superPower').not().isEmpty().withMessage('El superpoder es requerido')
-], createPet);
-router.get('/:petId', authMiddleware, getPetById);
-router.put('/:petId', authMiddleware, updatePet);
-router.delete('/:petId', authMiddleware, deletePet);
-router.put('/:petId/rename', authMiddleware, renamePet);
-router.put('/:petId/active', authMiddleware, setActivePet);
-router.put('/:petId/equip', authMiddleware, equipAccessory);
-router.put('/:petId/unequip', authMiddleware, unequipAccessory);
-router.post('/:petId/adopt', authMiddleware, adoptPet);
-router.post('/:petId/return', authMiddleware, returnPet);
+router.post('/', authMiddleware, createPet);
+router.get('/:id', authMiddleware, getPetById);
+router.put('/:id', authMiddleware, updatePet);
+router.delete('/:id', authMiddleware, deletePet);
+router.put('/:id/rename', authMiddleware, renamePet);
+router.put('/:id/active', authMiddleware, setActivePet);
+router.put('/:id/equip', authMiddleware, equipAccessory);
+router.put('/:id/unequip', authMiddleware, unequipAccessory);
+router.post('/:id/adopt', authMiddleware, adoptPet);
+router.post('/:id/return', authMiddleware, returnPet);
 router.get('/adopted/list', authMiddleware, getAdoptedPets);
 
 export default router; 

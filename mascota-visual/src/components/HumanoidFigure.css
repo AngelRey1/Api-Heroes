@@ -1,0 +1,212 @@
+.humanoid-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 20px 0;
+}
+
+.humanoid-figure {
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+  transition: all 0.3s ease;
+}
+
+.humanoid-figure:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 6px 12px rgba(0,0,0,0.4));
+}
+
+.body-part {
+  transition: fill 0.3s ease;
+}
+
+.shadow {
+  animation: shadowPulse 3s ease-in-out infinite;
+}
+
+.head {
+  animation: headBob 4s ease-in-out infinite;
+}
+
+.head-highlight {
+  animation: highlightGlow 2s ease-in-out infinite;
+}
+
+.arm-left, .arm-right {
+  animation: armSwing 3s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.forearm-left, .forearm-right {
+  animation: forearmFlex 2.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.hand-left, .hand-right {
+  animation: handWave 2s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.leg-left, .leg-right {
+  animation: legWalk 2s ease-in-out infinite;
+  transform-origin: top;
+}
+
+.calf-left, .calf-right {
+  animation: calfFlex 2.5s ease-in-out infinite;
+  transform-origin: top;
+}
+
+.foot-left, .foot-right {
+  animation: footTap 1.5s ease-in-out infinite;
+  transform-origin: center;
+}
+
+.eye {
+  animation: eyeBlink 4s ease-in-out infinite;
+}
+
+.eye-highlight {
+  animation: eyeSparkle 3s ease-in-out infinite;
+}
+
+.mouth {
+  animation: mouthSmile 5s ease-in-out infinite;
+}
+
+.ear-left, .ear-right {
+  animation: earWiggle 6s ease-in-out infinite;
+  transform-origin: bottom;
+}
+
+.accessory {
+  animation: accessoryFloat 4s ease-in-out infinite;
+}
+
+.shine {
+  animation: shineEffect 2s ease-in-out infinite;
+}
+
+.animated .body-part {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.animated .sparkle {
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+/* Animaciones específicas */
+@keyframes shadowPulse {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes headBob {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-2px); }
+}
+
+@keyframes highlightGlow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+@keyframes armSwing {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(3deg); }
+  75% { transform: rotate(-3deg); }
+}
+
+@keyframes forearmFlex {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(2deg); }
+}
+
+@keyframes handWave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(5deg); }
+  75% { transform: rotate(-5deg); }
+}
+
+@keyframes legWalk {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(1deg); }
+  75% { transform: rotate(-1deg); }
+}
+
+@keyframes calfFlex {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(1deg); }
+}
+
+@keyframes footTap {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-1px); }
+}
+
+@keyframes eyeBlink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+@keyframes eyeSparkle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+@keyframes mouthSmile {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+@keyframes earWiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(1deg); }
+  75% { transform: rotate(-1deg); }
+}
+
+@keyframes accessoryFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes shineEffect {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.9; }
+}
+
+@keyframes sparkle {
+  0%, 100% { 
+    opacity: 1; 
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.5; 
+    transform: scale(1.2);
+  }
+}
+
+/* Efectos de color dinámico */
+.body-part:hover {
+  filter: brightness(1.1);
+}
+
+.accessory:hover {
+  filter: brightness(1.2) drop-shadow(0 0 5px rgba(255,255,255,0.5));
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .humanoid-container {
+    margin: 10px 0;
+  }
+  
+  .humanoid-figure {
+    width: 150px;
+    height: 150px;
+  }
+} 
