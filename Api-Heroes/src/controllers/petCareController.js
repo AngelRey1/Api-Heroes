@@ -1,94 +1,181 @@
-import PetCareService from '../services/petCareService.js';
+import PetService from '../services/petService.js';
+const petService = new PetService();
 
-const petCareService = new PetCareService();
-
+/**
+ * Alimentar mascota
+ */
 export const feedPet = async (req, res) => {
     try {
-        console.log('feedPet - PetId:', req.params.id);
-        console.log('feedPet - UserId:', req.user._id);
-        console.log('feedPet - User:', req.user.username);
-        
-        const result = await petCareService.feedPet(req.params.id, req.user._id);
+        const { petId } = req.params;
+        const { foodType } = req.body;
+        const userId = req.user._id;
+        const result = await petService.feedPet(petId, userId, foodType);
         res.json(result);
     } catch (error) {
-        console.error('feedPet - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(400).json({ error: error.message });
+        if (error.status === 404) return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
+/**
+ * Dar agua a la mascota
+ */
+export const waterPet = async (req, res) => {
+    try {
+        const { petId } = req.params;
+        const { waterType } = req.body;
+        const userId = req.user._id;
+        const result = await petService.waterPet(petId, userId, waterType);
+        res.json(result);
+    } catch (error) {
+        if (error.status === 403) return res.status(403).json({ error: error.message });
+        if (error.status === 404) return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Jugar con la mascota
+ */
 export const playWithPet = async (req, res) => {
     try {
-        const result = await petCareService.playWithPet(req.params.id, req.user._id);
+        const { petId } = req.params;
+        const userId = req.user._id;
+        const result = await petService.playWithPet(petId, userId);
         res.json(result);
     } catch (error) {
-        console.error('playWithPet - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(400).json({ error: error.message });
+        if (error.status === 404) return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
-export const bathPet = async (req, res) => {
+/**
+ * Pasear la mascota
+ */
+export const walkPet = async (req, res) => {
     try {
-        const result = await petCareService.bathPet(req.params.id, req.user._id);
+        const { petId } = req.params;
+        const userId = req.user._id;
+        const result = await petService.walkPet(petId, userId);
         res.json(result);
     } catch (error) {
-        console.error('bathPet - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(400).json({ error: error.message });
+        if (error.status === 404) return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
+/**
+ * Bañar la mascota
+ */
+export const bathePet = async (req, res) => {
+    try {
+        const { petId } = req.params;
+        const userId = req.user._id;
+        const result = await petService.bathePet(petId, userId);
+        res.json(result);
+    } catch (error) {
+        if (error.status === 403) return res.status(403).json({ error: error.message });
+        if (error.status === 404) return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Hacer dormir la mascota
+ */
 export const sleepPet = async (req, res) => {
     try {
-        const result = await petCareService.sleepPet(req.params.id, req.user._id);
+        const { petId } = req.params;
+        const userId = req.user._id;
+        const result = await petService.sleepPet(petId, userId);
         res.json(result);
     } catch (error) {
-        console.error('sleepPet - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(400).json({ error: error.message });
+        if (error.status === 404) return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
+/**
+ * Despertar la mascota
+ */
+export const wakePet = async (req, res) => {
+    try {
+        const { petId } = req.params;
+        const userId = req.user._id;
+        const result = await petService.wakePet(petId, userId);
+        res.json(result);
+    } catch (error) {
+        if (error.status === 403) return res.status(403).json({ error: error.message });
+        if (error.status === 404) return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Acariciar la mascota
+ */
+export const petPet = async (req, res) => {
+    try {
+        const { petId } = req.params;
+        const userId = req.user._id;
+        const result = await petService.petPet(petId, userId);
+        res.json(result);
+    } catch (error) {
+        if (error.status === 403) return res.status(403).json({ error: error.message });
+        if (error.status === 404) return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
+    }
+};
+
+/**
+ * Curar la mascota
+ */
 export const healPet = async (req, res) => {
     try {
-        const result = await petCareService.healPet(req.params.id, req.user._id);
+        const { petId } = req.params;
+        const userId = req.user._id;
+        const result = await petService.healPet(petId, userId);
         res.json(result);
     } catch (error) {
-        console.error('healPet - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(400).json({ error: error.message });
+        if (error.status === 404) return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
+/**
+ * Obtener estadísticas de la mascota
+ */
 export const getPetStatus = async (req, res) => {
     try {
-        const result = await petCareService.getPetStatus(req.params.id, req.user._id);
+        const { petId } = req.params;
+        const userId = req.user._id;
+        const result = await petService.getPetStats(petId, userId);
         res.json(result);
     } catch (error) {
-        console.error('getPetStatus - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(400).json({ error: error.message });
+        if (error.status === 404) return res.status(404).json({ error: error.message });
+        res.status(500).json({ error: error.message });
     }
 };
 
-export const checkAbandonment = async (req, res) => {
+/**
+ * Obtener historial de actividades de la mascota
+ */
+export const getPetActivityHistory = async (req, res) => {
     try {
-        const result = await petCareService.checkAbandonment(req.params.id, req.user._id);
+        const { petId } = req.params;
+        const { limit } = req.query;
+        const userId = req.user._id;
+        const result = await petService.getPetActivityHistory(petId, userId, parseInt(limit) || 10);
         res.json(result);
     } catch (error) {
-        console.error('checkAbandonment - Error:', error);
         if (error.status === 403) return res.status(403).json({ error: error.message });
-        res.status(400).json({ error: error.message });
-    }
-};
-
-export const getCareStats = async (req, res) => {
-    try {
-        const result = await petCareService.getCareStats(req.user._id);
-        res.json(result);
-    } catch (error) {
-        console.error('getCareStats - Error:', error);
+        if (error.status === 404) return res.status(404).json({ error: error.message });
         res.status(500).json({ error: error.message });
     }
 }; 

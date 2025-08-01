@@ -3,7 +3,6 @@ import HeroRepository from '../repositories/heroRepository.js';
 import { ValidationError, NotFoundError, AuthorizationError } from '../utils/errors.js';
 import { validateObjectId, validateRequiredFields, validateStringLength } from '../utils/validations.js';
 
-// Función auxiliar para simplificar la mascota (incluyendo estadísticas)
 function toBasicPet(pet) {
     if (!pet) return null;
     return {
@@ -11,19 +10,31 @@ function toBasicPet(pet) {
         id_corto: pet._id ? pet._id.toString().substring(0, 8) : undefined,
         name: pet.name,
         type: pet.type,
+        petType: pet.petType,
         superPower: pet.superPower,
-        status: pet.status,
-        // Incluir estadísticas
+        status: pet.getLifeStatus(),
+        // Stats en tiempo real
         health: pet.health,
         happiness: pet.happiness,
+        sleep: pet.sleep,
+        hunger: pet.hunger,
+        cleanliness: pet.cleanliness,
         energy: pet.energy,
+        mood: pet.mood,
+        isSleeping: pet.isSleeping,
+        isSick: pet.isSick,
+        sickness: pet.sickness,
         lastCare: pet.lastCare,
         adoptedBy: pet.adoptedBy && typeof pet.adoptedBy === 'object' ? {
             _id: pet.adoptedBy._id || pet.adoptedBy,
             name: pet.adoptedBy.name,
             alias: pet.adoptedBy.alias
         } : pet.adoptedBy,
-        customization: pet.customization || { free: [], paid: [] }
+        customization: pet.customization || { free: [], paid: [] },
+        avatar: pet.avatar,
+        glowColor: pet.glowColor,
+        color: pet.color,
+        personality: pet.personality
     };
 }
 
@@ -35,18 +46,8 @@ class PetService {
 
     async createPet(petData, userId) {
         try {
-            // Validar campos requeridos básicos
-            if (!petData.name || petData.name.trim().length === 0) {
-                throw new Error('El nombre es requerido');
-            }
-            if (!petData.type || petData.type.trim().length === 0) {
-                throw new Error('El tipo es requerido');
-            }
-
-            // Validar que el usuario existe
-            if (!userId) {
-                throw new Error('ID de usuario requerido');
-            }
+            validateRequiredFields(petData, ['name', 'type']);
+            validateStringLength(petData.name, 1, 50, 'Nombre de mascota');
 
             const pet = await this.petRepository.createPet({
                 name: petData.name,
@@ -54,15 +55,24 @@ class PetService {
                 petType: petData.petType || petData.type,
                 superPower: petData.superPower || 'Amor incondicional',
                 color: petData.color || '#FFD700',
-                personality: petData.personality || 'neutral',
+                personality: petData.personality || 'normal',
                 accessories: petData.accessories || [],
                 owner: userId,
+                // Inicializar stats como en la imagen
                 health: 100,
                 happiness: 100,
+                sleep: 100,
+                hunger: 0,
+                cleanliness: 100,
                 energy: 100,
-                lastCare: new Date()
+                mood: 'happy',
+                isSleeping: false,
+                isSick: false,
+                status: 'viva',
+                lastCare: new Date(),
+                avatar: petData.avatar || '/assets/pet-default.png',
+                glowColor: petData.glowColor || '#FF69B4'
             });
-
             return pet;
         } catch (error) {
             throw new Error(`Error al crear mascota: ${error.message}`);
@@ -71,7 +81,6 @@ class PetService {
 
     async getAllPets(userId) {
         try {
-            // Si no se pasa userId, devuelve todas las mascotas
             let pets;
             if (!userId) {
                 pets = await this.petRepository.getPets();
@@ -79,8 +88,15 @@ class PetService {
                 validateObjectId(userId, 'ID de usuario');
                 pets = await this.petRepository.getPets({ owner: userId });
             }
-            // Solo datos básicos y customización
-            return pets.map(toBasicPet);
+            
+            // Actualizar estadísticas en tiempo real para cada mascota
+            const updatedPets = await Promise.all(pets.map(async (pet) => {
+                pet.updateStats();
+                await pet.save();
+                return pet;
+            }));
+            
+            return updatedPets.map(toBasicPet);
         } catch (error) {
             if (error instanceof ValidationError) {
                 throw error;
@@ -104,6 +120,10 @@ class PetService {
                 throw new AuthorizationError('No tienes permiso para ver esta mascota');
             }
 
+            // Actualizar estadísticas en tiempo real
+            pet.updateStats();
+            await pet.save();
+
             return pet;
         } catch (error) {
             if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
@@ -113,42 +133,7 @@ class PetService {
         }
     }
 
-    async updatePet(petId, updateData, userId) {
-        try {
-            validateObjectId(petId, 'ID de mascota');
-            validateObjectId(userId, 'ID de usuario');
-
-            // Validar campos si se proporcionan
-            if (updateData.name) {
-                validateStringLength(updateData.name, 1, 50, 'Nombre');
-            }
-            if (updateData.type) {
-                validateStringLength(updateData.type, 1, 30, 'Tipo');
-            }
-            if (updateData.superPower) {
-                validateStringLength(updateData.superPower, 1, 100, 'Superpoder');
-            }
-
-            const pet = await this.petRepository.getPetById(petId);
-
-            if (!pet) {
-                throw new NotFoundError('Mascota no encontrada');
-            }
-
-            if (pet.owner.toString() !== userId.toString()) {
-                throw new AuthorizationError('No tienes permiso para modificar esta mascota');
-            }
-
-            return await this.petRepository.updatePet(petId, updateData);
-        } catch (error) {
-            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
-                throw error;
-            }
-            throw new Error(`Error al actualizar mascota: ${error.message}`);
-        }
-    }
-
-    async deletePet(petId, userId) {
+    async getPetStats(petId, userId) {
         try {
             validateObjectId(petId, 'ID de mascota');
             validateObjectId(userId, 'ID de usuario');
@@ -160,101 +145,365 @@ class PetService {
             }
 
             if (pet.owner.toString() !== userId.toString()) {
-                throw new AuthorizationError('No tienes permiso para eliminar esta mascota');
+                throw new AuthorizationError('No tienes permiso para ver esta mascota');
             }
 
-            return await this.petRepository.deletePet(petId);
+            // Actualizar estadísticas en tiempo real
+            pet.updateStats();
+            await pet.save();
+
+            return pet.getBasicStats();
         } catch (error) {
             if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
                 throw error;
             }
-            throw new Error(`Error al eliminar mascota: ${error.message}`);
+            throw new Error(`Error al obtener estadísticas de mascota: ${error.message}`);
         }
     }
 
-    async adoptPet(petId, heroId, reason, notes, userId) {
+    async feedPet(petId, userId, foodType = 'regular') {
         try {
             validateObjectId(petId, 'ID de mascota');
-            validateObjectId(heroId, 'ID de héroe');
             validateObjectId(userId, 'ID de usuario');
 
-            if (reason) {
-                validateStringLength(reason, 10, 'Motivo de adopción');
-            }
-            if (notes) {
-                validateStringLength(notes, 1, 'Notas');
-            }
-
             const pet = await this.petRepository.getPetById(petId);
+
             if (!pet) {
                 throw new NotFoundError('Mascota no encontrada');
             }
 
             if (pet.owner.toString() !== userId.toString()) {
-                throw new AuthorizationError('No tienes permiso para adoptar esta mascota');
+                throw new AuthorizationError('No tienes permiso para alimentar esta mascota');
             }
 
-            const hero = await this.heroRepository.getHeroById(heroId);
-            if (!hero) {
-                throw new NotFoundError('Héroe no encontrado');
+            if (pet.status === 'dead') {
+                throw new Error('No puedes alimentar una mascota muerta');
             }
 
-            if (hero.owner.toString() !== userId.toString()) {
-                throw new AuthorizationError('No tienes permiso para usar este héroe');
+            const success = pet.feed(foodType);
+            if (!success) {
+                throw new Error('No se pudo alimentar la mascota');
             }
 
-            return await this.petRepository.adoptPet(petId, heroId, reason, notes);
+            await pet.save();
+            return pet.getBasicStats();
         } catch (error) {
             if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
                 throw error;
             }
-            throw new Error(`Error al adoptar mascota: ${error.message}`);
+            throw new Error(`Error al alimentar mascota: ${error.message}`);
         }
     }
 
-    async returnPet(petId, notes, userId) {
+    async waterPet(petId, userId, waterType = 'regular') {
         try {
             validateObjectId(petId, 'ID de mascota');
             validateObjectId(userId, 'ID de usuario');
 
-            if (notes) {
-                validateStringLength(notes, 1, 'Notas');
-            }
-
             const pet = await this.petRepository.getPetById(petId);
+
             if (!pet) {
                 throw new NotFoundError('Mascota no encontrada');
             }
 
             if (pet.owner.toString() !== userId.toString()) {
-                throw new AuthorizationError('No tienes permiso para devolver esta mascota');
+                throw new AuthorizationError('No tienes permiso para dar agua a esta mascota');
             }
 
-            return await this.petRepository.returnPet(petId, notes);
+            if (pet.status === 'dead') {
+                throw new Error('No puedes dar agua a una mascota muerta');
+            }
+
+            const success = pet.water(waterType);
+            if (!success) {
+                throw new Error('No se pudo dar agua a la mascota');
+            }
+
+            await pet.save();
+            return pet.getBasicStats();
         } catch (error) {
             if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
                 throw error;
             }
-            throw new Error(`Error al devolver mascota: ${error.message}`);
+            throw new Error(`Error al dar agua a la mascota: ${error.message}`);
         }
     }
 
-    // Mascotas adoptadas por héroes del usuario autenticado
-    async getAdoptedPetsByUser(userId) {
+    async playWithPet(petId, userId) {
         try {
+            validateObjectId(petId, 'ID de mascota');
             validateObjectId(userId, 'ID de usuario');
-            // Buscar héroes del usuario
-            const heroes = await this.heroRepository.getHeroes({ owner: userId });
-            const heroIds = heroes.map(h => h._id.toString());
-            if (heroIds.length === 0) return [];
-            // Buscar mascotas adoptadas por esos héroes
-            const pets = await this.petRepository.getPets({ adoptedBy: { $in: heroIds } });
-            return pets.map(toBasicPet);
+
+            const pet = await this.petRepository.getPetById(petId);
+
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para jugar con esta mascota');
+            }
+
+            if (pet.status === 'dead') {
+                throw new Error('No puedes jugar con una mascota muerta');
+            }
+
+            if (pet.energy < 15) {
+                throw new Error('La mascota está muy cansada para jugar');
+            }
+
+            const success = pet.play();
+            if (!success) {
+                throw new Error('No se pudo jugar con la mascota');
+            }
+
+            await pet.save();
+            return pet.getBasicStats();
         } catch (error) {
-            if (error instanceof ValidationError) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
                 throw error;
             }
-            throw new Error(`Error al obtener mascotas adoptadas: ${error.message}`);
+            throw new Error(`Error al jugar con la mascota: ${error.message}`);
+        }
+    }
+
+    async walkPet(petId, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
+
+            const pet = await this.petRepository.getPetById(petId);
+
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para pasear esta mascota');
+            }
+
+            if (pet.status === 'dead') {
+                throw new Error('No puedes pasear una mascota muerta');
+            }
+
+            if (pet.energy < 20) {
+                throw new Error('La mascota está muy cansada para pasear');
+            }
+
+            const success = pet.walk();
+            if (!success) {
+                throw new Error('No se pudo pasear la mascota');
+            }
+
+            await pet.save();
+            return pet.getBasicStats();
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al pasear la mascota: ${error.message}`);
+        }
+    }
+
+    async bathePet(petId, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
+
+            const pet = await this.petRepository.getPetById(petId);
+
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para bañar esta mascota');
+            }
+
+            if (pet.status === 'dead') {
+                throw new Error('No puedes bañar una mascota muerta');
+            }
+
+            const success = pet.bathe();
+            if (!success) {
+                throw new Error('No se pudo bañar la mascota');
+            }
+
+            await pet.save();
+            return pet.getBasicStats();
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al bañar la mascota: ${error.message}`);
+        }
+    }
+
+    async sleepPet(petId, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
+
+            const pet = await this.petRepository.getPetById(petId);
+
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para hacer dormir esta mascota');
+            }
+
+            if (pet.status === 'dead') {
+                throw new Error('No puedes hacer dormir una mascota muerta');
+            }
+
+            if (pet.isSleeping) {
+                throw new Error('La mascota ya está durmiendo');
+            }
+
+            const success = pet.sleep();
+            if (!success) {
+                throw new Error('No se pudo hacer dormir la mascota');
+            }
+
+            await pet.save();
+            return pet.getBasicStats();
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al hacer dormir la mascota: ${error.message}`);
+        }
+    }
+
+    async wakePet(petId, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
+
+            const pet = await this.petRepository.getPetById(petId);
+
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para despertar esta mascota');
+            }
+
+            if (pet.status === 'dead') {
+                throw new Error('No puedes despertar una mascota muerta');
+            }
+
+            if (!pet.isSleeping) {
+                throw new Error('La mascota no está durmiendo');
+            }
+
+            const success = pet.wake();
+            if (!success) {
+                throw new Error('No se pudo despertar la mascota');
+            }
+
+            await pet.save();
+            return pet.getBasicStats();
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al despertar la mascota: ${error.message}`);
+        }
+    }
+
+    async petPet(petId, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
+
+            const pet = await this.petRepository.getPetById(petId);
+
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para acariciar esta mascota');
+            }
+
+            if (pet.status === 'dead') {
+                throw new Error('No puedes acariciar una mascota muerta');
+            }
+
+            const success = pet.pet();
+            if (!success) {
+                throw new Error('No se pudo acariciar la mascota');
+            }
+
+            await pet.save();
+            return pet.getBasicStats();
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al acariciar la mascota: ${error.message}`);
+        }
+    }
+
+    async healPet(petId, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
+
+            const pet = await this.petRepository.getPetById(petId);
+
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para curar esta mascota');
+            }
+
+            if (pet.status === 'dead') {
+                throw new Error('No puedes curar una mascota muerta');
+            }
+
+            const success = pet.heal();
+            if (!success) {
+                throw new Error('No se pudo curar la mascota');
+            }
+
+            await pet.save();
+            return pet.getBasicStats();
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al curar la mascota: ${error.message}`);
+        }
+    }
+
+    async getPetActivityHistory(petId, userId, limit = 10) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
+
+            const pet = await this.petRepository.getPetById(petId);
+
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permiso para ver el historial de esta mascota');
+            }
+
+            return pet.activityHistory.slice(-limit).reverse();
+        } catch (error) {
+            if (error instanceof ValidationError || error instanceof NotFoundError || error instanceof AuthorizationError) {
+                throw error;
+            }
+            throw new Error(`Error al obtener historial de mascota: ${error.message}`);
         }
     }
 }

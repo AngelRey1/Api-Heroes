@@ -38,6 +38,7 @@ import secretAchievementRoutes from './src/routes/secretAchievementRoutes.js';
 import secretAchievementService from './src/services/secretAchievementService.js';
 import statisticsRoutes from './src/routes/statisticsRoutes.js';
 import customizationRoutes from './src/routes/customizationRoutes.js';
+import AutoUpdateService from './src/services/autoUpdateService.js';
 
 // Middleware de seguridad y manejo de errores
 import { errorHandler } from './src/middleware/errorHandler.js';
@@ -46,6 +47,9 @@ import { generalLimiter, authLimiter, createLimiter, petCareLimiter } from './sr
 const app = express();
 const server = http.createServer(app);
 
+// Inicializar servicios
+const autoUpdateService = new AutoUpdateService();
+
 // Inicializar Socket.IO
 const io = socketManager.initializeSocket(server);
 
@@ -53,9 +57,17 @@ const io = socketManager.initializeSocket(server);
 const corsOptions = {
   origin: process.env.ALLOWED_ORIGINS ? 
     process.env.ALLOWED_ORIGINS.split(',') : 
-    ['http://localhost:3000', 'http://localhost:3001', 'https://tu-app.onrender.com'],
+    [
+      'http://localhost:3000', 
+      'http://localhost:3001', 
+      'https://api-heroes-frontend.onrender.com',
+      'https://mascota-visual.onrender.com',
+      'https://api-heroes-gh4i.onrender.com'
+    ],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 };
 app.use(cors(corsOptions));
 
@@ -157,6 +169,10 @@ minigameService.initializeMinigames().then(() => {
 }).catch(err => {
   console.error('[APP] ❌ Error inicializando minijuegos:', err);
 });
+
+// Iniciar servicio de actualización automática de mascotas
+autoUpdateService.start();
+console.log('[APP] ✅ Servicio de actualización automática de mascotas iniciado');
 
 // Cron job: cada hora degrada stats de todas las mascotas
 cron.schedule('0 * * * *', async () => {
