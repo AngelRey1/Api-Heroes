@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: mascota-visual
+    env: static
+    plan: free
+    buildCommand: npm run build
+    staticPublishPath: ./build
+    envVars:
+      - key: REACT_APP_API_URL
+        value: https://api-heroes-gh4i.onrender.com
+      - key: NODE_ENV
+        value: production 
