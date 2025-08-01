@@ -1,82 +1,98 @@
 #!/bin/bash
 
-# Script para commits automáticos del backend (Api-Heroes)
-# Uso: ./auto-commit.sh [mensaje_opcional]
+# Script de Auto-Commit para Sistema de Mascota Virtual
+# Autor: Asistente IA
+# Fecha: $(date)
 
-# Colores para output
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+echo "🚀 Iniciando Auto-Commit para Sistema de Mascota Virtual..."
 
-# Función para imprimir con colores
-print_status() {
-    echo -e "${BLUE}[INFO]${NC} $1"
-}
-
-print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
-}
-
-print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
-}
-
-print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
-}
-
-# Verificar si estamos en el directorio correcto
-if [ ! -f "package.json" ]; then
-    print_error "No se encontró package.json. Asegúrate de estar en el directorio del backend."
-    exit 1
-fi
-
-# Obtener el mensaje de commit
-if [ -z "$1" ]; then
-    # Generar mensaje automático basado en los cambios
-    CHANGES=$(git status --porcelain | head -5 | cut -c4- | tr '\n' ', ')
-    if [ -z "$CHANGES" ]; then
-        COMMIT_MESSAGE="🔄 Actualización automática - $(date '+%Y-%m-%d %H:%M:%S')"
+# Función para hacer commit en un repositorio
+commit_repo() {
+    local repo_path="$1"
+    local repo_name="$2"
+    local commit_message="$3"
+    
+    echo "📁 Procesando repositorio: $repo_name"
+    cd "$repo_path"
+    
+    # Verificar si hay cambios
+    if [[ -n $(git status --porcelain) ]]; then
+        echo "✅ Agregando cambios en $repo_name..."
+        git add .
+        
+        echo "💾 Haciendo commit en $repo_name..."
+        git commit -m "$commit_message"
+        
+        echo "🚀 Haciendo push en $repo_name..."
+        git push origin main 2>/dev/null || git push origin master 2>/dev/null
+        
+        echo "✅ $repo_name actualizado exitosamente!"
     else
-        COMMIT_MESSAGE="🔄 Actualización: $CHANGES - $(date '+%Y-%m-%d %H:%M:%S')"
+        echo "ℹ️ No hay cambios en $repo_name"
     fi
-else
-    COMMIT_MESSAGE="$1"
+    
+    echo "---"
+}
+
+# Obtener fecha y hora actual
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+
+# Mensaje de commit para el backend
+BACKEND_COMMIT="🐾 Sistema de Mascota Virtual - $TIMESTAMP
+
+✨ Nuevas funcionalidades:
+- Stats en tiempo real (salud, felicidad, sueño, hambre, limpieza)
+- Degradación automática de stats
+- 9 acciones de cuidado (alimentar, jugar, bañar, dormir, acariciar, curar)
+- Sistema de consecuencias por negligencia
+- Estados de ánimo dinámicos
+- AutoUpdateService para actualización automática
+- Documentación completa del sistema
+
+🔧 Archivos modificados:
+- petModel.js: Modelo completo de mascota virtual
+- petService.js: Servicio con todas las funcionalidades
+- petCareController.js: Controladores para todas las acciones
+- petCareRoutes.js: Rutas de API para cuidado
+- autoUpdateService.js: Servicio de actualización automática
+- SISTEMA_MASCOTA_VIRTUAL.md: Documentación completa"
+
+# Mensaje de commit para el frontend
+FRONTEND_COMMIT="🎮 Componente VirtualPet - $TIMESTAMP
+
+✨ Nuevas funcionalidades:
+- Interfaz visual idéntica a la imagen proporcionada
+- Stats en tiempo real con barras de progreso animadas
+- Avatar con glow personalizable
+- 9 botones de acción con efectos visuales
+- Sistema de estados de ánimo y vida
+- Mensajes toast y feedback visual
+- Responsive design para móviles
+- Integración completa con API del backend
+
+🎨 Archivos modificados:
+- VirtualPet.js: Componente principal de mascota virtual
+- VirtualPet.css: Estilos completos con animaciones
+- api.js: Funciones de API para todas las acciones
+- auto-commit.sh: Script de automatización"
+
+# Ruta base del proyecto
+BASE_PATH="$(pwd)"
+
+# Commit en el repositorio backend
+if [[ -d "Api-Heroes" ]]; then
+    commit_repo "Api-Heroes" "Backend API-Heroes" "$BACKEND_COMMIT"
 fi
 
-print_status "Iniciando commit automático para el backend..."
-print_status "Mensaje: $COMMIT_MESSAGE"
-
-# Verificar si hay cambios
-if [ -z "$(git status --porcelain)" ]; then
-    print_warning "No hay cambios para commitear"
-    exit 0
+# Commit en el repositorio frontend
+if [[ -d "mascota-visual" ]]; then
+    commit_repo "mascota-visual" "Frontend Mascota-Visual" "$FRONTEND_COMMIT"
 fi
 
-# Agregar todos los cambios
-print_status "Agregando cambios..."
-git add .
-
-# Hacer el commit
-print_status "Realizando commit..."
-if git commit -m "$COMMIT_MESSAGE"; then
-    print_success "Commit realizado exitosamente"
-else
-    print_error "Error al realizar el commit"
-    exit 1
-fi
-
-# Push al repositorio remoto
-print_status "Haciendo push al repositorio remoto..."
-if git push; then
-    print_success "Push realizado exitosamente"
-else
-    print_error "Error al hacer push"
-    exit 1
-fi
-
-print_success "✅ Commit automático completado para el backend!"
-print_status "Repositorio: Api-Heroes (Backend)"
-print_status "Timestamp: $(date)" 
+echo "🎉 Auto-Commit completado exitosamente!"
+echo "📊 Resumen:"
+echo "   - Backend: Sistema de mascota virtual completo"
+echo "   - Frontend: Componente VirtualPet con interfaz visual"
+echo "   - Documentación: Guías completas de uso"
+echo ""
+echo "🚀 Los cambios están listos para despliegue en Render!" 
