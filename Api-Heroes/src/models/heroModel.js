@@ -5,6 +5,7 @@ const heroSchema = new mongoose.Schema({
     alias: { type: String, required: true, description: 'Nombre de superhéroe o alias' },
     city: { type: String, description: 'Ciudad donde opera el héroe' },
     team: { type: String, description: 'Equipo o grupo al que pertenece' },
+    superPower: { type: String, description: 'Poder especial del héroe' },
     type: { type: String, description: 'Tipo de héroe (Guerrero, Mago, etc.)' },
     personality: { type: String, description: 'Personalidad del héroe' },
     accessories: [{ type: String, description: 'Accesorios del héroe' }],

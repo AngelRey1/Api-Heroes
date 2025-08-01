@@ -34,7 +34,7 @@ export const addHero = async (req, res) => {
             });
         }
 
-        const { name, alias, city, team, type, color, personality, accessories, avatar } = req.body;
+        const { name, alias, city, team, superPower, type, color, personality, accessories, avatar } = req.body;
         
         // Validación adicional en el controlador
         if (!name || !alias) {
@@ -52,6 +52,7 @@ export const addHero = async (req, res) => {
             alias: alias.trim(), 
             city: city ? city.trim() : undefined, 
             team: team ? team.trim() : undefined, 
+            superPower: superPower ? superPower.trim() : undefined, 
             type: type ? type.trim() : undefined, 
             color: color || '#3498db', 
             personality: personality ? personality.trim() : undefined, 
@@ -120,7 +121,7 @@ export const updateHero = async (req, res) => {
             });
         }
         
-        const { name, alias, city, team, avatar, color } = req.body;
+        const { name, alias, city, team, superPower, avatar, color } = req.body;
         
         // Limpiar y validar datos
         const updateData = {};
@@ -128,6 +129,7 @@ export const updateHero = async (req, res) => {
         if (alias) updateData.alias = alias.trim();
         if (city) updateData.city = city.trim();
         if (team) updateData.team = team.trim();
+        if (superPower) updateData.superPower = superPower.trim();
         if (avatar) updateData.avatar = avatar.trim();
         if (color) updateData.color = color;
         
