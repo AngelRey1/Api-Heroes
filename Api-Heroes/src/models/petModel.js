@@ -35,13 +35,13 @@ const petSchema = new mongoose.Schema({
     lastHealed: { type: Date, default: Date.now, description: 'Última vez que fue curada' },
     
     // Configuración de degradación en tiempo real
-    hungerRate: { type: Number, default: 3, description: 'Puntos de hambre que gana por hora' },
-    thirstRate: { type: Number, default: 4, description: 'Puntos de sed que gana por hora' },
-    energyDecayRate: { type: Number, default: 2, description: 'Puntos de energía que pierde por hora' },
-    happinessDecayRate: { type: Number, default: 1, description: 'Puntos de felicidad que pierde por hora' },
-    cleanlinessDecayRate: { type: Number, default: 1.5, description: 'Puntos de limpieza que pierde por hora' },
-    sleepDecayRate: { type: Number, default: 2, description: 'Puntos de sueño que pierde por hora' },
-    healthDecayRate: { type: Number, default: 0.5, description: 'Puntos de salud que pierde por hora cuando está mal cuidada' },
+    hungerRate: { type: Number, default: 5, description: 'Puntos de hambre que gana por hora' },
+    thirstRate: { type: Number, default: 3, description: 'Puntos de sed que gana por hora' },
+    energyDecayRate: { type: Number, default: 3, description: 'Puntos de energía que pierde por hora' },
+    happinessDecayRate: { type: Number, default: 2, description: 'Puntos de felicidad que pierde por hora' },
+    cleanlinessDecayRate: { type: Number, default: 2.5, description: 'Puntos de limpieza que pierde por hora' },
+    sleepDecayRate: { type: Number, default: 4, description: 'Puntos de sueño que pierde por hora' },
+    healthDecayRate: { type: Number, default: 1, description: 'Puntos de salud que pierde por hora cuando está mal cuidada' },
     
     // Estado de sueño
     isSleeping: { type: Boolean, default: false, description: 'Si la mascota está durmiendo' },
@@ -94,7 +94,7 @@ const petSchema = new mongoose.Schema({
     forma: { type: String, default: 'normal', description: 'Forma visual de la mascota' },
     
     // Avatar y apariencia
-    avatar: { type: String, default: '/assets/pet-default.png', description: 'URL del avatar de la mascota' },
+    avatar: { type: String, default: '', description: 'URL del avatar de la mascota' },
     glowColor: { type: String, default: '#FF69B4', description: 'Color del glow alrededor del avatar' }
 });
 

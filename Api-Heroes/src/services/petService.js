@@ -70,7 +70,7 @@ class PetService {
                 isSick: false,
                 status: 'viva',
                 lastCare: new Date(),
-                avatar: petData.avatar || '/assets/pet-default.png',
+                avatar: petData.avatar || '',
                 glowColor: petData.glowColor || '#FF69B4'
             });
             return pet;
