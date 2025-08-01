@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useUser } from '../context/UserContext';
 import { useSoundEffects } from '../components/SoundEffects';
 import NotificationToast from '../components/NotificationToast';
+import VirtualPet from '../components/VirtualPet';
 import './Home.css';
 
 const Home = () => {
@@ -61,7 +62,7 @@ const Home = () => {
     try {
       console.log(`${actionName} mascota:`, activePet._id);
       
-      const response = await fetch(`http://localhost:3001/api/pet-care/${activePet._id}/${action}`, {
+      const response = await fetch(`https://api-heroes-gh4i.onrender.com/api/pet-care/${activePet._id}/${action}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -178,89 +179,12 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Panel principal de la mascota */}
-        <div className="pet-main-panel">
-          {/* Mascota central */}
-          <div className="pet-display">
-            <div className="pet-avatar">
-              {activePet?.type === 'dog' ? '🐕' : 
-               activePet?.type === 'cat' ? '🐱' : 
-               activePet?.type === 'rabbit' ? '🐰' : 
-               activePet?.type === 'bird' ? '🐦' : 
-               activePet?.type === 'hamster' ? '🐹' : 
-               activePet?.type === 'turtle' ? '🐢' : '🐾'}
-            </div>
-            <h3 className="pet-name">{activePet?.name || 'Sin mascota'}</h3>
-            <p className="pet-type">Tipo: {activePet?.type || 'N/A'}</p>
-            <p className="pet-power">Poder: {activePet?.superPower || 'N/A'}</p>
-            <div className="pet-status">
-              <span className="status-dot"></span>
-              <span className="status-text">Viva</span>
-            </div>
-          </div>
-
-          {/* Estadísticas de la mascota */}
-          <div className="pet-stats-panel">
-            <div className="stat-bar">
-              <span className="stat-icon">❤️</span>
-              <span className="stat-label">Salud:</span>
-              <div className="stat-progress">
-                <div className="stat-fill health-fill" style={{ width: `${activePet?.health || 0}%` }}></div>
-              </div>
-              <span className="stat-value">{activePet?.health || 0}%</span>
-            </div>
-            
-            <div className="stat-bar">
-              <span className="stat-icon">😊</span>
-              <span className="stat-label">Felicidad:</span>
-              <div className="stat-progress">
-                <div className="stat-fill happiness-fill" style={{ width: `${activePet?.happiness || 0}%` }}></div>
-              </div>
-              <span className="stat-value">{activePet?.happiness || 0}%</span>
-            </div>
-            
-            <div className="stat-bar">
-              <span className="stat-icon">⚡</span>
-              <span className="stat-label">Energía:</span>
-              <div className="stat-progress">
-                <div className="stat-fill energy-fill" style={{ width: `${activePet?.energy || 0}%` }}></div>
-              </div>
-              <span className="stat-value">{activePet?.energy || 0}%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Botones de cuidado */}
-        <div className="care-actions">
-          <div className="care-row">
-            <button className="care-btn" onClick={handleDormir}>
-              <span className="care-icon">😴</span>
-              <span className="care-text">Dormir</span>
-            </button>
-            <button className="care-btn" onClick={handleJugar}>
-              <span className="care-icon">✨</span>
-              <span className="care-text">Jugar</span>
-            </button>
-            <button className="care-btn" onClick={handleAlimentar}>
-              <span className="care-icon">🍎</span>
-              <span className="care-text">Alimentar</span>
-            </button>
-          </div>
-          <div className="care-row">
-            <button className="care-btn" onClick={handleLimpiar}>
-              <span className="care-icon">🛁</span>
-              <span className="care-text">Bañar</span>
-            </button>
-            <button className="care-btn" onClick={handleCurar}>
-              <span className="care-icon">🏥</span>
-              <span className="care-text">Curar</span>
-            </button>
-            <button className="care-btn">
-              <span className="care-icon">🤚</span>
-              <span className="care-text">Acariciar</span>
-            </button>
-          </div>
-        </div>
+        {/* Componente VirtualPet */}
+        <VirtualPet 
+          pet={activePet} 
+          token={token} 
+          onUpdate={fetchUserData}
+        />
       </div>
 
       {notification.message && (

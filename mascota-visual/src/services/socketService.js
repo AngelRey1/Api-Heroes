@@ -13,7 +13,7 @@ class SocketService {
       return;
     }
 
-    this.socket = io(process.env.REACT_APP_API_URL || 'http://localhost:3001', {
+    this.socket = io(process.env.REACT_APP_API_URL || 'https://api-heroes-gh4i.onrender.com', {
       auth: { token },
       transports: ['websocket', 'polling']
     });
