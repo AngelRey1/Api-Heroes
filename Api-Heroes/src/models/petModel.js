@@ -34,14 +34,14 @@ const petSchema = new mongoose.Schema({
     lastPet: { type: Date, default: Date.now, description: 'Última vez que fue acariciada' },
     lastHealed: { type: Date, default: Date.now, description: 'Última vez que fue curada' },
     
-    // Configuración de degradación en tiempo real
-    hungerRate: { type: Number, default: 5, description: 'Puntos de hambre que gana por hora' },
-    thirstRate: { type: Number, default: 3, description: 'Puntos de sed que gana por hora' },
-    energyDecayRate: { type: Number, default: 3, description: 'Puntos de energía que pierde por hora' },
-    happinessDecayRate: { type: Number, default: 2, description: 'Puntos de felicidad que pierde por hora' },
-    cleanlinessDecayRate: { type: Number, default: 2.5, description: 'Puntos de limpieza que pierde por hora' },
-    sleepDecayRate: { type: Number, default: 4, description: 'Puntos de sueño que pierde por hora' },
-    healthDecayRate: { type: Number, default: 1, description: 'Puntos de salud que pierde por hora cuando está mal cuidada' },
+    // Configuración de degradación en tiempo real (por minuto)
+    hungerRate: { type: Number, default: 0.5, description: 'Puntos de hambre que gana por minuto' },
+    thirstRate: { type: Number, default: 0.3, description: 'Puntos de sed que gana por minuto' },
+    energyDecayRate: { type: Number, default: 0.3, description: 'Puntos de energía que pierde por minuto' },
+    happinessDecayRate: { type: Number, default: 0.2, description: 'Puntos de felicidad que pierde por minuto' },
+    cleanlinessDecayRate: { type: Number, default: 0.25, description: 'Puntos de limpieza que pierde por minuto' },
+    sleepDecayRate: { type: Number, default: 0.4, description: 'Puntos de sueño que gana por minuto' },
+    healthDecayRate: { type: Number, default: 0.1, description: 'Puntos de salud que pierde por minuto cuando está mal cuidada' },
     
     // Estado de sueño
     isSleeping: { type: Boolean, default: false, description: 'Si la mascota está durmiendo' },
@@ -102,40 +102,61 @@ const petSchema = new mongoose.Schema({
 petSchema.methods.updateStats = function() {
     const now = new Date();
     
-    // Calcular tiempo transcurrido desde el último cuidado (en horas)
-    const hoursSinceFed = (now - this.lastFed) / (1000 * 60 * 60);
-    const hoursSinceWatered = (now - this.lastWatered) / (1000 * 60 * 60);
-    const hoursSincePlayed = (now - this.lastPlayed) / (1000 * 60 * 60);
-    const hoursSinceWalked = (now - this.lastWalked) / (1000 * 60 * 60);
-    const hoursSinceBathed = (now - this.lastBathed) / (1000 * 60 * 60);
-    const hoursSinceSlept = (now - this.lastSlept) / (1000 * 60 * 60);
-    const hoursSincePet = (now - this.lastPet) / (1000 * 60 * 60);
+    // Calcular tiempo transcurrido desde el último cuidado (en minutos)
+    const minutesSinceFed = (now - this.lastFed) / (1000 * 60);
+    const minutesSinceWatered = (now - this.lastWatered) / (1000 * 60);
+    const minutesSincePlayed = (now - this.lastPlayed) / (1000 * 60);
+    const minutesSinceWalked = (now - this.lastWalked) / (1000 * 60);
+    const minutesSinceBathed = (now - this.lastBathed) / (1000 * 60);
+    const minutesSinceSlept = (now - this.lastSlept) / (1000 * 60);
+    const minutesSincePet = (now - this.lastPet) / (1000 * 60);
     
     // Degradación de hambre (aumenta con el tiempo)
-    this.hunger = Math.min(100, this.hunger + (hoursSinceFed * this.hungerRate));
+    this.hunger = Math.min(100, this.hunger + (minutesSinceFed * this.hungerRate));
     
     // Degradación de energía (disminuye con el tiempo)
-    this.energy = Math.max(0, this.energy - (hoursSinceFed * this.energyDecayRate));
+    this.energy = Math.max(0, this.energy - (minutesSinceFed * this.energyDecayRate));
     
     // Degradación de felicidad (disminuye con el tiempo)
-    this.happiness = Math.max(0, this.happiness - (hoursSinceFed * this.happinessDecayRate));
+    this.happiness = Math.max(0, this.happiness - (minutesSinceFed * this.happinessDecayRate));
     
     // Degradación de limpieza (disminuye con el tiempo)
-    this.cleanliness = Math.max(0, this.cleanliness - (hoursSinceFed * this.cleanlinessDecayRate));
+    this.cleanliness = Math.max(0, this.cleanliness - (minutesSinceFed * this.cleanlinessDecayRate));
     
     // Degradación de sueño (aumenta con el tiempo)
-    this.sleep = Math.min(100, this.sleep + (hoursSinceFed * this.sleepDecayRate));
+    this.sleep = Math.min(100, this.sleep + (minutesSinceFed * this.sleepDecayRate));
     
     // Si está durmiendo, recuperar energía y reducir sueño
     if (this.isSleeping) {
-        const sleepHours = (now - this.sleepStartTime) / (1000 * 60 * 60);
-        this.energy = Math.min(100, this.energy + (sleepHours * 8)); // Recupera más energía
-        this.sleep = Math.max(0, this.sleep - (sleepHours * 10)); // Reduce sueño más rápido
+        const sleepMinutes = (now - this.sleepStartTime) / (1000 * 60);
+        this.energy = Math.min(100, this.energy + (sleepMinutes * 0.8)); // Recupera energía por minuto
+        this.sleep = Math.max(0, this.sleep - (sleepMinutes * 1.0)); // Reduce sueño por minuto
     }
     
     // Consecuencias por negligencia
     if (this.hunger > 80 || this.cleanliness < 20 || this.happiness < 20) {
-        this.health = Math.max(0, this.health - (hoursSinceFed * this.healthDecayRate));
+        this.health = Math.max(0, this.health - (minutesSinceFed * this.healthDecayRate));
+    }
+    
+    // Consecuencias por sobrealimentación (hambre muy baja)
+    if (this.hunger < 10) {
+        this.health = Math.max(0, this.health - (minutesSinceFed * this.healthDecayRate * 0.5));
+        if (this.hunger < 5 && !this.isSick) {
+            this.isSick = true;
+            this.sickness = 'Sobrepeso';
+            this.sicknessStartTime = now;
+            this.status = 'enferma';
+        }
+    }
+    
+    // Consecuencias por limpieza excesiva (muy limpia)
+    if (this.cleanliness > 95) {
+        this.happiness = Math.max(0, this.happiness - (minutesSinceFed * this.happinessDecayRate * 0.3));
+    }
+    
+    // Consecuencias por energía excesiva (muy alta energía)
+    if (this.energy > 95) {
+        this.happiness = Math.max(0, this.happiness - (minutesSinceFed * this.happinessDecayRate * 0.2));
     }
     
     // Enfermedades por negligencia
@@ -146,11 +167,55 @@ petSchema.methods.updateStats = function() {
         this.status = 'enferma';
     }
     
+    // Enfermedades por sobrealimentación
+    if (this.hunger < 5 && !this.isSick) {
+        this.isSick = true;
+        this.sickness = 'Sobrepeso';
+        this.sicknessStartTime = now;
+        this.status = 'enferma';
+    }
+    
+    // Enfermedades por limpieza excesiva
+    if (this.cleanliness > 98 && !this.isSick) {
+        this.isSick = true;
+        this.sickness = 'Piel Seca';
+        this.sicknessStartTime = now;
+        this.status = 'enferma';
+    }
+    
+    // Enfermedades por estrés (mucha energía sin gastar)
+    if (this.energy > 95 && this.happiness < 50 && !this.isSick) {
+        this.isSick = true;
+        this.sickness = 'Estrés';
+        this.sicknessStartTime = now;
+        this.status = 'enferma';
+    }
+    
     // Muerte por negligencia extrema
     if (this.health <= 0) {
         this.status = 'dead';
         this.deathDate = now;
         this.isSleeping = false;
+        this.mood = 'dead';
+    }
+    
+    // Muerte por hambre extrema (más de 95)
+    if (this.hunger >= 95) {
+        this.status = 'dead';
+        this.deathDate = now;
+        this.isSleeping = false;
+        this.mood = 'dead';
+    }
+    
+    // Muerte por enfermedad prolongada (más de 24 horas enferma)
+    if (this.isSick && this.sicknessStartTime) {
+        const sickHours = (now - this.sicknessStartTime) / (1000 * 60 * 60);
+        if (sickHours > 24) {
+            this.status = 'dead';
+            this.deathDate = now;
+            this.isSleeping = false;
+            this.mood = 'dead';
+        }
     }
     
     // Actualizar estado de ánimo
@@ -176,18 +241,23 @@ petSchema.methods.updateMood = function() {
         return;
     }
     
-    if (this.hunger > 70) {
+    if (this.hunger > 85) {
         this.mood = 'hungry';
         return;
     }
     
-    if (this.cleanliness < 30) {
+    if (this.cleanliness < 25) {
         this.mood = 'dirty';
         return;
     }
     
-    if (this.energy < 20) {
+    if (this.energy < 15) {
         this.mood = 'tired';
+        return;
+    }
+    
+    if (this.sleep > 80) {
+        this.mood = 'sleepy';
         return;
     }
     
@@ -196,7 +266,7 @@ petSchema.methods.updateMood = function() {
         return;
     }
     
-    if (this.happiness < 30) {
+    if (this.happiness < 25) {
         this.mood = 'sad';
         return;
     }
@@ -206,19 +276,39 @@ petSchema.methods.updateMood = function() {
 
 // Método para alimentar
 petSchema.methods.feed = function(foodType = 'regular') {
-    if (this.status === 'dead') return false;
+    if (this.status === 'dead' || this.mood === 'dead') return false;
     
     const now = new Date();
     this.lastFed = now;
-    this.hunger = Math.max(0, this.hunger - 40); // Reduce más hambre
-    this.happiness = Math.min(100, this.happiness + 15); // Aumenta más felicidad
-    this.health = Math.min(100, this.health + 10); // Aumenta más salud
+    
+    // Calcular cuánto alimentar basado en hambre actual
+    let hungerReduction = 40;
+    let healthIncrease = 10;
+    let happinessIncrease = 15;
+    
+    // Si ya está muy llena, reducir beneficios
+    if (this.hunger < 20) {
+        hungerReduction = 20;
+        healthIncrease = 5;
+        happinessIncrease = 5;
+    }
+    
+    // Si está sobrealimentada, consecuencias negativas
+    if (this.hunger < 10) {
+        hungerReduction = 10;
+        healthIncrease = -5; // Reduce salud
+        happinessIncrease = -10; // Reduce felicidad
+    }
+    
+    this.hunger = Math.max(0, this.hunger - hungerReduction);
+    this.happiness = Math.min(100, Math.max(0, this.happiness + happinessIncrease));
+    this.health = Math.min(100, Math.max(0, this.health + healthIncrease));
     
     this.activityHistory.push({
         action: 'feed',
         date: now,
         food: foodType,
-        effect: `Hambre -40, Felicidad +15, Salud +10`
+        effect: `Hambre -${hungerReduction}, Felicidad ${happinessIncrease > 0 ? '+' : ''}${happinessIncrease}, Salud ${healthIncrease > 0 ? '+' : ''}${healthIncrease}`
     });
     
     this.updateMood();
@@ -227,7 +317,7 @@ petSchema.methods.feed = function(foodType = 'regular') {
 
 // Método para dar agua
 petSchema.methods.water = function(waterType = 'regular') {
-    if (this.status === 'dead') return false;
+    if (this.status === 'dead' || this.mood === 'dead') return false;
     
     const now = new Date();
     this.lastWatered = now;
@@ -247,19 +337,47 @@ petSchema.methods.water = function(waterType = 'regular') {
 
 // Método para jugar
 petSchema.methods.play = function() {
-    if (this.status === 'dead' || this.energy < 10) return false;
+    if (this.status === 'dead' || this.mood === 'dead' || this.energy < 10) return false;
     
     const now = new Date();
     this.lastPlayed = now;
-    this.energy = Math.max(0, this.energy - 20); // Gasta más energía
-    this.happiness = Math.min(100, this.happiness + 25); // Aumenta más felicidad
-    this.hunger = Math.min(100, this.hunger + 15); // Aumenta más hambre
-    this.cleanliness = Math.max(0, this.cleanliness - 10); // Se ensucia más
+    
+    // Calcular efectos basados en energía actual
+    let energyCost = 20;
+    let happinessGain = 25;
+    let hungerGain = 15;
+    let cleanlinessLoss = 10;
+    
+    // Si está muy cansada, jugar es más difícil
+    if (this.energy < 20) {
+        energyCost = 25;
+        happinessGain = 15;
+        hungerGain = 20;
+        cleanlinessLoss = 15;
+    }
+    
+    // Si tiene mucha energía, puede jugar más intensamente
+    if (this.energy > 80) {
+        energyCost = 15;
+        happinessGain = 30;
+        hungerGain = 10;
+        cleanlinessLoss = 8;
+    }
+    
+    // Si está muy sucia, jugar la ensucia más
+    if (this.cleanliness < 30) {
+        cleanlinessLoss += 5;
+    }
+    
+    this.energy = Math.max(0, this.energy - energyCost);
+    this.happiness = Math.min(100, this.happiness + happinessGain);
+    this.hunger = Math.min(100, this.hunger + hungerGain);
+    this.cleanliness = Math.max(0, this.cleanliness - cleanlinessLoss);
     
     this.activityHistory.push({
         action: 'play',
         date: now,
-        effect: `Energía -20, Felicidad +25, Hambre +15, Limpieza -10`
+        effect: `Energía -${energyCost}, Felicidad +${happinessGain}, Hambre +${hungerGain}, Limpieza -${cleanlinessLoss}`
     });
     
     this.updateMood();
@@ -268,7 +386,7 @@ petSchema.methods.play = function() {
 
 // Método para pasear
 petSchema.methods.walk = function() {
-    if (this.status === 'dead' || this.energy < 20) return false;
+    if (this.status === 'dead' || this.mood === 'dead' || this.energy < 20) return false;
     
     const now = new Date();
     this.lastWalked = now;
@@ -289,17 +407,39 @@ petSchema.methods.walk = function() {
 
 // Método para bañar
 petSchema.methods.bathe = function() {
-    if (this.status === 'dead') return false;
+    if (this.status === 'dead' || this.mood === 'dead') return false;
     
     const now = new Date();
     this.lastBathed = now;
-    this.cleanliness = 100;
-    this.happiness = Math.min(100, this.happiness + 10);
+    
+    // Calcular efectos basados en limpieza actual
+    let cleanlinessGain = 100;
+    let happinessGain = 10;
+    
+    // Si ya está muy limpia, bañarla es menos efectivo
+    if (this.cleanliness > 80) {
+        cleanlinessGain = 20;
+        happinessGain = 5;
+    }
+    
+    // Si está muy sucia, el baño es más efectivo
+    if (this.cleanliness < 30) {
+        cleanlinessGain = 100;
+        happinessGain = 20;
+    }
+    
+    // Si está muy limpia, bañarla puede ser molesto
+    if (this.cleanliness > 90) {
+        happinessGain = -5; // Reduce felicidad
+    }
+    
+    this.cleanliness = Math.min(100, this.cleanliness + cleanlinessGain);
+    this.happiness = Math.min(100, Math.max(0, this.happiness + happinessGain));
     
     this.activityHistory.push({
         action: 'bath',
         date: now,
-        effect: `Limpieza +100, Felicidad +10`
+        effect: `Limpieza +${cleanlinessGain}, Felicidad ${happinessGain > 0 ? '+' : ''}${happinessGain}`
     });
     
     this.updateMood();
@@ -308,7 +448,7 @@ petSchema.methods.bathe = function() {
 
 // Método para dormir
 petSchema.methods.startSleep = function() {
-    if (this.status === 'dead' || this.isSleeping) return false;
+    if (this.status === 'dead' || this.mood === 'dead' || this.isSleeping) return false;
     
     const now = new Date();
     this.isSleeping = true;
@@ -327,21 +467,21 @@ petSchema.methods.startSleep = function() {
 
 // Método para despertar
 petSchema.methods.wake = function() {
-    if (this.status === 'dead' || !this.isSleeping) return false;
+    if (this.status === 'dead' || this.mood === 'dead' || !this.isSleeping) return false;
     
     const now = new Date();
     this.isSleeping = false;
     
     // Calcular tiempo dormido y recuperar stats
-    const sleepHours = (now - this.sleepStartTime) / (1000 * 60 * 60);
-    this.energy = Math.min(100, this.energy + (sleepHours * 15)); // Recupera más energía
-    this.sleep = Math.max(0, this.sleep - (sleepHours * 20)); // Reduce sueño más rápido
+    const sleepMinutes = (now - this.sleepStartTime) / (1000 * 60);
+    this.energy = Math.min(100, this.energy + (sleepMinutes * 0.8)); // Recupera energía por minuto
+    this.sleep = Math.max(0, this.sleep - (sleepMinutes * 1.0)); // Reduce sueño por minuto
     
     this.activityHistory.push({
         action: 'wake',
         date: now,
-        duration: sleepHours * 60,
-        effect: `Energía +${Math.floor(sleepHours * 15)}, Sueño -${Math.floor(sleepHours * 20)}`
+        duration: sleepMinutes,
+        effect: `Energía +${Math.floor(sleepMinutes * 0.8)}, Sueño -${Math.floor(sleepMinutes * 1.0)}`
     });
     
     this.updateMood();
@@ -350,17 +490,47 @@ petSchema.methods.wake = function() {
 
 // Método para acariciar
 petSchema.methods.pet = function() {
-    if (this.status === 'dead') return false;
+    if (this.status === 'dead' || this.mood === 'dead') return false;
     
     const now = new Date();
     this.lastPet = now;
-    this.happiness = Math.min(100, this.happiness + 15);
-    this.health = Math.min(100, this.health + 3);
+    
+    // Calcular efectos basados en estado actual
+    let happinessGain = 15;
+    let healthGain = 3;
+    
+    // Si está muy feliz, acariciarla es menos efectivo
+    if (this.happiness > 80) {
+        happinessGain = 8;
+        healthGain = 2;
+    }
+    
+    // Si está triste, acariciarla es más efectivo
+    if (this.happiness < 30) {
+        happinessGain = 25;
+        healthGain = 5;
+    }
+    
+    // Si está enferma, acariciarla ayuda más
+    if (this.isSick) {
+        happinessGain = 20;
+        healthGain = 8;
+    }
+    
+    // Si está durmiendo, acariciarla la despierta
+    if (this.isSleeping) {
+        this.isSleeping = false;
+        happinessGain = 10;
+        healthGain = 2;
+    }
+    
+    this.happiness = Math.min(100, this.happiness + happinessGain);
+    this.health = Math.min(100, this.health + healthGain);
     
     this.activityHistory.push({
         action: 'pet',
         date: now,
-        effect: `Felicidad +15, Salud +3`
+        effect: `Felicidad +${happinessGain}, Salud +${healthGain}${this.isSleeping ? ', Despertó' : ''}`
     });
     
     this.updateMood();
@@ -369,13 +539,42 @@ petSchema.methods.pet = function() {
 
 // Método para curar
 petSchema.methods.heal = function() {
-    if (this.status === 'dead') return false;
+    if (this.status === 'dead' || this.mood === 'dead') return false;
     
     const now = new Date();
     this.lastHealed = now;
-    this.health = Math.min(100, this.health + 30);
+    
+    // Calcular efectos de curación basados en enfermedad
+    let healthGain = 30;
+    let canCure = false;
     
     if (this.isSick) {
+        switch (this.sickness) {
+            case 'Desnutrición':
+                healthGain = 40;
+                canCure = true;
+                break;
+            case 'Sobrepeso':
+                healthGain = 25;
+                canCure = true;
+                break;
+            case 'Piel Seca':
+                healthGain = 20;
+                canCure = true;
+                break;
+            case 'Estrés':
+                healthGain = 35;
+                canCure = true;
+                break;
+            default:
+                healthGain = 30;
+                canCure = true;
+        }
+    }
+    
+    this.health = Math.min(100, this.health + healthGain);
+    
+    if (canCure && this.isSick) {
         this.isSick = false;
         this.sickness = null;
         this.sicknessStartTime = null;
@@ -385,7 +584,7 @@ petSchema.methods.heal = function() {
     this.activityHistory.push({
         action: 'heal',
         date: now,
-        effect: `Salud +30, Enfermedad curada`
+        effect: `Salud +${healthGain}${canCure ? ', Enfermedad curada' : ''}`
     });
     
     this.updateMood();
