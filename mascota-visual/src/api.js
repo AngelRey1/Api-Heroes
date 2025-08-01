@@ -608,3 +608,25 @@ export const getPetStatus = async (token, petId) => {
   });
   return res.data;
 };
+
+// Funciones adicionales para VirtualPet
+export const waterPet = async (token, petId) => {
+  const res = await axios.post(`${API_URL}/pet-care/${petId}/water`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const wakePet = async (token, petId) => {
+  const res = await axios.post(`${API_URL}/pet-care/${petId}/wake`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
+
+export const petPet = async (token, petId) => {
+  const res = await axios.post(`${API_URL}/pet-care/${petId}/pet`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return res.data;
+};
