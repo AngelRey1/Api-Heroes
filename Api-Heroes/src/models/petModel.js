@@ -337,7 +337,7 @@ petSchema.methods.water = function(waterType = 'regular') {
 
 // Método para jugar
 petSchema.methods.play = function() {
-    if (this.status === 'dead' || this.mood === 'dead' || this.energy < 10) return false;
+    if (this.status === 'dead' || this.mood === 'dead') return false;
     
     const now = new Date();
     this.lastPlayed = now;
@@ -348,12 +348,22 @@ petSchema.methods.play = function() {
     let hungerGain = 15;
     let cleanlinessLoss = 10;
     
-    // Si está muy cansada, jugar es más difícil
+    // Si está muy cansada, jugar es más difícil pero posible
     if (this.energy < 20) {
-        energyCost = 25;
-        happinessGain = 15;
-        hungerGain = 20;
-        cleanlinessLoss = 15;
+        energyCost = Math.min(this.energy, 15); // No puede gastar más energía de la que tiene
+        happinessGain = 10;
+        hungerGain = 25;
+        cleanlinessLoss = 20;
+    }
+    
+    // Si no tiene energía, puede jugar pero con consecuencias
+    if (this.energy <= 0) {
+        energyCost = 0;
+        happinessGain = 5;
+        hungerGain = 30;
+        cleanlinessLoss = 25;
+        // Reducir salud por jugar sin energía
+        this.health = Math.max(0, this.health - 5);
     }
     
     // Si tiene mucha energía, puede jugar más intensamente
@@ -377,7 +387,7 @@ petSchema.methods.play = function() {
     this.activityHistory.push({
         action: 'play',
         date: now,
-        effect: `Energía -${energyCost}, Felicidad +${happinessGain}, Hambre +${hungerGain}, Limpieza -${cleanlinessLoss}`
+        effect: `Energía -${energyCost}, Felicidad +${happinessGain}, Hambre +${hungerGain}, Limpieza -${cleanlinessLoss}${this.energy <= 0 ? ', Salud -5 (sin energía)' : ''}`
     });
     
     this.updateMood();
