@@ -309,7 +309,7 @@ petSchema.methods.bathe = function() {
 };
 
 // Método para dormir
-petSchema.methods.sleep = function() {
+petSchema.methods.startSleep = function() {
     if (this.status === 'dead' || this.isSleeping) return false;
     
     const now = new Date();
