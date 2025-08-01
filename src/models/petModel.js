@@ -112,33 +112,33 @@ petSchema.methods.updateStats = function() {
     const hoursSincePet = (now - this.lastPet) / (1000 * 60 * 60);
     
     // Actualizar hambre
-    this.hunger = Math.min(100, this.hunger + (hoursSinceFed * this.hungerRate));
+    this.hunger = Math.round(Math.min(100, this.hunger + (hoursSinceFed * this.hungerRate)));
     
     // Actualizar sed (usando thirst como parte del sistema de hidratación)
-    const thirst = Math.min(100, (hoursSinceWatered * this.thirstRate));
+    const thirst = Math.round(Math.min(100, (hoursSinceWatered * this.thirstRate)));
     
     // Actualizar energía
-    this.energy = Math.max(0, this.energy - (hoursSincePlayed * this.energyDecayRate));
+    this.energy = Math.round(Math.max(0, this.energy - (hoursSincePlayed * this.energyDecayRate)));
     
     // Actualizar felicidad
-    this.happiness = Math.max(0, this.happiness - (hoursSincePet * this.happinessDecayRate));
+    this.happiness = Math.round(Math.max(0, this.happiness - (hoursSincePet * this.happinessDecayRate)));
     
     // Actualizar limpieza
-    this.cleanliness = Math.max(0, this.cleanliness - (hoursSinceBathed * this.cleanlinessDecayRate));
+    this.cleanliness = Math.round(Math.max(0, this.cleanliness - (hoursSinceBathed * this.cleanlinessDecayRate)));
     
     // Actualizar sueño
-    this.sleep = Math.max(0, this.sleep - (hoursSinceSlept * this.sleepDecayRate));
+    this.sleep = Math.round(Math.max(0, this.sleep - (hoursSinceSlept * this.sleepDecayRate)));
     
     // Si está durmiendo, recuperar energía y sueño
     if (this.isSleeping) {
         const sleepHours = (now - this.sleepStartTime) / (1000 * 60 * 60);
-        this.energy = Math.min(100, this.energy + (sleepHours * 5));
-        this.sleep = Math.min(100, this.sleep + (sleepHours * 8));
+        this.energy = Math.round(Math.min(100, this.energy + (sleepHours * 5)));
+        this.sleep = Math.round(Math.min(100, this.sleep + (sleepHours * 8)));
     }
     
     // Consecuencias por negligencia
     if (this.hunger > 80 || this.cleanliness < 20 || this.happiness < 20) {
-        this.health = Math.max(0, this.health - (hoursSinceFed * this.healthDecayRate));
+        this.health = Math.round(Math.max(0, this.health - (hoursSinceFed * this.healthDecayRate)));
     }
     
     // Enfermedades por negligencia
@@ -213,9 +213,9 @@ petSchema.methods.feed = function(foodType = 'regular') {
     
     const now = new Date();
     this.lastFed = now;
-    this.hunger = Math.max(0, this.hunger - 30);
-    this.happiness = Math.min(100, this.happiness + 10);
-    this.health = Math.min(100, this.health + 5);
+    this.hunger = Math.round(Math.max(0, this.hunger - 30));
+    this.happiness = Math.round(Math.min(100, this.happiness + 10));
+    this.health = Math.round(Math.min(100, this.health + 5));
     
     this.activityHistory.push({
         action: 'feed',
@@ -234,8 +234,8 @@ petSchema.methods.water = function(waterType = 'regular') {
     
     const now = new Date();
     this.lastWatered = now;
-    this.happiness = Math.min(100, this.happiness + 5);
-    this.health = Math.min(100, this.health + 3);
+    this.happiness = Math.round(Math.min(100, this.happiness + 5));
+    this.health = Math.round(Math.min(100, this.health + 3));
     
     this.activityHistory.push({
         action: 'water',
@@ -254,9 +254,9 @@ petSchema.methods.play = function() {
     
     const now = new Date();
     this.lastPlayed = now;
-    this.energy = Math.max(0, this.energy - 15);
-    this.happiness = Math.min(100, this.happiness + 20);
-    this.hunger = Math.min(100, this.hunger + 10);
+    this.energy = Math.round(Math.max(0, this.energy - 15));
+    this.happiness = Math.round(Math.min(100, this.happiness + 20));
+    this.hunger = Math.round(Math.min(100, this.hunger + 10));
     
     this.activityHistory.push({
         action: 'play',
@@ -274,10 +274,10 @@ petSchema.methods.walk = function() {
     
     const now = new Date();
     this.lastWalked = now;
-    this.energy = Math.max(0, this.energy - 20);
-    this.happiness = Math.min(100, this.happiness + 15);
-    this.hunger = Math.min(100, this.hunger + 15);
-    this.cleanliness = Math.max(0, this.cleanliness - 5);
+    this.energy = Math.round(Math.max(0, this.energy - 20));
+    this.happiness = Math.round(Math.min(100, this.happiness + 15));
+    this.hunger = Math.round(Math.min(100, this.hunger + 15));
+    this.cleanliness = Math.round(Math.max(0, this.cleanliness - 5));
     
     this.activityHistory.push({
         action: 'walk',
@@ -296,7 +296,7 @@ petSchema.methods.bathe = function() {
     const now = new Date();
     this.lastBathed = now;
     this.cleanliness = 100;
-    this.happiness = Math.min(100, this.happiness + 10);
+    this.happiness = Math.round(Math.min(100, this.happiness + 10));
     
     this.activityHistory.push({
         action: 'bath',
@@ -336,8 +336,8 @@ petSchema.methods.wake = function() {
     
     // Calcular tiempo dormido y recuperar stats
     const sleepHours = (now - this.sleepStartTime) / (1000 * 60 * 60);
-    this.energy = Math.min(100, this.energy + (sleepHours * 10));
-    this.sleep = Math.min(100, this.sleep + (sleepHours * 15));
+    this.energy = Math.round(Math.min(100, this.energy + (sleepHours * 10)));
+    this.sleep = Math.round(Math.min(100, this.sleep + (sleepHours * 15)));
     
     this.activityHistory.push({
         action: 'wake',
@@ -356,8 +356,8 @@ petSchema.methods.pet = function() {
     
     const now = new Date();
     this.lastPet = now;
-    this.happiness = Math.min(100, this.happiness + 15);
-    this.health = Math.min(100, this.health + 3);
+    this.happiness = Math.round(Math.min(100, this.happiness + 15));
+    this.health = Math.round(Math.min(100, this.health + 3));
     
     this.activityHistory.push({
         action: 'pet',
@@ -375,7 +375,7 @@ petSchema.methods.heal = function() {
     
     const now = new Date();
     this.lastHealed = now;
-    this.health = Math.min(100, this.health + 30);
+    this.health = Math.round(Math.min(100, this.health + 30));
     
     if (this.isSick) {
         this.isSick = false;

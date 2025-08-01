@@ -506,6 +506,43 @@ class PetService {
             throw new Error(`Error al obtener historial de mascota: ${error.message}`);
         }
     }
+
+    async updatePet(petId, updateData, userId) {
+        try {
+            validateObjectId(petId, 'ID de mascota');
+            validateObjectId(userId, 'ID de usuario');
+            
+            const pet = await this.petRepository.getPetById(petId);
+            if (!pet) {
+                throw new NotFoundError('Mascota no encontrada');
+            }
+            
+            if (pet.owner.toString() !== userId.toString()) {
+                throw new AuthorizationError('No tienes permisos para modificar esta mascota');
+            }
+            
+            // Validar campos que se pueden actualizar
+            const allowedFields = ['name', 'type', 'superPower', 'personality', 'color'];
+            const filteredData = {};
+            
+            for (const [key, value] of Object.entries(updateData)) {
+                if (allowedFields.includes(key) && value !== undefined && value !== null) {
+                    filteredData[key] = value;
+                }
+            }
+            
+            // Actualizar mascota
+            const updatedPet = await this.petRepository.updatePet(petId, filteredData);
+            
+            // Actualizar stats antes de devolver
+            updatedPet.updateStats();
+            await updatedPet.save();
+            
+            return toBasicPet(updatedPet);
+        } catch (error) {
+            throw new Error(`Error al actualizar mascota: ${error.message}`);
+        }
+    }
 }
 
 export { toBasicPet };
