@@ -102,7 +102,7 @@ const petSchema = new mongoose.Schema({
 petSchema.methods.updateStats = function() {
     const now = new Date();
     
-    // Calcular tiempo transcurrido desde el último cuidado
+    // Calcular tiempo transcurrido desde el último cuidado (en horas)
     const hoursSinceFed = (now - this.lastFed) / (1000 * 60 * 60);
     const hoursSinceWatered = (now - this.lastWatered) / (1000 * 60 * 60);
     const hoursSincePlayed = (now - this.lastPlayed) / (1000 * 60 * 60);
@@ -111,29 +111,26 @@ petSchema.methods.updateStats = function() {
     const hoursSinceSlept = (now - this.lastSlept) / (1000 * 60 * 60);
     const hoursSincePet = (now - this.lastPet) / (1000 * 60 * 60);
     
-    // Actualizar hambre
+    // Degradación de hambre (aumenta con el tiempo)
     this.hunger = Math.min(100, this.hunger + (hoursSinceFed * this.hungerRate));
     
-    // Actualizar sed (usando thirst como parte del sistema de hidratación)
-    const thirst = Math.min(100, (hoursSinceWatered * this.thirstRate));
+    // Degradación de energía (disminuye con el tiempo)
+    this.energy = Math.max(0, this.energy - (hoursSinceFed * this.energyDecayRate));
     
-    // Actualizar energía
-    this.energy = Math.max(0, this.energy - (hoursSincePlayed * this.energyDecayRate));
+    // Degradación de felicidad (disminuye con el tiempo)
+    this.happiness = Math.max(0, this.happiness - (hoursSinceFed * this.happinessDecayRate));
     
-    // Actualizar felicidad
-    this.happiness = Math.max(0, this.happiness - (hoursSincePet * this.happinessDecayRate));
+    // Degradación de limpieza (disminuye con el tiempo)
+    this.cleanliness = Math.max(0, this.cleanliness - (hoursSinceFed * this.cleanlinessDecayRate));
     
-    // Actualizar limpieza
-    this.cleanliness = Math.max(0, this.cleanliness - (hoursSinceBathed * this.cleanlinessDecayRate));
+    // Degradación de sueño (aumenta con el tiempo)
+    this.sleep = Math.min(100, this.sleep + (hoursSinceFed * this.sleepDecayRate));
     
-    // Actualizar sueño
-    this.sleep = Math.max(0, this.sleep - (hoursSinceSlept * this.sleepDecayRate));
-    
-    // Si está durmiendo, recuperar energía y sueño
+    // Si está durmiendo, recuperar energía y reducir sueño
     if (this.isSleeping) {
         const sleepHours = (now - this.sleepStartTime) / (1000 * 60 * 60);
-        this.energy = Math.min(100, this.energy + (sleepHours * 5));
-        this.sleep = Math.min(100, this.sleep + (sleepHours * 8));
+        this.energy = Math.min(100, this.energy + (sleepHours * 8)); // Recupera más energía
+        this.sleep = Math.max(0, this.sleep - (sleepHours * 10)); // Reduce sueño más rápido
     }
     
     // Consecuencias por negligencia
@@ -213,15 +210,15 @@ petSchema.methods.feed = function(foodType = 'regular') {
     
     const now = new Date();
     this.lastFed = now;
-    this.hunger = Math.max(0, this.hunger - 30);
-    this.happiness = Math.min(100, this.happiness + 10);
-    this.health = Math.min(100, this.health + 5);
+    this.hunger = Math.max(0, this.hunger - 40); // Reduce más hambre
+    this.happiness = Math.min(100, this.happiness + 15); // Aumenta más felicidad
+    this.health = Math.min(100, this.health + 10); // Aumenta más salud
     
     this.activityHistory.push({
         action: 'feed',
         date: now,
         food: foodType,
-        effect: `Hambre -30, Felicidad +10, Salud +5`
+        effect: `Hambre -40, Felicidad +15, Salud +10`
     });
     
     this.updateMood();
@@ -250,18 +247,19 @@ petSchema.methods.water = function(waterType = 'regular') {
 
 // Método para jugar
 petSchema.methods.play = function() {
-    if (this.status === 'dead' || this.energy < 15) return false;
+    if (this.status === 'dead' || this.energy < 10) return false;
     
     const now = new Date();
     this.lastPlayed = now;
-    this.energy = Math.max(0, this.energy - 15);
-    this.happiness = Math.min(100, this.happiness + 20);
-    this.hunger = Math.min(100, this.hunger + 10);
+    this.energy = Math.max(0, this.energy - 20); // Gasta más energía
+    this.happiness = Math.min(100, this.happiness + 25); // Aumenta más felicidad
+    this.hunger = Math.min(100, this.hunger + 15); // Aumenta más hambre
+    this.cleanliness = Math.max(0, this.cleanliness - 10); // Se ensucia más
     
     this.activityHistory.push({
         action: 'play',
         date: now,
-        effect: `Energía -15, Felicidad +20, Hambre +10`
+        effect: `Energía -20, Felicidad +25, Hambre +15, Limpieza -10`
     });
     
     this.updateMood();
@@ -309,7 +307,7 @@ petSchema.methods.bathe = function() {
 };
 
 // Método para dormir
-petSchema.methods.sleep = function() {
+petSchema.methods.startSleep = function() {
     if (this.status === 'dead' || this.isSleeping) return false;
     
     const now = new Date();
@@ -336,14 +334,14 @@ petSchema.methods.wake = function() {
     
     // Calcular tiempo dormido y recuperar stats
     const sleepHours = (now - this.sleepStartTime) / (1000 * 60 * 60);
-    this.energy = Math.min(100, this.energy + (sleepHours * 10));
-    this.sleep = Math.min(100, this.sleep + (sleepHours * 15));
+    this.energy = Math.min(100, this.energy + (sleepHours * 15)); // Recupera más energía
+    this.sleep = Math.max(0, this.sleep - (sleepHours * 20)); // Reduce sueño más rápido
     
     this.activityHistory.push({
         action: 'wake',
         date: now,
         duration: sleepHours * 60,
-        effect: `Energía +${Math.floor(sleepHours * 10)}, Sueño +${Math.floor(sleepHours * 15)}`
+        effect: `Energía +${Math.floor(sleepHours * 15)}, Sueño -${Math.floor(sleepHours * 20)}`
     });
     
     this.updateMood();

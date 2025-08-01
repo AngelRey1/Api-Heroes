@@ -362,7 +362,7 @@ class PetService {
                 throw new Error('La mascota ya está durmiendo');
             }
 
-            const success = pet.sleep();
+            const success = pet.startSleep();
             if (!success) {
                 throw new Error('No se pudo hacer dormir la mascota');
             }
