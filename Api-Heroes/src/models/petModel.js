@@ -37,7 +37,7 @@ const petSchema = new mongoose.Schema({
     // Configuración de degradación en tiempo real (por minuto)
     hungerRate: { type: Number, default: 0.5, description: 'Puntos de hambre que gana por minuto' },
     thirstRate: { type: Number, default: 0.3, description: 'Puntos de sed que gana por minuto' },
-    energyDecayRate: { type: Number, default: 0.3, description: 'Puntos de energía que pierde por minuto' },
+    energyDecayRate: { type: Number, default: 0.1, description: 'Puntos de energía que pierde por minuto' },
     happinessDecayRate: { type: Number, default: 0.2, description: 'Puntos de felicidad que pierde por minuto' },
     cleanlinessDecayRate: { type: Number, default: 0.25, description: 'Puntos de limpieza que pierde por minuto' },
     sleepDecayRate: { type: Number, default: 0.4, description: 'Puntos de sueño que gana por minuto' },
@@ -484,7 +484,7 @@ petSchema.methods.wake = function() {
     
     // Calcular tiempo dormido y recuperar stats
     const sleepMinutes = (now - this.sleepStartTime) / (1000 * 60);
-    this.energy = Math.min(100, this.energy + (sleepMinutes * 0.8)); // Recupera energía por minuto
+    this.energy = Math.min(100, this.energy + (sleepMinutes * 3.0)); // Recupera energía más rápido (3 puntos por minuto)
     this.sleep = Math.max(0, this.sleep - (sleepMinutes * 1.0)); // Reduce sueño por minuto
     
     this.activityHistory.push({
